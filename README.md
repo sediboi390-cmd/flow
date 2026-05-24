@@ -76,6 +76,17 @@ This will generate `AI_Tools_Faceless_Channel_Scripts.pdf` in the same directory
 
 This project is open source and available for personal and commercial use.
 
+## 🤖 Built with Claude AI
+
+This project was built with the assistance of **[Claude](https://claude.ai)** — Anthropic's AI assistant.
+
+- **Scripts & voiceovers** — written and optimized by Claude AI
+- **Seedance 2 prompts** — crafted using Claude's understanding of cinematic language
+- **PDF generation code** — Python script structured with Claude's help
+- **Content strategy** — 4-week channel plan designed with Claude AI
+
+> 💡 *Claude is an AI assistant made by [Anthropic](https://www.anthropic.com). It excels at writing, coding, research, and creative projects — making it the perfect tool for content creators.*
+
 ---
 
-*Created with Kiro AI • Optimized for Seedance 2 by ByteDance • 2026*
+*Created with Kiro AI & Claude AI (Anthropic) • Optimized for Seedance 2 by ByteDance • 2026*
