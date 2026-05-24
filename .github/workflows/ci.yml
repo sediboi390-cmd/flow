@@ -1,0 +1,43 @@
+name: CI — Build PDF
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate PDF
+        run: python generate_pdf.py
+
+      - name: Verify PDF was created
+        run: |
+          if [ -f "AI_Tools_Faceless_Channel_Scripts.pdf" ]; then
+            echo "PDF generated successfully!"
+            ls -lh AI_Tools_Faceless_Channel_Scripts.pdf
+          else
+            echo "ERROR: PDF was not created!" && exit 1
+          fi
+
+      - name: Upload PDF as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AI_Tools_Faceless_Channel_Scripts
+          path: AI_Tools_Faceless_Channel_Scripts.pdf
+          retention-days: 7

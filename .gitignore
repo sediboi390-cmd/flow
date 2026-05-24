@@ -22,3 +22,20 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Environment variables
+.env
+*.env
+
+# Logs
+*.log
+
+# Build / packaging
+dist/
+build/
+*.egg-info/
+
+# Test & coverage
+.pytest_cache/
+.coverage
+htmlcov/
