@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>DroneAware — Drone Detection App</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Syne:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#050810; --surface:#0a0f1e; --card:#0d1528; --border:#1a2540;
+  --accent:#00d4ff; --accent2:#0066ff; --accent3:#ff6b35; --accent4:#a855f7;
+  --green:#00ff88; --yellow:#ffd700; --red:#ff4444;
+  --text:#e8f0fe; --muted:#5a7090; --glow:rgba(0,212,255,0.15);
+}
+.light-mode {
+  --bg:#f0f4ff; --surface:#ffffff; --card:#e8eeff; --border:#c8d4f0;
+  --text:#0a0f1e; --muted:#5a7090;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+/* ── HEADER ── */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-text{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;letter-spacing:3px;color:var(--accent);}
+.logo-sub{font-size:8px;color:var(--muted);letter-spacing:2px;}
+.header-right{display:flex;align-items:center;gap:8px;}
+.node-badge{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:16px;font-size:9px;letter-spacing:1px;text-transform:uppercase;border:1px solid rgba(0,255,136,0.3);background:rgba(0,255,136,0.08);color:var(--green);}
+.pulse{width:6px;height:6px;border-radius:50%;animation:pdot 2s infinite;}
+.pulse.green{background:var(--green);}
+.pulse.red{background:var(--red);}
+.pulse.blue{background:var(--accent);}
+@keyframes pdot{0%,100%{opacity:1}50%{opacity:0.3}}
+.icon-btn{width:34px;height:34px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.icon-btn:hover{border-color:var(--accent);color:var(--accent);}
+</style>
+
+<style>
+/* ── BOTTOM NAV ── */
+.bottom-nav{background:var(--surface);border-top:1px solid var(--border);display:flex;height:60px;flex-shrink:0;z-index:100;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;transition:all 0.2s;border:none;background:transparent;color:var(--muted);font-family:'Syne',sans-serif;font-size:8px;letter-spacing:1px;text-transform:uppercase;position:relative;}
+.nav-item.active{color:var(--accent);}
+.nav-item.active::after{content:'';position:absolute;top:0;left:20%;right:20%;height:2px;background:var(--accent);border-radius:0 0 3px 3px;}
+.nav-icon{font-size:18px;}
+/* ── SCREENS ── */
+.screen{display:none;flex:1;overflow-y:auto;flex-direction:column;}
+.screen.active{display:flex;}
+.screen::-webkit-scrollbar{width:3px;}
+.screen::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+/* ── COMMON ── */
+.section-title{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2.5px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;}
+.tag{font-size:8px;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:8px;}
+.tag-green{background:rgba(0,255,136,0.1);color:var(--green);border:1px solid rgba(0,255,136,0.25);}
+.tag-red{background:rgba(255,68,68,0.1);color:var(--red);border:1px solid rgba(255,68,68,0.25);}
+.tag-yellow{background:rgba(255,215,0,0.1);color:var(--yellow);border:1px solid rgba(255,215,0,0.25);}
+.tag-blue{background:rgba(0,212,255,0.1);color:var(--accent);border:1px solid rgba(0,212,255,0.25);}
+.tag-purple{background:rgba(168,85,247,0.1);color:var(--accent4);border:1px solid rgba(168,85,247,0.25);}
+.tag-orange{background:rgba(255,107,53,0.1);color:var(--accent3);border:1px solid rgba(255,107,53,0.25);}
+.divider{height:1px;background:var(--border);margin:12px 0;}
+</style>
+
+<style>
+/* ── HOME SCREEN ── */
+.home-hero{background:linear-gradient(135deg,rgba(0,212,255,0.08),rgba(0,102,255,0.08));border:1px solid rgba(0,212,255,0.2);border-radius:16px;padding:20px;margin-bottom:14px;position:relative;overflow:hidden;}
+.home-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:120px;height:120px;border-radius:50%;background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.1);}
+.hero-title{font-family:'Orbitron',monospace;font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px;}
+.hero-status{font-family:'Orbitron',monospace;font-size:22px;font-weight:700;color:var(--green);margin-bottom:8px;}
+.hero-sub{font-size:11px;color:var(--muted);line-height:1.6;}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;}
+.stat-val{font-family:'Orbitron',monospace;font-size:24px;font-weight:700;color:var(--accent);display:block;margin-bottom:4px;}
+.stat-label{font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;}
+.stat-card.alert-card{border-color:rgba(255,107,53,0.3);background:rgba(255,107,53,0.05);}
+.stat-card.alert-card .stat-val{color:var(--accent3);}
+.stat-card.online-card{border-color:rgba(0,255,136,0.3);background:rgba(0,255,136,0.05);}
+.stat-card.online-card .stat-val{color:var(--green);}
+/* Alert Banner */
+.alert-banner{background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.4);border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all 0.2s;}
+.alert-banner:hover{background:rgba(255,107,53,0.15);}
+.alert-banner-icon{font-size:22px;flex-shrink:0;}
+.alert-banner-text{flex:1;}
+.alert-banner-title{font-size:12px;font-weight:600;color:var(--accent3);margin-bottom:2px;}
+.alert-banner-sub{font-size:10px;color:var(--muted);}
+.alert-banner-arrow{color:var(--accent3);font-size:14px;}
+.alert-banner.hidden{display:none;}
+/* Recent Activity */
+.activity-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+.activity-item:last-child{border-bottom:none;}
+.activity-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.activity-icon.detect{background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.2);}
+.activity-icon.alert{background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.2);}
+.activity-icon.node{background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.2);}
+.activity-text{flex:1;}
+.activity-title{font-size:12px;color:var(--text);margin-bottom:2px;}
+.activity-time{font-size:9px;color:var(--muted);}
+</style>
+
+<style>
+/* ── MAP SCREEN ── */
+.map-screen{position:relative;flex:1;min-height:0;}
+#mapCanvas{position:absolute;inset:0;width:100%;height:100%;}
+.map-overlay-tl{position:absolute;top:12px;left:12px;z-index:10;display:flex;flex-direction:column;gap:6px;}
+.map-overlay-tr{position:absolute;top:12px;right:12px;z-index:10;display:flex;flex-direction:column;gap:6px;}
+.map-overlay-bl{position:absolute;bottom:12px;left:12px;z-index:10;}
+.map-overlay-br{position:absolute;bottom:12px;right:12px;z-index:10;}
+.map-card{background:rgba(10,15,30,0.93);border:1px solid var(--border);border-radius:10px;padding:10px 12px;backdrop-filter:blur(10px);}
+.map-btn-row{display:flex;gap:5px;}
+.map-btn{padding:5px 12px;background:rgba(10,15,30,0.93);border:1px solid var(--border);border-radius:7px;color:var(--muted);font-family:'Syne',sans-serif;font-size:9px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;backdrop-filter:blur(8px);}
+.map-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(0,212,255,0.08);}
+.map-stat-row{display:flex;gap:14px;}
+.map-stat{text-align:center;}
+.map-stat-val{font-family:'Orbitron',monospace;font-size:14px;color:var(--text);display:block;}
+.map-stat-lbl{font-size:7px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;}
+.map-ctrl-col{display:flex;flex-direction:column;gap:5px;}
+.mctrl{width:34px;height:34px;background:rgba(10,15,30,0.93);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;backdrop-filter:blur(8px);}
+.mctrl:hover{border-color:var(--accent);color:var(--accent);}
+/* Drone popup */
+.drone-popup{position:absolute;background:rgba(8,12,24,0.98);border:1px solid var(--accent);border-radius:10px;padding:12px 14px;min-width:180px;z-index:20;display:none;backdrop-filter:blur(12px);}
+.drone-popup.show{display:block;animation:fadeIn 0.2s ease;}
+@keyframes fadeIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
+.dp-id{font-family:'Orbitron',monospace;font-size:11px;color:var(--accent);letter-spacing:1.5px;margin-bottom:2px;}
+.dp-model{font-size:10px;color:var(--muted);margin-bottom:8px;}
+.dp-row{display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px;}
+.dp-label{color:var(--muted);}
+.dp-val{color:var(--text);font-family:'Orbitron',monospace;font-size:10px;}
+.dp-close{position:absolute;top:8px;right:10px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;}
+/* Legend */
+.map-legend{font-size:9px;}
+.leg-row{display:flex;align-items:center;gap:6px;margin-bottom:5px;}
+.leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+</style>
+
+<style>
+/* ── ALERTS SCREEN ── */
+.alert-item{display:flex;gap:12px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;}
+.alert-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px;}
+.alert-item.critical::before{background:var(--red);}
+.alert-item.warning::before{background:var(--yellow);}
+.alert-item.info::before{background:var(--accent);}
+.alert-item:hover{border-color:var(--accent);}
+.alert-icon{font-size:22px;flex-shrink:0;width:36px;text-align:center;}
+.alert-body{flex:1;}
+.alert-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px;}
+.alert-detail{font-size:10px;color:var(--muted);margin-bottom:6px;line-height:1.5;}
+.alert-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.alert-time{font-size:9px;color:var(--muted);}
+/* ── HISTORY SCREEN ── */
+.filter-bar{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;}
+.filter-bar::-webkit-scrollbar{height:2px;}
+.filter-bar::-webkit-scrollbar-thumb{background:var(--border);}
+.fbtn{padding:5px 12px;background:transparent;border:1px solid var(--border);border-radius:16px;color:var(--muted);font-family:'Syne',sans-serif;font-size:9px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;white-space:nowrap;flex-shrink:0;}
+.fbtn.active{background:rgba(0,212,255,0.1);border-color:var(--accent);color:var(--accent);}
+.history-item{display:flex;gap:12px;align-items:center;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;cursor:pointer;transition:all 0.2s;}
+.history-item:hover{border-color:var(--accent);}
+.history-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.15);}
+.history-body{flex:1;}
+.history-id{font-family:'Orbitron',monospace;font-size:10px;color:var(--accent);letter-spacing:1px;margin-bottom:2px;}
+.history-model{font-size:11px;color:var(--text);margin-bottom:4px;}
+.history-meta{display:flex;gap:8px;flex-wrap:wrap;}
+.history-val{font-size:9px;color:var(--muted);}
+.export-btn{width:100%;padding:12px;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.25);border-radius:10px;color:var(--accent);font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1.5px;cursor:pointer;text-transform:uppercase;transition:all 0.2s;margin-bottom:14px;}
+.export-btn:hover{background:rgba(0,212,255,0.15);}
+</style>
+
+<style>
+/* ── DRONE DATABASE ── */
+.search-input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'Syne',sans-serif;font-size:12px;outline:none;margin-bottom:12px;transition:border-color 0.2s;}
+.search-input:focus{border-color:var(--accent);}
+.search-input::placeholder{color:var(--muted);}
+.drone-db-item{display:flex;gap:12px;align-items:center;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;cursor:pointer;transition:all 0.2s;}
+.drone-db-item:hover{border-color:var(--accent);background:rgba(0,212,255,0.03);}
+.drone-db-img{width:48px;height:48px;border-radius:10px;background:rgba(0,212,255,0.06);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.drone-db-body{flex:1;}
+.drone-db-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;}
+.drone-db-brand{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
+.drone-db-specs{display:flex;gap:8px;flex-wrap:wrap;}
+.spec-chip{font-size:9px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:2px 7px;}
+/* Modal detail */
+.db-modal{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:300;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);}
+.db-modal.open{display:flex;}
+.db-modal-content{background:var(--surface);border:1px solid var(--border);border-radius:16px 16px 0 0;padding:24px;width:100%;max-width:600px;max-height:80vh;overflow-y:auto;animation:slideUp 0.3s ease;}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.db-modal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;}
+.db-modal-title{font-family:'Orbitron',monospace;font-size:14px;color:var(--accent);letter-spacing:2px;}
+.db-modal-brand{font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:3px;}
+.db-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;}
+.specs-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.spec-item{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;}
+.spec-item-val{font-family:'Orbitron',monospace;font-size:13px;color:var(--text);display:block;margin-bottom:2px;}
+.spec-item-lbl{font-size:8px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;}
+.fcc-box{padding:10px 12px;border-radius:10px;margin-bottom:12px;display:flex;align-items:center;gap:10px;}
+.fcc-box.banned{background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.3);}
+.fcc-box.ok{background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.3);}
+.fcc-box.warning{background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.3);}
+</style>
+
+<style>
+/* ── LAWS SCREEN ── */
+.country-select-row{display:flex;gap:8px;margin-bottom:14px;}
+.country-select{flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'Syne',sans-serif;font-size:12px;outline:none;cursor:pointer;}
+.country-select option{background:var(--card);}
+.law-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;}
+.law-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.law-card-title{font-size:12px;font-weight:600;color:var(--text);}
+.law-card-body{font-size:11px;color:var(--muted);line-height:1.7;}
+.law-section-title{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin:16px 0 8px;}
+.nfz-item{display:flex;align-items:center;gap:10px;padding:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;}
+.nfz-icon{font-size:18px;width:32px;text-align:center;flex-shrink:0;}
+.nfz-body{flex:1;}
+.nfz-name{font-size:11px;color:var(--text);margin-bottom:2px;}
+.nfz-desc{font-size:9px;color:var(--muted);}
+/* ── SETTINGS SCREEN ── */
+.settings-section{margin-bottom:20px;}
+.settings-item{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;}
+.settings-item-left{flex:1;}
+.settings-item-title{font-size:12px;color:var(--text);margin-bottom:2px;}
+.settings-item-sub{font-size:9px;color:var(--muted);}
+.toggle{width:42px;height:24px;background:var(--border);border-radius:12px;position:relative;cursor:pointer;transition:background 0.3s;flex-shrink:0;border:none;}
+.toggle.on{background:var(--accent);}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:left 0.3s;}
+.toggle.on::after{left:21px;}
+.settings-input{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-family:'Syne',sans-serif;font-size:11px;outline:none;width:140px;text-align:right;}
+.settings-input:focus{border-color:var(--accent);}
+.settings-btn{padding:8px 14px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'Syne',sans-serif;font-size:10px;cursor:pointer;transition:all 0.2s;}
+.settings-btn:hover{border-color:var(--accent);color:var(--accent);}
+.settings-btn.primary{background:rgba(0,212,255,0.1);border-color:var(--accent);color:var(--accent);}
+/* ── PROFILE SCREEN ── */
+.profile-hero{background:linear-gradient(135deg,rgba(168,85,247,0.1),rgba(0,102,255,0.1));border:1px solid rgba(168,85,247,0.25);border-radius:16px;padding:20px;margin-bottom:14px;text-align:center;}
+.profile-avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent4));display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 10px;}
+.profile-name{font-family:'Orbitron',monospace;font-size:14px;color:var(--text);letter-spacing:2px;margin-bottom:4px;}
+.profile-sub{font-size:10px;color:var(--muted);}
+.profile-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;}
+.pstat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;}
+.pstat-val{font-family:'Orbitron',monospace;font-size:18px;color:var(--accent);display:block;margin-bottom:3px;}
+.pstat-lbl{font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+.rank-bar{height:6px;background:var(--border);border-radius:3px;margin:8px 0 4px;}
+.rank-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent4));transition:width 1s;}
+.contribution-item{display:flex;align-items:center;gap:10px;padding:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;}
+.contrib-icon{font-size:16px;width:28px;text-align:center;}
+.contrib-body{flex:1;}
+.contrib-title{font-size:11px;color:var(--text);margin-bottom:1px;}
+.contrib-sub{font-size:9px;color:var(--muted);}
+.contrib-val{font-family:'Orbitron',monospace;font-size:12px;color:var(--accent);}
+/* ── TOAST ── */
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-80px);background:rgba(10,15,30,0.97);border:1px solid var(--accent);border-radius:10px;padding:10px 20px;font-size:11px;color:var(--accent);letter-spacing:1px;z-index:500;transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.error{border-color:var(--red);color:var(--red);}
+/* ── PADDING ── */
+.pad{padding:14px;}
+</style>
+
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <circle cx="14" cy="14" r="3" fill="#00d4ff"/>
+      <line x1="2" y1="2" x2="8" y2="8" stroke="#00d4ff" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="2" cy="2" r="2" fill="none" stroke="#00d4ff" stroke-width="1.4"/>
+      <line x1="26" y1="2" x2="20" y2="8" stroke="#00d4ff" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="26" cy="2" r="2" fill="none" stroke="#00d4ff" stroke-width="1.4"/>
+      <line x1="2" y1="26" x2="8" y2="20" stroke="#00d4ff" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="2" cy="26" r="2" fill="none" stroke="#00d4ff" stroke-width="1.4"/>
+      <line x1="26" y1="26" x2="20" y2="20" stroke="#00d4ff" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="26" cy="26" r="2" fill="none" stroke="#00d4ff" stroke-width="1.4"/>
+      <circle cx="14" cy="14" r="6" fill="none" stroke="rgba(0,212,255,0.2)" stroke-width="1"/>
+    </svg>
+    <div>
+      <div class="logo-text">DRONEAWARE</div>
+      <div class="logo-sub">Drone Detection Network</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="node-badge" id="nodeBadge">
+      <div class="pulse green" id="nodePulse"></div>
+      <span id="nodeStatusText">Node Online</span>
+    </div>
+    <button class="icon-btn" onclick="showToast('🔔 Notifications enabled')" title="Notifications">🔔</button>
+  </div>
+</div>
+
+<!-- SCREENS CONTAINER -->
+<div style="flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;">
+
+<!-- ═══════════════════════════ HOME SCREEN ═══════════════════════════ -->
+<div class="screen active pad" id="screen-home">
+  <div class="alert-banner" id="alertBanner" onclick="navTo('alerts')">
+    <div class="alert-banner-icon">⚠️</div>
+    <div class="alert-banner-text">
+      <div class="alert-banner-title">🛸 Drone Detected Nearby!</div>
+      <div class="alert-banner-sub" id="bannerSub">DJI-MINI4-X1B2 · ~600m · 45m altitude · 2 min ago</div>
+    </div>
+    <div class="alert-banner-arrow">›</div>
+  </div>
+
+  <div class="home-hero">
+    <div class="hero-title">Node Status</div>
+    <div class="hero-status" id="heroStatus">● SCANNING</div>
+    <div class="hero-sub" id="heroSub">Listening on Wi-Fi 2.4GHz &amp; Bluetooth BT5<br>Last scan: <span id="lastScan">just now</span></div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card online-card">
+      <span class="stat-val" id="statDetected">7</span>
+      <span class="stat-label">Detected Today</span>
+    </div>
+    <div class="stat-card alert-card">
+      <span class="stat-val" id="statAlerts">2</span>
+      <span class="stat-label">Active Alerts</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-val" id="statNodes" style="color:var(--accent4)">142</span>
+      <span class="stat-label">Network Nodes</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-val" id="statRange" style="color:var(--yellow)">3.2km</span>
+      <span class="stat-label">Detection Range</span>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px;">
+    <div class="section-title">Recent Activity</div>
+    <div id="activityList">
+      <div class="activity-item">
+        <div class="activity-icon detect">🛸</div>
+        <div class="activity-text">
+          <div class="activity-title">DJI Mini 4 Pro detected · 600m away</div>
+          <div class="activity-time">2 minutes ago · Alt: 45m · Speed: 8 m/s</div>
+        </div>
+        <span class="tag tag-blue">Wi-Fi</span>
+      </div>
+      <div class="activity-item">
+        <div class="activity-icon alert">⚠️</div>
+        <div class="activity-text">
+          <div class="activity-title">Autel EVO II entered 500m radius</div>
+          <div class="activity-time">18 minutes ago · Alt: 120m</div>
+        </div>
+        <span class="tag tag-orange">Alert</span>
+      </div>
+      <div class="activity-item">
+        <div class="activity-icon detect">🛸</div>
+        <div class="activity-text">
+          <div class="activity-title">DJI Mavic 3 Classic · 1.2km away</div>
+          <div class="activity-time">1 hour ago · Alt: 80m · Speed: 12 m/s</div>
+        </div>
+        <span class="tag tag-green">BT5</span>
+      </div>
+      <div class="activity-item">
+        <div class="activity-icon node">📡</div>
+        <div class="activity-text">
+          <div class="activity-title">Node connected to DroneAware Network</div>
+          <div class="activity-time">3 hours ago</div>
+        </div>
+        <span class="tag tag-green">Online</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Community Map Contribution</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <span style="font-size:11px;color:var(--muted);">Your rank on the network</span>
+      <span class="tag tag-purple">#38 of 142</span>
+    </div>
+    <div class="rank-bar"><div class="rank-fill" style="width:72%"></div></div>
+    <div style="font-size:9px;color:var(--muted);text-align:right;">72% to next rank — Explorer</div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════ MAP SCREEN ═══════════════════════════ -->
+<div class="screen" id="screen-map" style="position:relative;">
+  <div class="map-screen" style="flex:1;min-height:0;position:relative;">
+    <canvas id="mapCanvas"></canvas>
+
+    <!-- Top Left: Stats -->
+    <div class="map-overlay-tl">
+      <div class="map-card">
+        <div class="map-stat-row">
+          <div class="map-stat">
+            <span class="map-stat-val" id="mapDrones">5</span>
+            <span class="map-stat-lbl">Drones</span>
+          </div>
+          <div class="map-stat">
+            <span class="map-stat-val" id="mapRange">3.2km</span>
+            <span class="map-stat-lbl">Range</span>
+          </div>
+          <div class="map-stat">
+            <span class="map-stat-val" id="mapAlerts" style="color:var(--accent3)">2</span>
+            <span class="map-stat-lbl">Alerts</span>
+          </div>
+        </div>
+      </div>
+      <div class="map-btn-row">
+        <button class="map-btn active" onclick="setMapLayer('normal',this)">Normal</button>
+        <button class="map-btn" onclick="setMapLayer('radar',this)">Radar</button>
+        <button class="map-btn" onclick="setMapLayer('heat',this)">Heat</button>
+      </div>
+    </div>
+
+    <!-- Top Right: Controls -->
+    <div class="map-overlay-tr">
+      <div class="map-ctrl-col">
+        <button class="mctrl" onclick="mapZoom(1.3)" title="Zoom In">+</button>
+        <button class="mctrl" onclick="mapZoom(0.7)" title="Zoom Out">−</button>
+        <button class="mctrl" onclick="mapReset()" title="Center">⌖</button>
+        <button class="mctrl" onclick="togglePaths()" title="Paths" id="pathBtn">〰</button>
+      </div>
+    </div>
+
+    <!-- Bottom Left: Legend -->
+    <div class="map-overlay-bl">
+      <div class="map-card map-legend">
+        <div class="leg-row"><div class="leg-dot" style="background:var(--green)"></div><span style="color:var(--muted)">Flying</span></div>
+        <div class="leg-row"><div class="leg-dot" style="background:var(--yellow)"></div><span style="color:var(--muted)">Warning</span></div>
+        <div class="leg-row"><div class="leg-dot" style="background:var(--accent3)"></div><span style="color:var(--muted)">Alert</span></div>
+        <div class="leg-row"><div class="leg-dot" style="background:var(--accent)"></div><span style="color:var(--muted)">You</span></div>
+      </div>
+    </div>
+
+    <!-- Drone popup -->
+    <div class="drone-popup" id="dronePopup">
+      <button class="dp-close" onclick="closePopup()">✕</button>
+      <div class="dp-id" id="popId">DJI-MINI4-X1B2</div>
+      <div class="dp-model" id="popModel">DJI Mini 4 Pro</div>
+      <div class="dp-row"><span class="dp-label">Altitude</span><span class="dp-val" id="popAlt">45m</span></div>
+      <div class="dp-row"><span class="dp-label">Speed</span><span class="dp-val" id="popSpeed">8.2 m/s</span></div>
+      <div class="dp-row"><span class="dp-label">Distance</span><span class="dp-val" id="popDist">~600m</span></div>
+      <div class="dp-row"><span class="dp-label">Pilot</span><span class="dp-val" id="popPilot">~580m away</span></div>
+      <div class="dp-row"><span class="dp-label">Protocol</span><span class="dp-val" id="popProto">Wi-Fi RID</span></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════ ALERTS SCREEN ═══════════════════════════ -->
+<div class="screen pad" id="screen-alerts">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <div>
+      <div style="font-family:'Orbitron',monospace;font-size:13px;color:var(--accent);letter-spacing:2px;">ALERTS</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:2px;">Real-time drone detection alerts</div>
+    </div>
+    <button class="fbtn active" onclick="clearAlerts()">Clear All</button>
+  </div>
+
+  <div id="alertsList">
+    <div class="alert-item critical" onclick="showToast('📍 Drone location shown on map')">
+      <div class="alert-icon">🚨</div>
+      <div class="alert-body">
+        <div class="alert-title">Drone entered restricted zone</div>
+        <div class="alert-detail">DJI Mini 4 Pro (ID: DJI-MINI4-X1B2) entered your 500m detection radius. Pilot located ~580m from your position.</div>
+        <div class="alert-meta">
+          <span class="tag tag-red">Critical</span>
+          <span class="tag tag-blue">Wi-Fi RID</span>
+          <span class="alert-time">2 min ago</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert-item warning" onclick="showToast('📍 Drone location shown on map')">
+      <div class="alert-icon">⚠️</div>
+      <div class="alert-body">
+        <div class="alert-title">Autel EVO II — High Altitude</div>
+        <div class="alert-detail">Drone flying at 120m above ground. ID: AUTEL-EVO2-B3C4. Speed: 15 m/s heading NE.</div>
+        <div class="alert-meta">
+          <span class="tag tag-yellow">Warning</span>
+          <span class="tag tag-green">BT5 RID</span>
+          <span class="alert-time">18 min ago</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert-item info" onclick="showToast('📍 Drone location shown on map')">
+      <div class="alert-icon">📡</div>
+      <div class="alert-body">
+        <div class="alert-title">New drone detected — DJI Mavic 3</div>
+        <div class="alert-detail">First time detection. Serial: DJI-MAV3-D5E6. Location: 1.2km from your node.</div>
+        <div class="alert-meta">
+          <span class="tag tag-blue">Info</span>
+          <span class="tag tag-blue">Wi-Fi RID</span>
+          <span class="alert-time">1 hr ago</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert-item info">
+      <div class="alert-icon">🛸</div>
+      <div class="alert-body">
+        <div class="alert-title">Skydio 2+ detected</div>
+        <div class="alert-detail">Autonomous flight mode. ID: SKYDIO-2P-F7G8. Altitude: 35m. Distance: 2.1km.</div>
+        <div class="alert-meta">
+          <span class="tag tag-blue">Info</span>
+          <span class="tag tag-purple">BT4 RID</span>
+          <span class="alert-time">3 hrs ago</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert-item info">
+      <div class="alert-icon">✅</div>
+      <div class="alert-body">
+        <div class="alert-title">DJI Mini 3 Pro — Left detection zone</div>
+        <div class="alert-detail">Drone ID: DJI-MINI3-H9I0 exited your 5km range. Total flight tracked: 22 minutes.</div>
+        <div class="alert-meta">
+          <span class="tag tag-green">Resolved</span>
+          <span class="alert-time">5 hrs ago</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════ HISTORY SCREEN ═══════════════════════════ -->
+<div class="screen pad" id="screen-history">
+  <div style="margin-bottom:14px;">
+    <div style="font-family:'Orbitron',monospace;font-size:13px;color:var(--accent);letter-spacing:2px;margin-bottom:4px;">DETECTION HISTORY</div>
+    <div style="font-size:10px;color:var(--muted);">All drone detections logged by your node</div>
+  </div>
+
+  <button class="export-btn" onclick="exportHistory()">⬇ Export as CSV / PDF</button>
+
+  <div class="filter-bar">
+    <button class="fbtn active" onclick="filterHistory('all',this)">All</button>
+    <button class="fbtn" onclick="filterHistory('today',this)">Today</button>
+    <button class="fbtn" onclick="filterHistory('week',this)">This Week</button>
+    <button class="fbtn" onclick="filterHistory('dji',this)">DJI</button>
+    <button class="fbtn" onclick="filterHistory('autel',this)">Autel</button>
+    <button class="fbtn" onclick="filterHistory('alert',this)">Alerts Only</button>
+  </div>
+
+  <div id="historyList">
+    <div class="history-item">
+      <div class="history-icon">🛸</div>
+      <div class="history-body">
+        <div class="history-id">DJI-MINI4-X1B2</div>
+        <div class="history-model">DJI Mini 4 Pro</div>
+        <div class="history-meta">
+          <span class="history-val">📍 600m</span>
+          <span class="history-val">⬆ 45m alt</span>
+          <span class="history-val">💨 8 m/s</span>
+          <span class="history-val">🕐 Today 14:32</span>
+        </div>
+      </div>
+      <span class="tag tag-red">Alert</span>
+    </div>
+
+    <div class="history-item">
+      <div class="history-icon">🛸</div>
+      <div class="history-body">
+        <div class="history-id">AUTEL-EVO2-B3C4</div>
+        <div class="history-model">Autel EVO II Pro</div>
+        <div class="history-meta">
+          <span class="history-val">📍 1.1km</span>
+          <span class="history-val">⬆ 120m alt</span>
+          <span class="history-val">💨 15 m/s</span>
+          <span class="history-val">🕐 Today 14:14</span>
+        </div>
+      </div>
+      <span class="tag tag-yellow">Warning</span>
+    </div>
+
+    <div class="history-item">
+      <div class="history-icon">🛸</div>
+      <div class="history-body">
+        <div class="history-id">DJI-MAV3-D5E6</div>
+        <div class="history-model">DJI Mavic 3 Classic</div>
+        <div class="history-meta">
+          <span class="history-val">📍 1.2km</span>
+          <span class="history-val">⬆ 80m alt</span>
+          <span class="history-val">💨 12 m/s</span>
+          <span class="history-val">🕐 Today 13:28</span>
+        </div>
+      </div>
+      <span class="tag tag-blue">Detected</span>
+    </div>
+
+    <div class="history-item">
+      <div class="history-icon">🛸</div>
+      <div class="history-body">
+        <div class="history-id">SKYDIO-2P-F7G8</div>
+        <div class="history-model">Skydio 2+</div>
+        <div class="history-meta">
+          <span class="history-val">📍 2.1km</span>
+          <span class="history-val">⬆ 35m alt</span>
+          <span class="history-val">💨 6 m/s</span>
+          <span class="history-val">🕐 Today 11:05</span>
+        </div>
+      </div>
+      <span class="tag tag-blue">Detected</span>
+    </div>
+
+    <div class="history-item">
+      <div class="history-icon">🛸</div>
+      <div class="history-body">
+        <div class="history-id">DJI-MINI3-H9I0</div>
+        <div class="history-model">DJI Mini 3 Pro</div>
+        <div class="history-meta">
+          <span class="history-val">📍 900m</span>
+          <span class="history-val">⬆ 60m alt</span>
+          <span class="history-val">💨 10 m/s</span>
+          <span class="history-val">🕐 Yesterday 16:44</span>
+        </div>
+      </div>
+      <span class="tag tag-green">Resolved</span>
+    </div>
+
+    <div class="history-item">
+      <div class="history-icon">🛸</div>
+      <div class="history-body">
+        <div class="history-id">PARROT-ANAF-J1K2</div>
+        <div class="history-model">Parrot ANAFI AI</div>
+        <div class="history-meta">
+          <span class="history-val">📍 3.4km</span>
+          <span class="history-val">⬆ 50m alt</span>
+          <span class="history-val">💨 9 m/s</span>
+          <span class="history-val">🕐 Yesterday 09:20</span>
+        </div>
+      </div>
+      <span class="tag tag-blue">Detected</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════ DRONE DATABASE SCREEN ═══════════════════════════ -->
+<div class="screen pad" id="screen-database">
+  <div style="margin-bottom:14px;">
+    <div style="font-family:'Orbitron',monospace;font-size:13px;color:var(--accent);letter-spacing:2px;margin-bottom:4px;">DRONE DATABASE</div>
+    <div style="font-size:10px;color:var(--muted);">Specs, Remote ID support &amp; regulatory status</div>
+  </div>
+
+  <input class="search-input" type="text" placeholder="🔍  Search drone model, brand..." oninput="searchDB(this.value)" id="dbSearch">
+
+  <div class="filter-bar" style="margin-bottom:14px;">
+    <button class="fbtn active" onclick="filterDB('all',this)">All Brands</button>
+    <button class="fbtn" onclick="filterDB('dji',this)">DJI</button>
+    <button class="fbtn" onclick="filterDB('autel',this)">Autel</button>
+    <button class="fbtn" onclick="filterDB('skydio',this)">Skydio</button>
+    <button class="fbtn" onclick="filterDB('parrot',this)">Parrot</button>
+  </div>
+
+  <div id="dbList"></div>
+</div>
+
+<!-- Drone DB Detail Modal -->
+<div class="db-modal" id="dbModal">
+  <div class="db-modal-content">
+    <div class="db-modal-header">
+      <div>
+        <div class="db-modal-title" id="modalDroneName">DJI Mini 4 Pro</div>
+        <div class="db-modal-brand" id="modalDroneBrand">DJI · Consumer</div>
+      </div>
+      <button class="db-close" onclick="closeDBModal()">✕</button>
+    </div>
+    <div class="fcc-box" id="modalFccBox">
+      <span style="font-size:18px" id="modalFccIcon">⚠️</span>
+      <div>
+        <div style="font-size:12px;font-weight:600;" id="modalFccTitle">FCC Status</div>
+        <div style="font-size:10px;color:var(--muted);" id="modalFccDesc">Status description</div>
+      </div>
+    </div>
+    <div class="specs-grid" id="modalSpecs"></div>
+    <div class="divider"></div>
+    <div style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Remote ID</div>
+    <div style="font-size:11px;color:var(--text);line-height:1.7;" id="modalRID"></div>
+    <div class="divider"></div>
+    <div style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Description</div>
+    <div style="font-size:11px;color:var(--muted);line-height:1.7;" id="modalDesc"></div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════ LAWS SCREEN ═══════════════════════════ -->
+<div class="screen pad" id="screen-laws">
+  <div style="margin-bottom:14px;">
+    <div style="font-family:'Orbitron',monospace;font-size:13px;color:var(--accent);letter-spacing:2px;margin-bottom:4px;">DRONE LAWS</div>
+    <div style="font-size:10px;color:var(--muted);">Regulations, no-fly zones &amp; Remote ID requirements</div>
+  </div>
+
+  <div class="country-select-row">
+    <select class="country-select" onchange="loadLaws(this.value)" id="countrySelect">
+      <option value="za">🇿🇦 South Africa</option>
+      <option value="us">🇺🇸 United States</option>
+      <option value="eu">🇪🇺 European Union</option>
+      <option value="uk">🇬🇧 United Kingdom</option>
+      <option value="au">🇦🇺 Australia</option>
+      <option value="ng">🇳🇬 Nigeria</option>
+      <option value="ke">🇰🇪 Kenya</option>
+    </select>
+  </div>
+
+  <div id="lawsContent"></div>
+</div>
+
+<!-- ═══════════════════════════ SETTINGS SCREEN ═══════════════════════════ -->
+<div class="screen pad" id="screen-settings">
+  <div style="margin-bottom:14px;">
+    <div style="font-family:'Orbitron',monospace;font-size:13px;color:var(--accent);letter-spacing:2px;margin-bottom:4px;">SETTINGS</div>
+    <div style="font-size:10px;color:var(--muted);">Configure your detection node</div>
+  </div>
+
+  <!-- Node Config -->
+  <div class="settings-section">
+    <div class="section-title">Node Configuration</div>
+    <div class="settings-item">
+      <div class="settings-item-left">
+        <div class="settings-item-title">Node Name</div>
+        <div class="settings-item-sub">Your node's name on the community map</div>
+      </div>
+      <input class="settings-input" type="text" value="MyDroneNode" id="nodeName">
+    </div>
+    <div class="settings-item">
+      <div class="settings-item-left">
+        <div class="settings-item-title">Latitude</div>
+        <div class="settings-item-sub">Your GPS latitude</div>
+      </div>
+      <input class="settings-input" type="text" value="-26.2041" id="settingsLat">
+    </div>
+    <div class="settings-item">
+      <div class="settings-item-left">
+        <div class="settings-item-title">Longitude</div>
+        <div class="settings-item-sub">Your GPS longitude</div>
+      </div>
+      <input class="settings-input" type="text" value="28.0473" id="settingsLon">
+    </div>
+    <div class="settings-item">
+      <div class="settings-item-left">
+        <div class="settings-item-title">Detection Radius</div>
+        <div class="settings-item-sub">Alert when drone enters this range</div>
+      </div>
+      <select class="settings-input" style="width:100px;" id="detectionRadius">
+        <option>500m</option>
+        <option selected>1km</option>
+        <option>2km</option>
+        <option>5km</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Notifications -->
+  <div class="settings-section">
+    <div class="section-title">Notifications</div>
+    <div class="settings-item">
+      <div class="settings-item-left">
+        <div class="settings-item-title">Drone Detected Alert</div>
+        <div class="settings-item-sub">Notify when a new drone is detected</div>
+      </div>
+      <button class="toggle on" id="toggleDetect" onclick="toggleSetting(this)"></button>
+    </div>
+    <div class="settings-item">
+      <div class="settings-item-left">
+        <div class="settings-item-title">Zone Entry Alert</div>
+        <div class="settings-item-sub">Notify when drone enters detection radius</div>
+      </div>
+      <button class="toggle on" id="toggleZone" onclick="toggleSetting(this)"></button>
+    </div>
+    <div class="settings-item">
+      <div class="settings-item-left">
+        <div class="settings-item-title">High Altitude Warning</div>
+        <div class="settings-item-sub">Notify if drone exceeds 120m AGL</div>
+      </div>
+      <button class="toggle on" id="toggleAlt" onclick="toggleSetting(this)"></button>
+    </div>
+    <div class="settings-item">
+      <div class="settings-item-left">
+        <div class="settings-item-title">Sound Alerts</div>
+        <div class="settings-item-sub">Play sound on detection</div>
+      </div>
+      <button class="toggle" id="toggleSound" onclick="toggleSetting(this)"></button>
+    </div>
+  </div>
+
+  <!-- Network -->
+  <div class="settings-section">
+    <div class="section-title">Network &amp; API</div>
+    <div class="settings-item">
+      <div class="settings-item-left">
+        <div class="settings-item-title">DroneAware API Key</div>
+        <div class="settings-item-sub">Share detections to community map</div>
+      </div>
+      <input class="settings-input" type="password" placeholder="Enter key..." id="apiKey">
+    </div>
+    <div class="settings-item">
+      <div class="settings-item-left">
+        <div class="settings-item-title">Upload to Community Map</div>
+        <div class="settings-item-sub">Contribute detections to droneaware.io</div>
+      </div>
+      <button class="toggle on" id="toggleUpload" onclick="toggleSetting(this)"></button>
+    </div>
+  </div>
+
+  <!-- Display -->
+  <div class="settings-section">
+    <div class="section-title">Display</div>
+    <div class="settings-item">
+      <div class="settings-item-left">
+        <div class="settings-item-title">Light Mode</div>
+        <div class="settings-item-sub">Switch to light theme</div>
+      </div>
+      <button class="toggle" id="toggleLight" onclick="toggleLightMode(this)"></button>
+    </div>
+    <div class="settings-item">
+      <div class="settings-item-left">
+        <div class="settings-item-title">Show Flight Paths</div>
+        <div class="settings-item-sub">Draw drone trails on map</div>
+      </div>
+      <button class="toggle on" id="togglePaths" onclick="toggleSetting(this)"></button>
+    </div>
+  </div>
+
+  <button class="export-btn" onclick="saveSettings()">💾 Save Settings</button>
+</div>
+
+
+<!-- ═══════════════════════════ PROFILE SCREEN ═══════════════════════════ -->
+<div class="screen pad" id="screen-profile">
+  <div class="profile-hero">
+    <div class="profile-avatar">👤</div>
+    <div class="profile-name" id="profileName">MyDroneNode</div>
+    <div class="profile-sub">DroneAware Network · Member since 2025</div>
+    <div style="margin-top:10px;display:flex;justify-content:center;gap:8px;">
+      <span class="tag tag-green">● Online</span>
+      <span class="tag tag-purple">Rank #38</span>
+      <span class="tag tag-blue">Explorer</span>
+    </div>
+  </div>
+
+  <div class="profile-stats">
+    <div class="pstat">
+      <span class="pstat-val" id="profileDetected">247</span>
+      <span class="pstat-lbl">Detections</span>
+    </div>
+    <div class="pstat">
+      <span class="pstat-val" id="profileDays">42</span>
+      <span class="pstat-lbl">Days Active</span>
+    </div>
+    <div class="pstat">
+      <span class="pstat-val" id="profileNodes" style="color:var(--accent4)">142</span>
+      <span class="pstat-lbl">Network</span>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px;">
+    <div class="section-title">Rank Progress</div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;">
+      <span style="color:var(--text);">Explorer <span class="tag tag-blue" style="margin-left:4px;">Current</span></span>
+      <span style="color:var(--muted);">Sentinel</span>
+    </div>
+    <div class="rank-bar"><div class="rank-fill" style="width:72%"></div></div>
+    <div style="font-size:9px;color:var(--muted);margin-top:4px;">178 / 250 detections to reach Sentinel rank</div>
+    <div class="divider"></div>
+    <div style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Ranks</div>
+    <div style="display:flex;flex-direction:column;gap:5px;">
+      <div style="display:flex;justify-content:space-between;font-size:10px;">
+        <span style="color:var(--muted);">🔵 Observer</span><span style="color:var(--muted);">0–50 detections</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;">
+        <span style="color:var(--accent);">🟦 Explorer ← You</span><span style="color:var(--muted);">51–250</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;">
+        <span style="color:var(--muted);">🟩 Sentinel</span><span style="color:var(--muted);">251–1000</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;">
+        <span style="color:var(--muted);">🟨 Guardian</span><span style="color:var(--muted);">1001–5000</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;">
+        <span style="color:var(--muted);">🔴 Warden</span><span style="color:var(--muted);">5000+</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px;">
+    <div class="section-title">My Contributions</div>
+    <div class="contribution-item">
+      <div class="contrib-icon">🛸</div>
+      <div class="contrib-body">
+        <div class="contrib-title">Total Detections</div>
+        <div class="contrib-sub">All unique drones logged</div>
+      </div>
+      <div class="contrib-val">247</div>
+    </div>
+    <div class="contribution-item">
+      <div class="contrib-icon">📡</div>
+      <div class="contrib-body">
+        <div class="contrib-title">Community Uploads</div>
+        <div class="contrib-sub">Shared to droneaware.io map</div>
+      </div>
+      <div class="contrib-val">231</div>
+    </div>
+    <div class="contribution-item">
+      <div class="contrib-icon">🗺️</div>
+      <div class="contrib-body">
+        <div class="contrib-title">Map Coverage Area</div>
+        <div class="contrib-sub">Area monitored by your node</div>
+      </div>
+      <div class="contrib-val">~32km²</div>
+    </div>
+    <div class="contribution-item">
+      <div class="contrib-icon">⏱️</div>
+      <div class="contrib-body">
+        <div class="contrib-title">Node Uptime</div>
+        <div class="contrib-sub">Total hours online</div>
+      </div>
+      <div class="contrib-val">1,008h</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">About</div>
+    <div style="font-size:11px;color:var(--muted);line-height:1.7;">
+      DroneAware Network is a free, community-powered drone detection platform.
+      Each node contributes Remote ID detections to a shared live map visible to everyone.
+      <br><br>
+      Built using OpenDroneID protocol · <span style="color:var(--accent);">droneaware.io</span>
+    </div>
+  </div>
+</div>
+
+</div><!-- end screens container -->
+
+<!-- BOTTOM NAVIGATION -->
+<div class="bottom-nav">
+  <button class="nav-item active" onclick="navTo('home')" id="nav-home">
+    <span class="nav-icon">🏠</span>Home
+  </button>
+  <button class="nav-item" onclick="navTo('map')" id="nav-map">
+    <span class="nav-icon">🗺️</span>Map
+  </button>
+  <button class="nav-item" onclick="navTo('alerts')" id="nav-alerts">
+    <span class="nav-icon">🔔</span>Alerts
+  </button>
+  <button class="nav-item" onclick="navTo('history')" id="nav-history">
+    <span class="nav-icon">📋</span>History
+  </button>
+  <button class="nav-item" onclick="navTo('database')" id="nav-database">
+    <span class="nav-icon">🛸</span>Drones
+  </button>
+  <button class="nav-item" onclick="navTo('laws')" id="nav-laws">
+    <span class="nav-icon">⚖️</span>Laws
+  </button>
+  <button class="nav-item" onclick="navTo('settings')" id="nav-settings">
+    <span class="nav-icon">⚙️</span>Settings
+  </button>
+  <button class="nav-item" onclick="navTo('profile')" id="nav-profile">
+    <span class="nav-icon">👤</span>Profile
+  </button>
+</div>
+
+
+<script>
+// ══════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════
+function navTo(screen) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-' + screen).classList.add('active');
+  document.getElementById('nav-' + screen).classList.add('active');
+  if (screen === 'map') { setTimeout(initMap, 50); }
+  if (screen === 'database') { renderDB('all'); }
+  if (screen === 'laws') { loadLaws(document.getElementById('countrySelect').value); }
+}
+
+// ══════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════
+let toastTimer;
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (type === 'error' ? ' error' : '');
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ══════════════════════════════════════════════
+//  TOGGLE SETTINGS
+// ══════════════════════════════════════════════
+function toggleSetting(btn) {
+  btn.classList.toggle('on');
+  showToast(btn.classList.contains('on') ? '✅ Setting enabled' : '⚫ Setting disabled');
+}
+function toggleLightMode(btn) {
+  btn.classList.toggle('on');
+  document.body.classList.toggle('light-mode');
+  showToast(btn.classList.contains('on') ? '☀️ Light mode on' : '🌙 Dark mode on');
+}
+function saveSettings() {
+  const name = document.getElementById('nodeName').value;
+  document.getElementById('profileName').textContent = name;
+  document.getElementById('nodeStatusText').textContent = name + ' Online';
+  showToast('💾 Settings saved!');
+}
+
+// ══════════════════════════════════════════════
+//  ALERTS
+// ══════════════════════════════════════════════
+function clearAlerts() {
+  document.getElementById('alertsList').innerHTML =
+    '<div style="text-align:center;padding:40px;color:var(--muted);font-size:12px;">✅ No active alerts</div>';
+  document.getElementById('statAlerts').textContent = '0';
+  document.getElementById('alertBanner').classList.add('hidden');
+  showToast('🗑️ All alerts cleared');
+}
+
+// ══════════════════════════════════════════════
+//  HISTORY
+// ══════════════════════════════════════════════
+function filterHistory(type, btn) {
+  document.querySelectorAll('#screen-history .fbtn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  showToast('🔍 Filtered: ' + type);
+}
+function exportHistory() {
+  showToast('📥 Exporting detection log...');
+  setTimeout(() => showToast('✅ Export ready! (demo mode)'), 1500);
+}
+
+// ══════════════════════════════════════════════
+//  DRONE DATABASE
+// ══════════════════════════════════════════════
+const droneDB = [
+  { id:'dji1', brand:'DJI', name:'Mini 4 Pro', category:'Consumer', emoji:'🚁',
+    weight:'249g', range:'20km', camera:'4K/60fps', time:'34min', remoteid:'Wi-Fi + BT5 Long Range',
+    fcc:'warning', fccTitle:'US Import Restricted', fccDesc:'DJI added to FCC Covered List Dec 2025. Existing units still usable.',
+    desc:'Ultra-lightweight foldable drone under 250g. Features 4K HDR video, omnidirectional obstacle sensing and 20km max range.' },
+  { id:'dji2', brand:'DJI', name:'Mavic 3 Classic', category:'Prosumer', emoji:'✈️',
+    weight:'895g', range:'30km', camera:'5.1K/50fps', time:'46min', remoteid:'Wi-Fi + BT5',
+    fcc:'warning', fccTitle:'US Import Restricted', fccDesc:'DJI added to FCC Covered List Dec 2025.',
+    desc:'Flagship Hasselblad camera drone. 5.1K resolution, triple-lens system with tele and wide options.' },
+  { id:'dji3', brand:'DJI', name:'Mini 3 Pro', category:'Consumer', emoji:'🚁',
+    weight:'249g', range:'18km', camera:'4K/60fps', time:'47min', remoteid:'Wi-Fi + BT',
+    fcc:'warning', fccTitle:'US Import Restricted', fccDesc:'DJI added to FCC Covered List Dec 2025.',
+    desc:'Professional-grade sub-250g drone. Tri-directional obstacle sensing and vertical shooting mode.' },
+  { id:'autel1', brand:'Autel', name:'EVO II Pro V3', category:'Prosumer', emoji:'🛸',
+    weight:'1,191g', range:'15km', camera:'6K/30fps', time:'42min', remoteid:'Wi-Fi Remote ID',
+    fcc:'ok', fccTitle:'FCC Approved', fccDesc:'Autel is not on the FCC Covered List. Fully compliant in the US.',
+    desc:'6K Rugged drone with Sony 1" sensor. Strong DJI alternative for US government and enterprise use.' },
+  { id:'autel2', brand:'Autel', name:'EVO Nano+', category:'Consumer', emoji:'🚁',
+    weight:'249g', range:'10km', camera:'4K/30fps', time:'28min', remoteid:'Wi-Fi Remote ID',
+    fcc:'ok', fccTitle:'FCC Approved', fccDesc:'Fully compliant in the US.',
+    desc:'Sub-250g competitor to DJI Mini series. RYYB sensor for excellent low-light performance.' },
+  { id:'skydio1', brand:'Skydio', name:'X10', category:'Enterprise', emoji:'🔭',
+    weight:'1,500g', range:'10km', camera:'4K+50MP', time:'40min', remoteid:'Wi-Fi + BT Remote ID',
+    fcc:'ok', fccTitle:'FCC Approved — NDAA Compliant', fccDesc:'Made in USA. Approved for all government use.',
+    desc:'America\'s most autonomous drone. AI-powered 360° obstacle avoidance. Used by public safety and military.' },
+  { id:'skydio2', brand:'Skydio', name:'2+', category:'Consumer', emoji:'🛸',
+    weight:'800g', range:'6.5km', camera:'4K/60fps', time:'27min', remoteid:'Wi-Fi + BT Remote ID',
+    fcc:'ok', fccTitle:'FCC Approved', fccDesc:'US-made, fully compliant.',
+    desc:'Best-in-class autonomous flight. Self-flies through complex environments without pilot input.' },
+  { id:'parrot1', brand:'Parrot', name:'ANAFI AI', category:'Enterprise', emoji:'🦜',
+    weight:'896g', range:'4km', camera:'4K/60fps', time:'32min', remoteid:'4G + Wi-Fi Remote ID',
+    fcc:'ok', fccTitle:'FCC Approved — NDAA Compliant', fccDesc:'French-made. Compliant for US government use.',
+    desc:'4G-connected enterprise drone. OpenFlight SDK, 180° tilt gimbal, and full remote ID support.' },
+];
+
+let currentDBFilter = 'all';
+let currentDBSearch = '';
+
+function renderDB(filter) {
+  currentDBFilter = filter;
+  const list = document.getElementById('dbList');
+  if (!list) return;
+  const search = currentDBSearch.toLowerCase();
+  const filtered = droneDB.filter(d => {
+    const matchFilter = filter === 'all' || d.brand.toLowerCase() === filter;
+    const matchSearch = !search || d.name.toLowerCase().includes(search) || d.brand.toLowerCase().includes(search);
+    return matchFilter && matchSearch;
+  });
+  list.innerHTML = filtered.map(d => `
+    <div class="drone-db-item" onclick="openDroneDetail('${d.id}')">
+      <div class="drone-db-img">${d.emoji}</div>
+      <div class="drone-db-body">
+        <div class="drone-db-name">${d.name}</div>
+        <div class="drone-db-brand">${d.brand} · ${d.category}</div>
+        <div class="drone-db-specs">
+          <span class="spec-chip">⚖️ ${d.weight}</span>
+          <span class="spec-chip">📡 ${d.range}</span>
+          <span class="spec-chip">🎥 ${d.camera}</span>
+          <span class="spec-chip">🔋 ${d.time}</span>
+        </div>
+      </div>
+      <span class="tag ${d.fcc==='ok'?'tag-green':d.fcc==='warning'?'tag-yellow':'tag-red'}" style="flex-shrink:0;margin-left:4px;">${d.fcc==='ok'?'✓ OK':'⚠ Check'}</span>
+    </div>`).join('');
+  if (!filtered.length) list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:12px;">No drones found</div>';
+}
+
+function filterDB(f, btn) {
+  document.querySelectorAll('#screen-database .fbtn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderDB(f);
+}
+function searchDB(val) { currentDBSearch = val; renderDB(currentDBFilter); }
+
+function openDroneDetail(id) {
+  const d = droneDB.find(x => x.id === id);
+  if (!d) return;
+  document.getElementById('modalDroneName').textContent = d.name;
+  document.getElementById('modalDroneBrand').textContent = d.brand + ' · ' + d.category;
+  const fbox = document.getElementById('modalFccBox');
+  fbox.className = 'fcc-box ' + (d.fcc === 'ok' ? 'ok' : d.fcc === 'warning' ? 'warning' : 'banned');
+  document.getElementById('modalFccIcon').textContent = d.fcc === 'ok' ? '✅' : '⚠️';
+  document.getElementById('modalFccTitle').textContent = d.fccTitle;
+  document.getElementById('modalFccDesc').textContent = d.fccDesc;
+  document.getElementById('modalSpecs').innerHTML = [
+    ['Weight', d.weight], ['Range', d.range], ['Camera', d.camera], ['Flight Time', d.time]
+  ].map(([l,v]) => `<div class="spec-item"><span class="spec-item-val">${v}</span><span class="spec-item-lbl">${l}</span></div>`).join('');
+  document.getElementById('modalRID').textContent = d.remoteid;
+  document.getElementById('modalDesc').textContent = d.desc;
+  document.getElementById('dbModal').classList.add('open');
+}
+function closeDBModal() { document.getElementById('dbModal').classList.remove('open'); }
+</script>
+
+
+<script>
+// ══════════════════════════════════════════════
+//  LAWS DATA
+// ══════════════════════════════════════════════
+const lawsData = {
+  za: {
+    name:'South Africa', flag:'🇿🇦', authority:'South African Civil Aviation Authority (SACAA)',
+    rules:[
+      {title:'Registration Required',tag:'required',body:'All drones above 250g must be registered with SACAA. Operators need an RPAS Licence.'},
+      {title:'Max Altitude',tag:'limit',body:'Maximum altitude is 120m (400ft) above ground level unless special permission is granted.'},
+      {title:'Remote ID',tag:'required',body:'Remote ID broadcasts required for all commercial operations and drones over 250g.'},
+      {title:'No-Fly Zones',tag:'restricted',body:'Flying within 10km of any airport, helipad or aerodrome is prohibited without ATC approval.'},
+      {title:'BVLOS',tag:'restricted',body:'Beyond Visual Line of Sight (BVLOS) operations require special SACAA authorization.'},
+      {title:'Insurance',tag:'required',body:'Third-party liability insurance is mandatory for all commercial drone operations.'},
+    ],
+    nfz:[
+      {icon:'✈️',name:'OR Tambo International Airport',desc:'10km no-fly zone — Johannesburg'},
+      {icon:'🏛️',name:'Union Buildings',desc:'Restricted airspace — Pretoria'},
+      {icon:'⚡',name:'Koeberg Nuclear Power Station',desc:'Permanent no-fly zone — Cape Town'},
+      {icon:'🏟️',name:'FNB Stadium',desc:'Restricted during events — Johannesburg'},
+      {icon:'🏥',name:'Hospitals & Clinics',desc:'No flying over medical facilities'},
+    ]
+  },
+  us: {
+    name:'United States', flag:'🇺🇸', authority:'Federal Aviation Administration (FAA)',
+    rules:[
+      {title:'FAA Registration',tag:'required',body:'All drones 250g–25kg must be registered with the FAA. Fee: $5 for 3 years.'},
+      {title:'Remote ID Mandatory',tag:'required',body:'As of September 2023, all drones must broadcast Remote ID. No exceptions for recreational flyers.'},
+      {title:'Max Altitude',tag:'limit',body:'400ft (122m) AGL maximum. Can fly higher within 400ft of a structure.'},
+      {title:'DJI Ban',tag:'restricted',body:'DJI added to FCC Covered List December 2025. New DJI products cannot be imported or sold.'},
+      {title:'LAANC Authorization',tag:'required',body:'Flying near airports requires LAANC approval. Available via FAA DroneZone or approved apps.'},
+      {title:'Part 107 for Commercial',tag:'required',body:'Commercial drone pilots must pass the FAA Part 107 Knowledge Test.'},
+    ],
+    nfz:[
+      {icon:'✈️',name:'All Airports',desc:'Class B/C/D/E airspace — requires LAANC authorization'},
+      {icon:'🏛️',name:'Washington D.C.',desc:'Permanent Flight Restricted Zone (PFRZ) — 15 mile radius'},
+      {icon:'⚡',name:'Nuclear Power Plants',desc:'Prohibited — 1km no-fly zone'},
+      {icon:'🌲',name:'National Parks',desc:'Prohibited without special permit'},
+      {icon:'🏟️',name:'Stadiums (Game Day)',desc:'3 nautical miles prohibited during events'},
+    ]
+  },
+  eu: {
+    name:'European Union', flag:'🇪🇺', authority:'European Union Aviation Safety Agency (EASA)',
+    rules:[
+      {title:'EU Drone Categories',tag:'required',body:'Drones classified into Open (A1/A2/A3), Specific, and Certified categories based on risk.'},
+      {title:'CE Class Marking',tag:'required',body:'Drones must have CE class marking (C0–C6). Class C0 (<250g) has fewest restrictions.'},
+      {title:'Remote ID',tag:'required',body:'EU Remote ID required for all drones in Open category except C0 class flying in A3 subcategory.'},
+      {title:'Max Altitude',tag:'limit',body:'120m AGL for Open category. Higher altitudes require specific authorization.'},
+      {title:'Registration',tag:'required',body:'Operators with drones 250g+ or any drone with camera must register in their EU member state.'},
+      {title:'U-Space',tag:'info',body:'Designated U-Space airspace requires special authorization and electronic conspicuity.'},
+    ],
+    nfz:[
+      {icon:'✈️',name:'All Airports',desc:'Prohibited within airspace — contact national aviation authority'},
+      {icon:'🏙️',name:'Urban Populated Areas',desc:'A1/A2 subcategory rules apply — limited altitudes'},
+      {icon:'⚡',name:'Critical Infrastructure',desc:'Power plants, water facilities — national restrictions apply'},
+      {icon:'🌊',name:'Natura 2000 Areas',desc:'Environmental protection zones — may require permit'},
+    ]
+  },
+  uk: {
+    name:'United Kingdom', flag:'🇬🇧', authority:'Civil Aviation Authority (CAA)',
+    rules:[
+      {title:'Flyer & Operator ID',tag:'required',body:'Drone operators with drones 250g+ must get an Operator ID (£10.33/yr). Flyers need a Flyer ID (free test).'},
+      {title:'Max Altitude',tag:'limit',body:'400ft (122m) AGL maximum for recreational and commercial drones.'},
+      {title:'Remote ID',tag:'required',body:'UK Remote ID regulations align with EASA standards. Required for most operations.'},
+      {title:'No Flying Near Airports',tag:'restricted',body:'No flying within 1km of airport boundary without permission.'},
+      {title:'GVC for BVLOS',tag:'required',body:'Ground Risk Class operations beyond VLOS require General VLOS Certificate (GVC).'},
+    ],
+    nfz:[
+      {icon:'✈️',name:'All UK Airports',desc:'1km exclusion zone around boundary'},
+      {icon:'🏰',name:'Royal Palaces',desc:'Prohibited airspace'},
+      {icon:'🏛️',name:'Houses of Parliament',desc:'Restricted airspace — London'},
+      {icon:'⚡',name:'Nuclear Sites',desc:'Permanent prohibited zones'},
+    ]
+  },
+  au: {
+    name:'Australia', flag:'🇦🇺', authority:'Civil Aviation Safety Authority (CASA)',
+    rules:[
+      {title:'Registration',tag:'required',body:'Drones 250g+ used for commercial purposes or over 2kg must be registered with CASA.'},
+      {title:'Remote Pilot Licence',tag:'required',body:'Commercial operators need a Remote Pilot Licence (RePL) or fly under ReOC holder.'},
+      {title:'Max Altitude',tag:'limit',body:'120m (400ft) AGL maximum. No flying over people or in restricted airspace.'},
+      {title:'Remote ID',tag:'info',body:'Australia is developing Remote ID requirements aligned with ICAO standards.'},
+      {title:'BVLOS',tag:'restricted',body:'Requires CASA approval. Only for certified operators with safety cases.'},
+    ],
+    nfz:[
+      {icon:'✈️',name:'Controlled Airspace',desc:'All airports — requires CASA/ATC approval'},
+      {icon:'🔥',name:'Bushfire Zones',desc:'Prohibited during active fires'},
+      {icon:'🏖️',name:'Populated Beaches',desc:'Restricted — no flying over crowds'},
+    ]
+  },
+  ng: {
+    name:'Nigeria', flag:'🇳🇬', authority:'Nigerian Civil Aviation Authority (NCAA)',
+    rules:[
+      {title:'NCAA Permit Required',tag:'required',body:'All drone operations require a permit from NCAA. Application via NCAA portal.'},
+      {title:'Max Altitude',tag:'limit',body:'400ft (122m) AGL maximum altitude.'},
+      {title:'Restricted Zones',tag:'restricted',body:'No flying near military installations, government buildings, or airports without clearance.'},
+      {title:'Commercial License',tag:'required',body:'Commercial operators must obtain an RPAS Operator Certificate from NCAA.'},
+    ],
+    nfz:[
+      {icon:'✈️',name:'Murtala Muhammed Airport',desc:'Lagos — 10km no-fly zone'},
+      {icon:'🏛️',name:'Aso Rock Presidential Villa',desc:'Permanent no-fly zone — Abuja'},
+      {icon:'⛽',name:'Oil Facilities',desc:'Prohibited over NNPC and oil infrastructure'},
+    ]
+  },
+  ke: {
+    name:'Kenya', flag:'🇰🇪', authority:'Kenya Civil Aviation Authority (KCAA)',
+    rules:[
+      {title:'KCAA Permit',tag:'required',body:'All drone operators must be licensed by KCAA. Foreign operators need special approval.'},
+      {title:'Max Altitude',tag:'limit',body:'120m AGL maximum altitude for VLOS operations.'},
+      {title:'Insurance Required',tag:'required',body:'Third-party liability insurance mandatory for all drone operations.'},
+      {title:'No-Fly Zones',tag:'restricted',body:'Prohibited within 8km of any aerodrome and over national parks without permit.'},
+    ],
+    nfz:[
+      {icon:'✈️',name:'JKIA Airport',desc:'8km no-fly zone — Nairobi'},
+      {icon:'🦁',name:'National Parks',desc:'Maasai Mara, Amboseli — permit required'},
+      {icon:'🏛️',name:'State House',desc:'Restricted airspace — Nairobi'},
+    ]
+  }
+};
+
+function loadLaws(country) {
+  const data = lawsData[country];
+  if (!data) return;
+  const tagColors = {required:'tag-orange', restricted:'tag-red', limit:'tag-yellow', info:'tag-blue'};
+  document.getElementById('lawsContent').innerHTML = `
+    <div class="card" style="margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <span style="font-size:28px;">${data.flag}</span>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);">${data.name}</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:2px;">${data.authority}</div>
+        </div>
+      </div>
+    </div>
+    ${data.rules.map(r => `
+    <div class="law-card">
+      <div class="law-card-header">
+        <div class="law-card-title">${r.title}</div>
+        <span class="tag ${tagColors[r.tag]||'tag-blue'}">${r.tag}</span>
+      </div>
+      <div class="law-card-body">${r.body}</div>
+    </div>`).join('')}
+    <div class="law-section-title">No-Fly Zones</div>
+    ${data.nfz.map(z => `
+    <div class="nfz-item">
+      <div class="nfz-icon">${z.icon}</div>
+      <div class="nfz-body">
+        <div class="nfz-name">${z.name}</div>
+        <div class="nfz-desc">${z.desc}</div>
+      </div>
+      <span class="tag tag-red">⛔ NFZ</span>
+    </div>`).join('')}
+  `;
+}
+</script>
+
+
+<script>
+// ══════════════════════════════════════════════
+//  MAP ENGINE
+// ══════════════════════════════════════════════
+let mapCtx, mapW, mapH, mapScale = 1, mapOffX = 0, mapOffY = 0;
+let showPaths = true, mapLayer = 'normal';
+let mapDrones = [
+  { id:'DJI-MINI4-X1B2', model:'DJI Mini 4 Pro', x:0.55, y:0.42, alt:45, speed:8.2, dist:'~600m', pilot:'~580m', proto:'Wi-Fi RID', color:'#ff4444', path:[] },
+  { id:'AUTEL-EVO2-B3C4', model:'Autel EVO II Pro', x:0.38, y:0.55, alt:120, speed:15, dist:'~1.1km', pilot:'~1km', proto:'BT5 RID', color:'#ffd700', path:[] },
+  { id:'DJI-MAV3-D5E6', model:'DJI Mavic 3 Classic', x:0.62, y:0.65, alt:80, speed:12, dist:'~1.2km', pilot:'~1.1km', proto:'Wi-Fi RID', color:'#00ff88', path:[] },
+  { id:'SKYDIO-2P-F7G8', model:'Skydio 2+', x:0.28, y:0.35, alt:35, speed:6, dist:'~2.1km', pilot:'~2km', proto:'BT4 RID', color:'#00d4ff', path:[] },
+  { id:'PARROT-ANAF-J1K2', model:'Parrot ANAFI AI', x:0.7, y:0.3, alt:50, speed:9, dist:'~3.4km', pilot:'~3.3km', proto:'Wi-Fi RID', color:'#a855f7', path:[] },
+];
+let selectedDrone = null;
+let mapAnimFrame;
+
+function initMap() {
+  const canvas = document.getElementById('mapCanvas');
+  if (!canvas) return;
+  const parent = canvas.parentElement;
+  canvas.width = parent.offsetWidth;
+  canvas.height = parent.offsetHeight;
+  mapW = canvas.width; mapH = canvas.height;
+  mapCtx = canvas.getContext('2d');
+  canvas.onclick = onMapClick;
+  if (mapAnimFrame) cancelAnimationFrame(mapAnimFrame);
+  animateMap();
+}
+
+function animateMap() {
+  if (!mapCtx) return;
+  // Move drones
+  mapDrones.forEach(d => {
+    d.path.push({x: d.x, y: d.y});
+    if (d.path.length > 40) d.path.shift();
+    d.x += (Math.random() - 0.5) * 0.004;
+    d.y += (Math.random() - 0.5) * 0.004;
+    d.x = Math.max(0.05, Math.min(0.95, d.x));
+    d.y = Math.max(0.05, Math.min(0.95, d.y));
+  });
+  drawMap();
+  mapAnimFrame = requestAnimationFrame(animateMap);
+}
+
+function drawMap() {
+  const c = mapCtx, w = mapW, h = mapH;
+  c.clearRect(0, 0, w, h);
+  // Background
+  if (mapLayer === 'heat') {
+    const bg = c.createRadialGradient(w*0.5, h*0.5, 0, w*0.5, h*0.5, w*0.6);
+    bg.addColorStop(0, '#1a0520'); bg.addColorStop(1, '#050810');
+    c.fillStyle = bg; c.fillRect(0,0,w,h);
+  } else if (mapLayer === 'radar') {
+    c.fillStyle = '#020a05'; c.fillRect(0,0,w,h);
+  } else {
+    c.fillStyle = '#050810'; c.fillRect(0,0,w,h);
+  }
+  // Grid
+  c.strokeStyle = 'rgba(26,37,64,0.5)'; c.lineWidth = 0.5;
+  const gs = 60 * mapScale;
+  for (let x = mapOffX % gs; x < w; x += gs) { c.beginPath(); c.moveTo(x,0); c.lineTo(x,h); c.stroke(); }
+  for (let y = mapOffY % gs; y < h; y += gs) { c.beginPath(); c.moveTo(0,y); c.lineTo(w,y); c.stroke(); }
+  // Detection radius rings
+  const cx = w*0.5, cy = h*0.5;
+  [0.08, 0.16, 0.28].forEach((r,i) => {
+    const rad = r * w * mapScale;
+    c.beginPath(); c.arc(cx, cy, rad, 0, Math.PI*2);
+    c.strokeStyle = `rgba(0,212,255,${0.06+i*0.02})`; c.lineWidth = 1; c.stroke();
+    c.fillStyle = 'rgba(0,212,255,0.25)'; c.font = '9px Syne';
+    c.fillText(['1km','2km','5km'][i], cx + rad - 24, cy - 4);
+  });
+  // Radar sweep (radar mode)
+  if (mapLayer === 'radar') {
+    const sweep = (Date.now() / 1200) % (Math.PI * 2);
+    const grad = c.createConicalGradient ? null : null;
+    c.save(); c.translate(cx, cy); c.rotate(sweep);
+    const sg = c.createLinearGradient(0, 0, w*0.4, 0);
+    sg.addColorStop(0, 'rgba(0,255,136,0.4)');
+    sg.addColorStop(1, 'rgba(0,255,136,0)');
+    c.beginPath(); c.moveTo(0,0); c.lineTo(w*0.4, 0);
+    c.strokeStyle = sg; c.lineWidth = 2; c.stroke();
+    c.restore();
+  }
+  // Paths
+  if (showPaths) {
+    mapDrones.forEach(d => {
+      if (d.path.length < 2) return;
+      c.beginPath();
+      d.path.forEach((p,i) => {
+        const px = p.x * w * mapScale + mapOffX;
+        const py = p.y * h * mapScale + mapOffY;
+        i === 0 ? c.moveTo(px, py) : c.lineTo(px, py);
+      });
+      c.strokeStyle = d.color + '44'; c.lineWidth = 1.5; c.stroke();
+    });
+  }
+  // Drones
+  mapDrones.forEach(d => {
+    const dx = d.x * w * mapScale + mapOffX;
+    const dy = d.y * h * mapScale + mapOffY;
+    // Glow
+    const grd = c.createRadialGradient(dx, dy, 0, dx, dy, 20);
+    grd.addColorStop(0, d.color + '33'); grd.addColorStop(1, 'transparent');
+    c.fillStyle = grd; c.fillRect(dx-20, dy-20, 40, 40);
+    // Dot
+    c.beginPath(); c.arc(dx, dy, selectedDrone === d ? 8 : 6, 0, Math.PI*2);
+    c.fillStyle = d.color; c.fill();
+    if (selectedDrone === d) { c.strokeStyle = '#fff'; c.lineWidth = 2; c.stroke(); }
+    // Label
+    c.fillStyle = 'rgba(10,15,30,0.8)';
+    c.fillRect(dx+10, dy-12, 80, 14);
+    c.fillStyle = d.color; c.font = 'bold 9px Orbitron';
+    c.fillText(d.id.substring(0,12), dx+12, dy-2);
+    // Alt indicator
+    c.fillStyle = 'rgba(255,255,255,0.5)'; c.font = '8px Syne';
+    c.fillText(d.alt + 'm', dx+12, dy+10);
+  });
+  // You (center)
+  c.beginPath(); c.arc(cx, cy, 8, 0, Math.PI*2);
+  c.fillStyle = '#00d4ff'; c.fill();
+  c.beginPath(); c.arc(cx, cy, 14, 0, Math.PI*2);
+  c.strokeStyle = 'rgba(0,212,255,0.3)'; c.lineWidth = 2; c.stroke();
+  c.fillStyle = '#fff'; c.font = 'bold 8px Syne'; c.textAlign = 'center';
+  c.fillText('YOU', cx, cy+20); c.textAlign = 'left';
+  // Heat overlay
+  if (mapLayer === 'heat') {
+    mapDrones.forEach(d => {
+      const dx = d.x * w * mapScale + mapOffX;
+      const dy = d.y * h * mapScale + mapOffY;
+      const hg = c.createRadialGradient(dx,dy,0,dx,dy,80);
+      hg.addColorStop(0,'rgba(255,68,68,0.15)'); hg.addColorStop(1,'transparent');
+      c.fillStyle = hg; c.fillRect(dx-80,dy-80,160,160);
+    });
+  }
+}
+
+function onMapClick(e) {
+  const rect = e.target.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  let hit = null;
+  mapDrones.forEach(d => {
+    const dx = d.x * mapW * mapScale + mapOffX;
+    const dy = d.y * mapH * mapScale + mapOffY;
+    if (Math.hypot(mx-dx, my-dy) < 16) hit = d;
+  });
+  if (hit) {
+    selectedDrone = hit;
+    const popup = document.getElementById('dronePopup');
+    document.getElementById('popId').textContent = hit.id;
+    document.getElementById('popModel').textContent = hit.model;
+    document.getElementById('popAlt').textContent = hit.alt + 'm';
+    document.getElementById('popSpeed').textContent = hit.speed + ' m/s';
+    document.getElementById('popDist').textContent = hit.dist;
+    document.getElementById('popPilot').textContent = hit.pilot;
+    document.getElementById('popProto').textContent = hit.proto;
+    popup.style.left = Math.min(mx+10, mapW-200) + 'px';
+    popup.style.top = Math.max(my-80, 10) + 'px';
+    popup.classList.add('show');
+  } else {
+    closePopup();
+  }
+}
+function closePopup() {
+  document.getElementById('dronePopup').classList.remove('show');
+  selectedDrone = null;
+}
+function mapZoom(f) { mapScale = Math.max(0.5, Math.min(3, mapScale * f)); }
+function mapReset() { mapScale = 1; mapOffX = 0; mapOffY = 0; }
+function togglePaths() {
+  showPaths = !showPaths;
+  document.getElementById('pathBtn').style.borderColor = showPaths ? 'var(--accent)' : '';
+  document.getElementById('pathBtn').style.color = showPaths ? 'var(--accent)' : '';
+}
+function setMapLayer(l, btn) {
+  mapLayer = l;
+  document.querySelectorAll('.map-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ══════════════════════════════════════════════
+//  LIVE COUNTERS
+// ══════════════════════════════════════════════
+let detectedCount = 7;
+setInterval(() => {
+  if (Math.random() > 0.85) {
+    detectedCount++;
+    document.getElementById('statDetected').textContent = detectedCount;
+    document.getElementById('profileDetected').textContent = 247 + (detectedCount - 7);
+    showToast('📡 New drone detected in area!');
+  }
+}, 15000);
+
+// Scan timer
+let scanSecs = 0;
+setInterval(() => {
+  scanSecs++;
+  const m = Math.floor(scanSecs/60), s = scanSecs%60;
+  document.getElementById('lastScan').textContent = scanSecs < 60 ? scanSecs + 's ago' : m + 'm ' + s + 's ago';
+  if (scanSecs % 8 === 0) { scanSecs = 0; document.getElementById('lastScan').textContent = 'just now'; }
+}, 1000);
+
+// Init
+window.addEventListener('resize', () => { if (document.getElementById('screen-map').classList.contains('active')) initMap(); });
+loadLaws('za');
+renderDB('all');
+</script>
+</body>
+</html>
