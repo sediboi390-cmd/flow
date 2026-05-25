@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PriceWorld — Global Price Comparison</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f7f8fc; --surface:#ffffff; --card:#ffffff; --border:#e8eaf0;
+  --accent:#6c63ff; --accent2:#ff6584; --accent3:#43c59e;
+  --accent4:#f7b731; --accent5:#fd9644;
+  --text:#1a1d2e; --muted:#8c93a8; --light:#f0f1f7;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;height:60px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.logo{display:flex;align-items:center;gap:8px;}
+.logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.logo-text{font-size:18px;font-weight:900;color:var(--text);}
+.logo-text span{color:var(--accent);}
+.header-right{display:flex;gap:8px;}
+.icon-btn{width:36px;height:36px;background:var(--light);border:none;border-radius:10px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.icon-btn:hover{background:var(--border);}
+.bottom-nav{background:var(--surface);border-top:1px solid var(--border);display:flex;height:64px;flex-shrink:0;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;border:none;background:transparent;color:var(--muted);font-family:'Nunito',sans-serif;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;position:relative;transition:color 0.2s;}
+.nav-item.active{color:var(--accent);}
+.nav-item.active::after{content:'';position:absolute;top:0;left:25%;right:25%;height:3px;background:var(--accent);border-radius:0 0 4px 4px;}
+.nav-icon{font-size:20px;}
+.screen{display:none;flex:1;overflow-y:auto;flex-direction:column;}
+.screen.active{display:flex;}
+.screen::-webkit-scrollbar{width:3px;}
+.screen::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+.pad{padding:16px;}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(80px);background:#1a1d2e;border-radius:12px;padding:10px 20px;font-size:12px;color:#fff;font-weight:700;z-index:500;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+</style>
+
+<style>
+/* HOME */
+.hero{background:linear-gradient(135deg,#6c63ff,#a855f7);border-radius:20px;padding:22px;margin-bottom:16px;color:#fff;position:relative;overflow:hidden;}
+.hero::before{content:'🌍';position:absolute;right:-10px;top:-10px;font-size:80px;opacity:0.15;}
+.hero-label{font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;opacity:0.8;margin-bottom:6px;}
+.hero-title{font-size:22px;font-weight:900;line-height:1.3;margin-bottom:8px;}
+.hero-sub{font-size:12px;opacity:0.8;line-height:1.6;}
+.cats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.cat-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;cursor:pointer;transition:all 0.2s;display:flex;flex-direction:column;align-items:flex-start;gap:8px;}
+.cat-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 4px 20px rgba(108,99,255,0.1);}
+.cat-icon{font-size:28px;}
+.cat-name{font-size:12px;font-weight:800;color:var(--text);}
+.cat-count{font-size:10px;color:var(--muted);font-weight:600;}
+.cat-card.food{border-left:4px solid #fd9644;}
+.cat-card.housing{border-left:4px solid #6c63ff;}
+.cat-card.transport{border-left:4px solid #43c59e;}
+.cat-card.tech{border-left:4px solid #4fc3f7;}
+.cat-card.clothing{border-left:4px solid #f7b731;}
+.cat-card.healthcare{border-left:4px solid #ff6584;}
+.cat-card.education{border-left:4px solid #a855f7;}
+.cat-card.lifestyle{border-left:4px solid #26de81;}
+.section-title{font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.country-scroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;margin-bottom:16px;}
+.country-scroll::-webkit-scrollbar{height:0;}
+.country-pill{display:flex;align-items:center;gap:6px;padding:8px 14px;background:var(--surface);border:2px solid var(--border);border-radius:20px;cursor:pointer;white-space:nowrap;transition:all 0.2s;flex-shrink:0;}
+.country-pill.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.country-pill:hover:not(.active){border-color:var(--accent);}
+.country-flag{font-size:16px;}
+.country-name{font-size:11px;font-weight:700;}
+/* COMPARE */
+.search-wrap{position:relative;margin-bottom:14px;}
+.search-input{width:100%;background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:12px 14px 12px 40px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;color:var(--text);outline:none;transition:border-color 0.2s;}
+.search-input:focus{border-color:var(--accent);}
+.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--muted);}
+.compare-country-row{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;}
+.compare-country-row::-webkit-scrollbar{height:0;}
+.c-pill{display:flex;align-items:center;gap:5px;padding:6px 12px;background:var(--light);border:2px solid transparent;border-radius:20px;cursor:pointer;white-space:nowrap;flex-shrink:0;font-size:11px;font-weight:700;transition:all 0.2s;}
+.c-pill.sel{background:var(--accent);color:#fff;border-color:var(--accent);}
+.price-item{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:10px;cursor:pointer;transition:all 0.2s;}
+.price-item:hover{border-color:var(--accent);box-shadow:0 2px 12px rgba(108,99,255,0.08);}
+.price-item-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.price-item-name{font-size:13px;font-weight:800;color:var(--text);}
+.price-item-cat{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+.price-bars{display:flex;flex-direction:column;gap:6px;}
+.price-bar-row{display:flex;align-items:center;gap:8px;}
+.price-bar-flag{font-size:14px;width:20px;}
+.price-bar-country{font-size:10px;font-weight:700;color:var(--muted);width:55px;flex-shrink:0;}
+.price-bar-track{flex:1;background:var(--light);border-radius:6px;height:8px;overflow:hidden;}
+.price-bar-fill{height:100%;border-radius:6px;transition:width 0.8s ease;}
+.price-bar-val{font-size:11px;font-weight:800;color:var(--text);width:60px;text-align:right;flex-shrink:0;}
+</style>
+
+<style>
+/* DETAIL MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal-sheet{background:var(--surface);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:600px;max-height:85vh;overflow-y:auto;animation:slideUp 0.3s ease;}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;}
+.modal-item-name{font-size:20px;font-weight:900;margin-bottom:4px;}
+.modal-item-cat{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;}
+.modal-country-card{background:var(--light);border-radius:14px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+.modal-flag{font-size:28px;}
+.modal-country-info{flex:1;}
+.modal-country-name{font-size:13px;font-weight:800;margin-bottom:2px;}
+.modal-country-price{font-size:20px;font-weight:900;color:var(--accent);}
+.modal-country-usd{font-size:10px;color:var(--muted);font-weight:600;}
+.modal-rank-badge{padding:4px 10px;border-radius:10px;font-size:10px;font-weight:800;}
+.rank-cheap{background:#e8f8f2;color:#43c59e;}
+.rank-mid{background:#fff8e6;color:#f7b731;}
+.rank-exp{background:#ffeef2;color:#ff6584;}
+/* MAP SCREEN */
+.map-screen-wrap{flex:1;display:flex;flex-direction:column;padding:16px;}
+.world-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;}
+.world-card{background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:14px;cursor:pointer;transition:all 0.2s;text-align:center;}
+.world-card:hover{border-color:var(--accent);transform:translateY(-2px);}
+.world-card-flag{font-size:30px;margin-bottom:6px;}
+.world-card-name{font-size:11px;font-weight:800;color:var(--text);margin-bottom:2px;}
+.world-card-cost{font-size:10px;font-weight:700;color:var(--muted);}
+.cost-bar{height:4px;border-radius:2px;margin-top:6px;}
+/* PROFILE */
+.profile-hero{background:linear-gradient(135deg,#6c63ff,#a855f7);border-radius:20px;padding:24px;margin-bottom:16px;color:#fff;text-align:center;}
+.profile-avatar{width:64px;height:64px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 10px;}
+.profile-name{font-size:18px;font-weight:900;margin-bottom:4px;}
+.profile-sub{font-size:11px;opacity:0.8;}
+.stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;}
+.stat-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center;}
+.stat-val{font-size:20px;font-weight:900;color:var(--accent);display:block;margin-bottom:2px;}
+.stat-lbl{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;}
+.menu-item{display:flex;align-items:center;gap:12px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:8px;cursor:pointer;transition:all 0.2s;}
+.menu-item:hover{border-color:var(--accent);}
+.menu-icon{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.menu-body{flex:1;}
+.menu-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:1px;}
+.menu-sub{font-size:11px;color:var(--muted);}
+.menu-arrow{color:var(--muted);font-size:16px;}
+/* FILTER TABS */
+.filter-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;}
+.filter-tabs::-webkit-scrollbar{height:0;}
+.ftab{padding:7px 14px;background:var(--light);border:none;border-radius:20px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all 0.2s;}
+.ftab.active{background:var(--accent);color:#fff;}
+</style>
+
+<body>
+<div class="toast" id="toast"></div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">🌍</div>
+    <div class="logo-text">Price<span>World</span></div>
+  </div>
+  <div class="header-right">
+    <button class="icon-btn" onclick="navTo('search')" title="Search">🔍</button>
+    <button class="icon-btn" onclick="showToast('💡 Tip: Tap any item to see all country prices!')" title="Help">💡</button>
+  </div>
+</div>
+
+<!-- SCREENS WRAPPER -->
+<div style="flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;">
+
+<!-- ══════ HOME ══════ -->
+<div class="screen active pad" id="screen-home">
+  <div class="hero">
+    <div class="hero-label">Global Price Tracker</div>
+    <div class="hero-title">See what things cost around the world 🌎</div>
+    <div class="hero-sub">Compare prices in 20+ countries across 8 categories</div>
+  </div>
+
+  <div class="section-title">Browse by Category</div>
+  <div class="cats-grid">
+    <div class="cat-card food" onclick="navTo('compare','food')">
+      <div class="cat-icon">🍔</div>
+      <div class="cat-name">Food & Groceries</div>
+      <div class="cat-count">18 items</div>
+    </div>
+    <div class="cat-card housing" onclick="navTo('compare','housing')">
+      <div class="cat-icon">🏠</div>
+      <div class="cat-name">Housing & Rent</div>
+      <div class="cat-count">8 items</div>
+    </div>
+    <div class="cat-card transport" onclick="navTo('compare','transport')">
+      <div class="cat-icon">🚗</div>
+      <div class="cat-name">Transport</div>
+      <div class="cat-count">10 items</div>
+    </div>
+    <div class="cat-card tech" onclick="navTo('compare','tech')">
+      <div class="cat-icon">📱</div>
+      <div class="cat-name">Tech & Gadgets</div>
+      <div class="cat-count">10 items</div>
+    </div>
+    <div class="cat-card clothing" onclick="navTo('compare','clothing')">
+      <div class="cat-icon">👕</div>
+      <div class="cat-name">Clothing</div>
+      <div class="cat-count">8 items</div>
+    </div>
+    <div class="cat-card healthcare" onclick="navTo('compare','healthcare')">
+      <div class="cat-icon">💊</div>
+      <div class="cat-name">Healthcare</div>
+      <div class="cat-count">7 items</div>
+    </div>
+    <div class="cat-card education" onclick="navTo('compare','education')">
+      <div class="cat-icon">🎓</div>
+      <div class="cat-name">Education</div>
+      <div class="cat-count">6 items</div>
+    </div>
+    <div class="cat-card lifestyle" onclick="navTo('compare','lifestyle')">
+      <div class="cat-icon">☕</div>
+      <div class="cat-name">Lifestyle</div>
+      <div class="cat-count">10 items</div>
+    </div>
+  </div>
+
+  <div class="section-title">Quick Country Glance</div>
+  <div class="country-scroll" id="homeCountryScroll"></div>
+
+  <div class="section-title">Most Searched Today</div>
+  <div id="trendingList"></div>
+</div>
+
+<!-- ══════ COMPARE ══════ -->
+<div class="screen pad" id="screen-compare">
+  <div style="font-size:18px;font-weight:900;margin-bottom:14px;" id="compareTitle">Compare Prices</div>
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input class="search-input" type="text" placeholder="Search item..." id="compareSearch" oninput="filterItems(this.value)">
+  </div>
+  <div class="filter-tabs" id="filterTabs"></div>
+  <div class="compare-country-row" id="countryPills"></div>
+  <div id="itemsList"></div>
+</div>
+
+<!-- ══════ COUNTRIES ══════ -->
+<div class="screen pad" id="screen-countries">
+  <div style="font-size:18px;font-weight:900;margin-bottom:14px;">🌍 Countries</div>
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input class="search-input" type="text" placeholder="Search country..." oninput="filterCountries(this.value)">
+  </div>
+  <div class="world-grid" id="worldGrid"></div>
+</div>
+
+<!-- ══════ SEARCH ══════ -->
+<div class="screen pad" id="screen-search">
+  <div style="font-size:18px;font-weight:900;margin-bottom:14px;">🔍 Search Everything</div>
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input class="search-input" type="text" placeholder="e.g. Big Mac, iPhone, Rent..." id="globalSearch" oninput="globalSearchFn(this.value)" autofocus>
+  </div>
+  <div id="searchResults"><div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;font-weight:600;">Type to search any item or country...</div></div>
+</div>
+
+<!-- ══════ PROFILE ══════ -->
+<div class="screen pad" id="screen-profile">
+  <div class="profile-hero">
+    <div class="profile-avatar">👤</div>
+    <div class="profile-name">PriceWorld Explorer</div>
+    <div class="profile-sub">Comparing prices since 2025</div>
+  </div>
+  <div class="stat-row">
+    <div class="stat-box"><span class="stat-val">77</span><span class="stat-lbl">Items</span></div>
+    <div class="stat-box"><span class="stat-val">20</span><span class="stat-lbl">Countries</span></div>
+    <div class="stat-box"><span class="stat-val">8</span><span class="stat-lbl">Categories</span></div>
+  </div>
+
+  <div class="section-title">Most Expensive Countries</div>
+  <div id="expensiveList"></div>
+
+  <div class="section-title" style="margin-top:14px;">Most Affordable Countries</div>
+  <div id="cheapList"></div>
+
+  <div class="section-title" style="margin-top:14px;">About PriceWorld</div>
+  <div class="menu-item">
+    <div class="menu-icon" style="background:#f0f0ff;">ℹ️</div>
+    <div class="menu-body">
+      <div class="menu-title">About This App</div>
+      <div class="menu-sub">Prices are approximate averages in USD</div>
+    </div>
+  </div>
+  <div class="menu-item">
+    <div class="menu-icon" style="background:#fff8e6;">📅</div>
+    <div class="menu-body">
+      <div class="menu-title">Data Last Updated</div>
+      <div class="menu-sub">May 2025 — all prices in USD</div>
+    </div>
+  </div>
+  <div class="menu-item">
+    <div class="menu-icon" style="background:#e8f8f2;">🌍</div>
+    <div class="menu-body">
+      <div class="menu-title">Coverage</div>
+      <div class="menu-sub">Africa, Americas, Europe, Asia, Oceania</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end screens wrapper -->
+
+<!-- ITEM DETAIL MODAL -->
+<div class="modal-overlay" id="itemModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-item-name" id="modalItemName"></div>
+    <div class="modal-item-cat" id="modalItemCat"></div>
+    <div id="modalCountries"></div>
+    <button style="width:100%;padding:14px;background:var(--light);border:none;border-radius:14px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;margin-top:8px;" onclick="closeModal()">Close</button>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="nav-item active" onclick="navTo('home')" id="nav-home"><span class="nav-icon">🏠</span>Home</button>
+  <button class="nav-item" onclick="navTo('compare')" id="nav-compare"><span class="nav-icon">⚖️</span>Compare</button>
+  <button class="nav-item" onclick="navTo('countries')" id="nav-countries"><span class="nav-icon">🌍</span>Countries</button>
+  <button class="nav-item" onclick="navTo('search')" id="nav-search"><span class="nav-icon">🔍</span>Search</button>
+  <button class="nav-item" onclick="navTo('profile')" id="nav-profile"><span class="nav-icon">👤</span>Profile</button>
+</div>
+
+<script>
+// ═══════════════════════════════════
+// COUNTRIES DATA
+// ═══════════════════════════════════
+const countries = [
+  {id:'us', name:'United States', flag:'🇺🇸', region:'Americas', currency:'USD', costIndex:100},
+  {id:'uk', name:'United Kingdom', flag:'🇬🇧', region:'Europe', currency:'GBP', costIndex:95},
+  {id:'za', name:'South Africa', flag:'🇿🇦', region:'Africa', currency:'ZAR', costIndex:38},
+  {id:'ng', name:'Nigeria', flag:'🇳🇬', region:'Africa', currency:'NGN', costIndex:22},
+  {id:'ke', name:'Kenya', flag:'🇰🇪', region:'Africa', currency:'KES', costIndex:28},
+  {id:'gh', name:'Ghana', flag:'🇬🇭', region:'Africa', currency:'GHS', costIndex:25},
+  {id:'eg', name:'Egypt', flag:'🇪🇬', region:'Africa', currency:'EGP', costIndex:18},
+  {id:'de', name:'Germany', flag:'🇩🇪', region:'Europe', currency:'EUR', costIndex:88},
+  {id:'fr', name:'France', flag:'🇫🇷', region:'Europe', currency:'EUR', costIndex:90},
+  {id:'au', name:'Australia', flag:'🇦🇺', region:'Oceania', currency:'AUD', costIndex:85},
+  {id:'ca', name:'Canada', flag:'🇨🇦', region:'Americas', currency:'CAD', costIndex:80},
+  {id:'br', name:'Brazil', flag:'🇧🇷', region:'Americas', currency:'BRL', costIndex:42},
+  {id:'in', name:'India', flag:'🇮🇳', region:'Asia', currency:'INR', costIndex:20},
+  {id:'cn', name:'China', flag:'🇨🇳', region:'Asia', currency:'CNY', costIndex:45},
+  {id:'jp', name:'Japan', flag:'🇯🇵', region:'Asia', currency:'JPY', costIndex:78},
+  {id:'ae', name:'UAE (Dubai)', flag:'🇦🇪', region:'Asia', currency:'AED', costIndex:82},
+  {id:'sg', name:'Singapore', flag:'🇸🇬', region:'Asia', currency:'SGD', costIndex:98},
+  {id:'mx', name:'Mexico', flag:'🇲🇽', region:'Americas', currency:'MXN', costIndex:35},
+  {id:'ru', name:'Russia', flag:'🇷🇺', region:'Europe', currency:'RUB', costIndex:40},
+  {id:'pk', name:'Pakistan', flag:'🇵🇰', region:'Asia', currency:'PKR', costIndex:16},
+];
+
+// ═══════════════════════════════════
+// PRICE DATA (all in USD)
+// ═══════════════════════════════════
+const items = [
+  // FOOD
+  {id:'bigmac', name:'Big Mac', cat:'food', catLabel:'Food & Groceries', emoji:'🍔',
+    prices:{us:5.58,uk:4.99,za:2.45,ng:3.20,ke:2.10,gh:2.30,eg:1.80,de:5.10,fr:5.20,au:4.90,ca:5.05,br:2.80,in:1.90,cn:3.40,jp:4.20,ae:3.80,sg:4.50,mx:2.90,ru:2.00,pk:1.20}},
+  {id:'bread', name:'Loaf of Bread (500g)', cat:'food', catLabel:'Food & Groceries', emoji:'🍞',
+    prices:{us:3.20,uk:1.50,za:1.10,ng:0.80,ke:0.70,gh:0.75,eg:0.40,de:1.80,fr:1.90,au:2.40,ca:2.80,br:1.20,in:0.50,cn:1.10,jp:1.80,ae:1.40,sg:1.90,mx:1.10,ru:0.70,pk:0.40}},
+  {id:'milk', name:'Milk (1 Litre)', cat:'food', catLabel:'Food & Groceries', emoji:'🥛',
+    prices:{us:1.20,uk:1.10,za:0.90,ng:1.20,ke:0.80,gh:0.95,eg:0.70,de:1.10,fr:1.05,au:1.40,ca:1.80,br:0.90,in:0.60,cn:1.30,jp:1.60,ae:1.20,sg:1.50,mx:0.90,ru:0.70,pk:0.50}},
+  {id:'rice', name:'Rice (1kg)', cat:'food', catLabel:'Food & Groceries', emoji:'🍚',
+    prices:{us:1.80,uk:1.20,za:0.90,ng:0.70,ke:0.60,gh:0.65,eg:0.50,de:1.50,fr:1.60,au:1.80,ca:1.90,br:0.80,in:0.35,cn:0.80,jp:2.20,ae:1.10,sg:1.40,mx:0.75,ru:0.60,pk:0.30}},
+  {id:'chicken', name:'Chicken (1kg)', cat:'food', catLabel:'Food & Groceries', emoji:'🍗',
+    prices:{us:4.80,uk:3.50,za:3.10,ng:2.80,ke:2.40,gh:2.60,eg:1.80,de:4.20,fr:4.50,au:5.20,ca:5.50,br:2.20,in:1.50,cn:2.80,jp:4.80,ae:3.20,sg:4.10,mx:2.30,ru:2.10,pk:1.20}},
+  {id:'eggs', name:'Eggs (12)', cat:'food', catLabel:'Food & Groceries', emoji:'🥚',
+    prices:{us:3.20,uk:2.80,za:1.80,ng:1.50,ke:1.20,gh:1.40,eg:1.00,de:2.90,fr:3.10,au:3.80,ca:3.50,br:1.40,in:0.80,cn:1.60,jp:2.40,ae:2.10,sg:2.80,mx:1.20,ru:1.10,pk:0.70}},
+  {id:'coffee_cafe', name:'Coffee (Café)', cat:'food', catLabel:'Food & Groceries', emoji:'☕',
+    prices:{us:4.50,uk:3.80,za:2.10,ng:1.80,ke:1.50,gh:1.60,eg:1.20,de:3.20,fr:2.80,au:3.90,ca:4.20,br:1.50,in:1.10,cn:2.40,jp:3.50,ae:4.00,sg:4.20,mx:2.00,ru:1.80,pk:0.90}},
+  {id:'restaurant_meal', name:'Restaurant Meal (mid-range)', cat:'food', catLabel:'Food & Groceries', emoji:'🍽️',
+    prices:{us:18.00,uk:16.00,za:8.00,ng:6.00,ke:5.50,gh:5.80,eg:4.50,de:14.00,fr:16.00,au:18.00,ca:17.00,br:7.00,in:3.50,cn:7.00,jp:12.00,ae:14.00,sg:15.00,mx:6.00,ru:6.50,pk:2.50}},
+
+  // HOUSING
+  {id:'rent_1bed', name:'1-Bedroom Apt (City)', cat:'housing', catLabel:'Housing & Rent', emoji:'🏠',
+    prices:{us:1800,uk:1600,za:500,ng:400,ke:350,gh:380,eg:250,de:1200,fr:1300,au:1400,ca:1500,br:550,in:250,cn:700,jp:900,ae:1400,sg:2200,mx:450,ru:400,pk:150}},
+  {id:'rent_3bed', name:'3-Bedroom Apt (City)', cat:'housing', catLabel:'Housing & Rent', emoji:'🏡',
+    prices:{us:3200,uk:2800,za:900,ng:700,ke:600,gh:650,eg:450,de:2100,fr:2200,au:2400,ca:2600,br:950,in:450,cn:1200,jp:1600,ae:2500,sg:3800,mx:800,ru:700,pk:280}},
+  {id:'buy_apt', name:'Buy Apt per m² (City)', cat:'housing', catLabel:'Housing & Rent', emoji:'🏢',
+    prices:{us:4500,uk:7000,za:1200,ng:1000,ke:800,gh:850,eg:600,de:5500,fr:7500,au:6000,ca:5500,br:1800,in:1200,cn:3500,jp:6500,ae:4200,sg:15000,mx:1500,ru:1200,pk:700}},
+  {id:'utilities', name:'Monthly Utilities', cat:'housing', catLabel:'Housing & Rent', emoji:'💡',
+    prices:{us:180,uk:220,za:80,ng:40,ke:35,gh:38,eg:25,de:280,fr:200,au:180,ca:160,br:80,in:30,cn:60,jp:120,ae:150,sg:160,mx:55,ru:50,pk:20}},
+
+  // TRANSPORT
+  {id:'fuel', name:'Petrol / Gas (1L)', cat:'transport', catLabel:'Transport', emoji:'⛽',
+    prices:{us:0.95,uk:1.80,za:1.10,ng:0.45,ke:1.20,gh:1.10,eg:0.30,de:1.90,fr:1.85,au:1.40,ca:1.20,br:1.10,in:1.00,cn:0.95,jp:1.50,ae:0.80,sg:1.80,mx:0.90,ru:0.55,pk:0.80}},
+  {id:'new_car', name:'New Car (basic model)', cat:'transport', catLabel:'Transport', emoji:'🚗',
+    prices:{us:26000,uk:24000,za:18000,ng:22000,ke:18000,gh:19000,eg:15000,de:22000,fr:23000,au:22000,ca:24000,br:20000,in:10000,cn:15000,jp:19000,ae:20000,sg:80000,mx:16000,ru:18000,pk:12000}},
+  {id:'taxi_1km', name:'Taxi (1km)', cat:'transport', catLabel:'Transport', emoji:'🚕',
+    prices:{us:2.50,uk:3.00,za:0.80,ng:0.50,ke:0.45,gh:0.50,eg:0.30,de:2.20,fr:2.50,au:2.80,ca:2.30,br:0.70,in:0.25,cn:0.50,jp:2.40,ae:1.50,sg:1.80,mx:0.60,ru:0.40,pk:0.20}},
+  {id:'public_transport', name:'Monthly Public Transport', cat:'transport', catLabel:'Transport', emoji:'🚌',
+    prices:{us:85,uk:120,za:35,ng:20,ke:18,gh:20,eg:8,de:95,fr:90,au:100,ca:95,br:30,in:12,cn:25,jp:80,ae:60,sg:90,mx:22,ru:18,pk:8}},
+  {id:'flight_domestic', name:'Domestic Flight (avg)', cat:'transport', catLabel:'Transport', emoji:'✈️',
+    prices:{us:180,uk:120,za:100,ng:90,ke:80,gh:85,eg:60,de:110,fr:120,au:160,ca:170,br:90,in:55,cn:80,jp:130,ae:120,sg:100,mx:75,ru:60,pk:45}},
+
+  // TECH
+  {id:'iphone15', name:'iPhone 15 (128GB)', cat:'tech', catLabel:'Tech & Gadgets', emoji:'📱',
+    prices:{us:799,uk:849,za:920,ng:950,ke:900,gh:920,eg:880,de:950,fr:969,au:1049,ca:1099,br:1200,in:850,cn:780,jp:820,ae:820,sg:860,mx:980,ru:980,pk:820}},
+  {id:'samsung_s24', name:'Samsung Galaxy S24', cat:'tech', catLabel:'Tech & Gadgets', emoji:'📲',
+    prices:{us:799,uk:820,za:780,ng:800,ke:760,gh:770,eg:740,de:850,fr:860,au:900,ca:950,br:980,in:720,cn:700,jp:780,ae:780,sg:820,mx:880,ru:850,pk:700}},
+  {id:'laptop', name:'Mid-range Laptop', cat:'tech', catLabel:'Tech & Gadgets', emoji:'💻',
+    prices:{us:650,uk:700,za:620,ng:680,ke:640,gh:650,eg:600,de:750,fr:760,au:800,ca:820,br:850,in:550,cn:520,jp:700,ae:680,sg:720,mx:700,ru:700,pk:580}},
+  {id:'internet', name:'Internet (60Mbps/month)', cat:'tech', catLabel:'Tech & Gadgets', emoji:'🌐',
+    prices:{us:60,uk:40,za:35,ng:25,ke:20,gh:22,eg:15,de:38,fr:35,au:55,ca:65,br:25,in:8,cn:12,jp:28,ae:55,sg:35,mx:22,ru:12,pk:10}},
+  {id:'netflix', name:'Netflix (monthly)', cat:'tech', catLabel:'Tech & Gadgets', emoji:'📺',
+    prices:{us:15.49,uk:10.99,za:8.99,ng:4.99,ke:4.99,gh:4.99,eg:4.50,de:12.99,fr:13.49,au:13.99,ca:16.99,br:6.99,in:2.99,cn:8.99,jp:12.99,ae:13.99,sg:11.98,mx:7.99,ru:5.99,pk:2.99}},
+  {id:'playstation', name:'PlayStation 5', cat:'tech', catLabel:'Tech & Gadgets', emoji:'🎮',
+    prices:{us:499,uk:479,za:550,ng:580,ke:560,gh:570,eg:540,de:549,fr:549,au:699,ca:629,br:700,in:520,cn:480,jp:450,ae:490,sg:510,mx:580,ru:560,pk:500}},
+
+  // CLOTHING
+  {id:'jeans', name:'Jeans (Levi\'s 501)', cat:'clothing', catLabel:'Clothing', emoji:'👖',
+    prices:{us:69,uk:75,za:55,ng:60,ke:55,gh:57,eg:50,de:79,fr:82,au:80,ca:75,br:65,in:45,cn:50,jp:72,ae:70,sg:75,mx:60,ru:60,pk:40}},
+  {id:'sneakers', name:'Nike Running Shoes', cat:'clothing', catLabel:'Clothing', emoji:'👟',
+    prices:{us:95,uk:90,za:80,ng:85,ke:78,gh:80,eg:75,de:100,fr:105,au:110,ca:100,br:90,in:70,cn:68,jp:92,ae:88,sg:95,mx:82,ru:82,pk:65}},
+  {id:'dress', name:'Summer Dress (Zara)', cat:'clothing', catLabel:'Clothing', emoji:'👗',
+    prices:{us:45,uk:42,za:35,ng:38,ke:34,gh:36,eg:32,de:48,fr:49,au:55,ca:48,br:42,in:28,cn:30,jp:44,ae:42,sg:45,mx:38,ru:38,pk:25}},
+  {id:'suit', name:'Business Suit', cat:'clothing', catLabel:'Clothing', emoji:'👔',
+    prices:{us:280,uk:260,za:180,ng:190,ke:170,gh:175,eg:150,de:300,fr:310,au:320,ca:300,br:220,in:130,cn:150,jp:280,ae:260,sg:280,mx:200,ru:200,pk:110}},
+
+  // HEALTHCARE
+  {id:'doctor', name:'Doctor Visit', cat:'healthcare', catLabel:'Healthcare', emoji:'👨‍⚕️',
+    prices:{us:250,uk:0,za:35,ng:15,ke:12,gh:14,eg:8,de:0,fr:28,au:50,ca:0,br:20,in:5,cn:8,jp:25,ae:80,sg:60,mx:18,ru:5,pk:4}},
+  {id:'paracetamol', name:'Paracetamol (20 tabs)', cat:'healthcare', catLabel:'Healthcare', emoji:'💊',
+    prices:{us:8,uk:1.50,za:1.20,ng:0.80,ke:0.70,gh:0.75,eg:0.50,de:2.50,fr:2.80,au:4.00,ca:5.00,br:1.80,in:0.40,cn:0.60,jp:3.50,ae:2.00,sg:3.00,mx:1.00,ru:0.60,pk:0.30}},
+  {id:'gym', name:'Gym Membership (monthly)', cat:'healthcare', catLabel:'Healthcare', emoji:'💪',
+    prices:{us:45,uk:38,za:22,ng:18,ke:15,gh:16,eg:10,de:35,fr:38,au:48,ca:42,br:20,in:12,cn:18,jp:40,ae:70,sg:85,mx:20,ru:15,pk:8}},
+  {id:'dental', name:'Dental Checkup', cat:'healthcare', catLabel:'Healthcare', emoji:'🦷',
+    prices:{us:200,uk:65,za:40,ng:25,ke:20,gh:22,eg:15,de:80,fr:75,au:150,ca:120,br:35,in:12,cn:20,jp:60,ae:90,sg:80,mx:30,ru:20,pk:10}},
+
+  // EDUCATION
+  {id:'uni_year', name:'University Year (public)', cat:'education', catLabel:'Education', emoji:'🎓',
+    prices:{us:11000,uk:12000,za:2500,ng:800,ke:700,gh:750,eg:600,de:500,fr:3000,au:9000,ca:8000,br:1200,in:800,cn:1500,jp:5500,ae:12000,sg:8000,mx:1500,ru:500,pk:400}},
+  {id:'school_year', name:'Private School (year)', cat:'education', catLabel:'Education', emoji:'🏫',
+    prices:{us:12000,uk:18000,za:3500,ng:1500,ke:1200,gh:1300,eg:900,de:8000,fr:9000,au:10000,ca:9000,br:2500,in:1500,cn:3000,jp:8000,ae:15000,sg:12000,mx:2000,ru:1500,pk:800}},
+  {id:'english_course', name:'English Course (month)', cat:'education', catLabel:'Education', emoji:'📚',
+    prices:{us:400,uk:500,za:150,ng:80,ke:70,gh:75,eg:50,de:350,fr:400,au:450,ca:420,br:100,in:60,cn:100,jp:300,ae:350,sg:380,mx:100,ru:80,pk:40}},
+
+  // LIFESTYLE
+  {id:'haircut', name:'Haircut (standard)', cat:'lifestyle', catLabel:'Lifestyle', emoji:'💇',
+    prices:{us:28,uk:22,za:8,ng:3,ke:2.50,gh:2.80,eg:2.00,de:18,fr:20,au:30,ca:28,br:8,in:2,cn:3,jp:20,ae:18,sg:22,mx:6,ru:6,pk:1.50}},
+  {id:'cinema', name:'Cinema Ticket', cat:'lifestyle', catLabel:'Lifestyle', emoji:'🎬',
+    prices:{us:15,uk:14,za:5.50,ng:4,ke:3.50,gh:3.80,eg:2.50,de:12,fr:13,au:14,ca:14,br:5,in:2,cn:4.50,jp:12,ae:12,sg:12,mx:4.50,ru:4,pk:1.50}},
+  {id:'beer', name:'Beer (bar, 500ml)', cat:'lifestyle', catLabel:'Lifestyle', emoji:'🍺',
+    prices:{us:7,uk:6.50,za:2.20,ng:1.50,ke:1.30,gh:1.40,eg:1.80,de:3.80,fr:4.00,au:6.50,ca:6.80,br:2.00,in:1.80,cn:1.20,jp:4.00,ae:12,sg:9,mx:1.80,ru:1.50,pk:0}},
+  {id:'cigarettes', name:'Pack of Cigarettes', cat:'lifestyle', catLabel:'Lifestyle', emoji:'🚬',
+    prices:{us:9,uk:16,za:2.80,ng:1.20,ke:1.00,gh:1.10,eg:0.80,de:7.50,fr:11,au:22,ca:12,br:2.20,in:1.20,cn:2.00,jp:4.50,ae:3.50,sg:11,mx:2.50,ru:1.50,pk:0.80}},
+  {id:'wine_bottle', name:'Wine Bottle (mid-range)', cat:'lifestyle', catLabel:'Lifestyle', emoji:'🍷',
+    prices:{us:14,uk:9,za:5,ng:8,ke:7,gh:7.50,eg:5,de:8,fr:7,au:12,ca:13,br:6,in:9,cn:7,jp:10,ae:18,sg:22,mx:7,ru:5,pk:8}},
+  {id:'mcdonalds_meal', name:'McDonald\'s Meal (combo)', cat:'lifestyle', catLabel:'Lifestyle', emoji:'🍟',
+    prices:{us:10,uk:8.50,za:4.50,ng:4,ke:3.50,gh:3.80,eg:2.80,de:9,fr:9.50,au:9,ca:9.50,br:5,in:3,cn:5,jp:6.50,ae:8,sg:7.50,mx:4,ru:3.50,pk:2}},
+];
+
+const catColors = {
+  food:'#fd9644', housing:'#6c63ff', transport:'#43c59e',
+  tech:'#4fc3f7', clothing:'#f7b731', healthcare:'#ff6584',
+  education:'#a855f7', lifestyle:'#26de81'
+};
+</script>
+
+<script>
+// ═══════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════
+let currentCat = 'all';
+let selectedCountries = ['us','uk','za','ng','in'];
+
+function navTo(screen, cat) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-' + screen).classList.add('active');
+  const navEl = document.getElementById('nav-' + screen);
+  if (navEl) navEl.classList.add('active');
+  if (screen === 'compare') { currentCat = cat || 'all'; buildCompare(); }
+  if (screen === 'countries') buildCountries();
+  if (screen === 'profile') buildProfile();
+  if (screen === 'home') buildHome();
+}
+
+// ═══════════════════════════════════
+// TOAST
+// ═══════════════════════════════════
+let toastT;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ═══════════════════════════════════
+// HOME SCREEN
+// ═══════════════════════════════════
+function buildHome() {
+  // Country scroll
+  const scroll = document.getElementById('homeCountryScroll');
+  scroll.innerHTML = countries.map(c => `
+    <div class="country-pill ${selectedCountries.includes(c.id)?'active':''}" onclick="toggleHomeCountry('${c.id}',this)">
+      <span class="country-flag">${c.flag}</span>
+      <span class="country-name">${c.name.split(' ')[0]}</span>
+    </div>`).join('');
+
+  // Trending
+  const trending = ['bigmac','iphone15','rent_1bed','fuel','doctor','netflix','jeans','coffee_cafe'];
+  const tList = document.getElementById('trendingList');
+  tList.innerHTML = trending.map(id => {
+    const item = items.find(x => x.id === id);
+    if (!item) return '';
+    const sel = selectedCountries.slice(0,3);
+    const priceStr = sel.map(cid => {
+      const c = countries.find(x => x.id === cid);
+      return `${c.flag} $${item.prices[cid] !== undefined ? formatPrice(item.prices[cid]) : 'N/A'}`;
+    }).join('  ·  ');
+    return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:12px;" onclick="openItem('${item.id}')">
+      <span style="font-size:24px;">${item.emoji}</span>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:800;">${item.name}</div>
+        <div style="font-size:10px;color:var(--muted);font-weight:600;margin-top:2px;">${priceStr}</div>
+      </div>
+      <span style="color:var(--muted);">›</span>
+    </div>`;
+  }).join('');
+}
+
+function toggleHomeCountry(id, el) {
+  if (selectedCountries.includes(id)) {
+    if (selectedCountries.length <= 2) { showToast('⚠️ Select at least 2 countries'); return; }
+    selectedCountries = selectedCountries.filter(c => c !== id);
+    el.classList.remove('active');
+  } else {
+    if (selectedCountries.length >= 6) { showToast('⚠️ Max 6 countries for comparison'); return; }
+    selectedCountries.push(id);
+    el.classList.add('active');
+  }
+  buildHome();
+}
+
+// ═══════════════════════════════════
+// COMPARE SCREEN
+// ═══════════════════════════════════
+function buildCompare() {
+  document.getElementById('compareTitle').textContent =
+    currentCat === 'all' ? 'Compare Prices' :
+    items.find(x => x.cat === currentCat)?.catLabel || 'Compare Prices';
+
+  // Filter tabs
+  const cats = [{id:'all',label:'All',emoji:'🌐'},{id:'food',label:'Food',emoji:'🍔'},
+    {id:'housing',label:'Housing',emoji:'🏠'},{id:'transport',label:'Transport',emoji:'🚗'},
+    {id:'tech',label:'Tech',emoji:'📱'},{id:'clothing',label:'Clothing',emoji:'👕'},
+    {id:'healthcare',label:'Health',emoji:'💊'},{id:'education',label:'Education',emoji:'🎓'},
+    {id:'lifestyle',label:'Lifestyle',emoji:'☕'}];
+  document.getElementById('filterTabs').innerHTML = cats.map(c =>
+    `<button class="ftab ${currentCat===c.id?'active':''}" onclick="setCat('${c.id}')">${c.emoji} ${c.label}</button>`
+  ).join('');
+
+  // Country pills
+  document.getElementById('countryPills').innerHTML = countries.map(c =>
+    `<div class="c-pill ${selectedCountries.includes(c.id)?'sel':''}" onclick="toggleCountry('${c.id}')">
+      ${c.flag} ${c.name.split(' ')[0]}
+    </div>`).join('');
+
+  renderItems('');
+}
+
+function setCat(cat) {
+  currentCat = cat;
+  buildCompare();
+}
+
+function toggleCountry(id) {
+  if (selectedCountries.includes(id)) {
+    if (selectedCountries.length <= 2) { showToast('⚠️ Keep at least 2 countries'); return; }
+    selectedCountries = selectedCountries.filter(c => c !== id);
+  } else {
+    if (selectedCountries.length >= 6) { showToast('⚠️ Max 6 countries'); return; }
+    selectedCountries.push(id);
+  }
+  buildCompare();
+}
+
+function filterItems(q) { renderItems(q); }
+
+function renderItems(q) {
+  const filtered = items.filter(item => {
+    const matchCat = currentCat === 'all' || item.cat === currentCat;
+    const matchQ = !q || item.name.toLowerCase().includes(q.toLowerCase());
+    return matchCat && matchQ;
+  });
+
+  document.getElementById('itemsList').innerHTML = filtered.map(item => {
+    const vals = selectedCountries.map(cid => ({
+      cid, c: countries.find(x => x.id === cid),
+      val: item.prices[cid] ?? null
+    })).filter(x => x.val !== null);
+    const max = Math.max(...vals.map(x => x.val));
+    const min = Math.min(...vals.map(x => x.val));
+    const color = catColors[item.cat] || '#6c63ff';
+
+    return `<div class="price-item" onclick="openItem('${item.id}')">
+      <div class="price-item-header">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:20px;">${item.emoji}</span>
+            <div class="price-item-name">${item.name}</div>
+          </div>
+          <div class="price-item-cat" style="margin-top:2px;margin-left:28px;">${item.catLabel}</div>
+        </div>
+        <span style="color:var(--muted);font-size:16px;">›</span>
+      </div>
+      <div class="price-bars">
+        ${vals.map(x => `
+          <div class="price-bar-row">
+            <span class="price-bar-flag">${x.c.flag}</span>
+            <span class="price-bar-country">${x.c.name.split(' ')[0]}</span>
+            <div class="price-bar-track">
+              <div class="price-bar-fill" style="width:${max>0?(x.val/max*100):0}%;background:${x.val===min?'#43c59e':x.val===max?'#ff6584':color};"></div>
+            </div>
+            <span class="price-bar-val">$${formatPrice(x.val)}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('') || '<div style="text-align:center;padding:30px;color:var(--muted);font-weight:700;">No items found</div>';
+}
+
+// ═══════════════════════════════════
+// ITEM DETAIL MODAL
+// ═══════════════════════════════════
+function openItem(id) {
+  const item = items.find(x => x.id === id);
+  if (!item) return;
+  document.getElementById('modalItemName').textContent = item.emoji + ' ' + item.name;
+  document.getElementById('modalItemCat').textContent = item.catLabel;
+
+  const sorted = countries
+    .filter(c => item.prices[c.id] !== undefined)
+    .map(c => ({...c, price: item.prices[c.id]}))
+    .sort((a,b) => a.price - b.price);
+
+  const min = sorted[0]?.price || 0;
+  const max = sorted[sorted.length-1]?.price || 1;
+
+  document.getElementById('modalCountries').innerHTML = sorted.map((c, i) => {
+    const rank = i < 5 ? 'rank-cheap' : i >= sorted.length-5 ? 'rank-exp' : 'rank-mid';
+    const rankLabel = i < 5 ? '💚 Cheapest' : i >= sorted.length-5 ? '🔴 Expensive' : '🟡 Mid-range';
+    return `<div class="modal-country-card">
+      <span class="modal-flag">${c.flag}</span>
+      <div class="modal-country-info">
+        <div class="modal-country-name">${c.name}</div>
+        <div class="modal-country-price">$${formatPrice(c.price)}</div>
+        <div class="modal-country-usd">${c.currency} · ${c.region}</div>
+      </div>
+      <span class="modal-rank-badge ${rank}">${rankLabel}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('itemModal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('itemModal').classList.remove('open'); }
+
+// ═══════════════════════════════════
+// COUNTRIES SCREEN
+// ═══════════════════════════════════
+function buildCountries(q) {
+  const filtered = countries.filter(c => !q || c.name.toLowerCase().includes(q.toLowerCase()));
+  document.getElementById('worldGrid').innerHTML = filtered.map(c => {
+    const avgCost = (c.costIndex / 100 * 1800).toFixed(0);
+    const barW = c.costIndex;
+    const color = c.costIndex > 80 ? '#ff6584' : c.costIndex > 50 ? '#f7b731' : '#43c59e';
+    return `<div class="world-card" onclick="openCountryDetail('${c.id}')">
+      <div class="world-card-flag">${c.flag}</div>
+      <div class="world-card-name">${c.name.split('(')[0].trim()}</div>
+      <div class="world-card-cost">${c.region}</div>
+      <div class="cost-bar" style="background:${color};width:${barW}%;"></div>
+    </div>`;
+  }).join('');
+}
+
+function filterCountries(q) { buildCountries(q); }
+
+function openCountryDetail(id) {
+  const c = countries.find(x => x.id === id);
+  if (!c) return;
+  const countryItems = items.map(item => ({
+    ...item, price: item.prices[id] ?? null
+  })).filter(x => x.price !== null).sort((a,b) => b.price - a.price);
+
+  document.getElementById('modalItemName').textContent = c.flag + ' ' + c.name;
+  document.getElementById('modalItemCat').textContent = c.region + ' · ' + c.currency + ' · Cost Index: ' + c.costIndex + '/100';
+  document.getElementById('modalCountries').innerHTML = countryItems.slice(0, 20).map(item =>
+    `<div class="modal-country-card">
+      <span style="font-size:24px;">${item.emoji}</span>
+      <div class="modal-country-info">
+        <div class="modal-country-name">${item.name}</div>
+        <div class="modal-country-price">$${formatPrice(item.price)}</div>
+        <div class="modal-country-usd">${item.catLabel}</div>
+      </div>
+    </div>`
+  ).join('');
+  document.getElementById('itemModal').classList.add('open');
+}
+
+// ═══════════════════════════════════
+// GLOBAL SEARCH
+// ═══════════════════════════════════
+function globalSearchFn(q) {
+  const box = document.getElementById('searchResults');
+  if (!q) { box.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;font-weight:600;">Type to search any item or country...</div>'; return; }
+  const matchItems = items.filter(i => i.name.toLowerCase().includes(q.toLowerCase())).slice(0,8);
+  const matchCountries = countries.filter(c => c.name.toLowerCase().includes(q.toLowerCase())).slice(0,5);
+  let html = '';
+  if (matchCountries.length) {
+    html += '<div style="font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Countries</div>';
+    html += matchCountries.map(c => `
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:12px;" onclick="openCountryDetail('${c.id}');navTo('countries')">
+        <span style="font-size:28px;">${c.flag}</span>
+        <div><div style="font-size:13px;font-weight:800;">${c.name}</div><div style="font-size:10px;color:var(--muted);font-weight:600;">${c.region} · Cost Index: ${c.costIndex}/100</div></div>
+        <span style="color:var(--muted);">›</span>
+      </div>`).join('');
+  }
+  if (matchItems.length) {
+    html += '<div style="font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin:8px 0;">Items</div>';
+    html += matchItems.map(item => {
+      const cheapest = countries.filter(c => item.prices[c.id]).sort((a,b) => item.prices[a.id]-item.prices[b.id])[0];
+      const expensive = countries.filter(c => item.prices[c.id]).sort((a,b) => item.prices[b.id]-item.prices[a.id])[0];
+      return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:8px;cursor:pointer;" onclick="openItem('${item.id}')">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <span style="font-size:22px;">${item.emoji}</span>
+          <div><div style="font-size:13px;font-weight:800;">${item.name}</div><div style="font-size:10px;color:var(--muted);font-weight:600;">${item.catLabel}</div></div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <div style="flex:1;background:#e8f8f2;border-radius:10px;padding:8px;text-align:center;">
+            <div style="font-size:9px;color:#43c59e;font-weight:800;">CHEAPEST</div>
+            <div style="font-size:14px;font-weight:900;">${cheapest.flag} $${formatPrice(item.prices[cheapest.id])}</div>
+            <div style="font-size:9px;color:var(--muted);">${cheapest.name.split(' ')[0]}</div>
+          </div>
+          <div style="flex:1;background:#ffeef2;border-radius:10px;padding:8px;text-align:center;">
+            <div style="font-size:9px;color:#ff6584;font-weight:800;">MOST EXP.</div>
+            <div style="font-size:14px;font-weight:900;">${expensive.flag} $${formatPrice(item.prices[expensive.id])}</div>
+            <div style="font-size:9px;color:var(--muted);">${expensive.name.split(' ')[0]}</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  if (!html) html = '<div style="text-align:center;padding:30px;color:var(--muted);font-weight:700;">No results found for "' + q + '"</div>';
+  box.innerHTML = html;
+}
+
+// ═══════════════════════════════════
+// PROFILE SCREEN
+// ═══════════════════════════════════
+function buildProfile() {
+  const sorted = [...countries].sort((a,b) => b.costIndex - a.costIndex);
+  document.getElementById('expensiveList').innerHTML = sorted.slice(0,5).map((c,i) =>
+    `<div class="menu-item" onclick="openCountryDetail('${c.id}');navTo('countries')">
+      <div class="menu-icon" style="background:var(--light);font-size:22px;">${c.flag}</div>
+      <div class="menu-body">
+        <div class="menu-title">${i+1}. ${c.name}</div>
+        <div class="menu-sub">Cost Index: ${c.costIndex}/100 · ${c.region}</div>
+      </div>
+      <div style="font-size:11px;font-weight:800;color:#ff6584;">💸 Expensive</div>
+    </div>`).join('');
+
+  document.getElementById('cheapList').innerHTML = sorted.slice(-5).reverse().map((c,i) =>
+    `<div class="menu-item" onclick="openCountryDetail('${c.id}');navTo('countries')">
+      <div class="menu-icon" style="background:var(--light);font-size:22px;">${c.flag}</div>
+      <div class="menu-body">
+        <div class="menu-title">${i+1}. ${c.name}</div>
+        <div class="menu-sub">Cost Index: ${c.costIndex}/100 · ${c.region}</div>
+      </div>
+      <div style="font-size:11px;font-weight:800;color:#43c59e;">✅ Affordable</div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════
+function formatPrice(val) {
+  if (val >= 1000) return val.toLocaleString();
+  if (val < 1) return val.toFixed(2);
+  if (val < 10) return val.toFixed(2);
+  return val.toFixed(0);
+}
+
+// ═══════════════════════════════════
+// INIT
+// ═══════════════════════════════════
+buildHome();
+buildCountries();
+buildProfile();
+</script>
+</body>
+</html>
