@@ -337,7 +337,7 @@ canvas#map{position:absolute;inset:0;width:100%;height:100%;}
       <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>Flying</div>
       <div class="leg-item"><div class="leg-dot" style="background:var(--yellow)"></div>Low Battery / Manual</div>
       <div class="leg-item"><div class="leg-dot" style="background:var(--accent3)"></div>Alert / Simulated</div>
-      <div class="leg-item"><div class="leg-dot" style="background:var(--accent4)"></div>Live ATC</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--accent4)"></div>Live ATC / FlightHub 2</div>
       <div class="leg-item"><div class="leg-dot" style="background:var(--muted)"></div>Offline</div>
     </div>
 
@@ -609,40 +609,85 @@ canvas#map{position:absolute;inset:0;width:100%;height:100%;}
   </div>
 </div>
 
-<!-- ===== FLIGHTHUB SETUP WIZARD MODAL ===== -->
+<!-- ===== FLIGHTHUB MODAL ===== -->
 <div class="modal-overlay" id="fhModal">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('fhModal')">✕</button>
-    <div class="modal-title">🛰️ DJI FLIGHTHUB 2 SETUP</div>
-    <div class="modal-sub">Connect your DJI FlightHub 2 account to see your registered drones on this map in real time.</div>
-    <div class="step-wizard">
-      <div class="step active" id="fhStep1"><div class="step-num">1</div><div class="step-lbl">Account</div></div>
-      <div class="step" id="fhStep2"><div class="step-num">2</div><div class="step-lbl">API Key</div></div>
-      <div class="step" id="fhStep3"><div class="step-num">3</div><div class="step-lbl">Connect</div></div>
+    <div class="modal-title">🛰️ DJI FLIGHTHUB 2</div>
+    <div class="modal-sub">Track your registered DJI drone fleet in real time. Choose Demo to preview how it looks, or connect a real account.</div>
+
+    <!-- Tab switcher -->
+    <div class="source-tabs" style="margin-bottom:18px">
+      <button class="stab2 active" id="fhTabDemo" onclick="switchFhTab('demo',this)">🎮 Demo Fleet</button>
+      <button class="stab2" id="fhTabConnect" onclick="switchFhTab('connect',this)">🔌 Connect Account</button>
+      <button class="stab2" id="fhTabGuide" onclick="switchFhTab('guide',this)">📖 How To Get Started</button>
     </div>
-    <div id="fhPanel1">
-      <div class="info-box tip">📋 You need a <strong>DJI FlightHub 2</strong> enterprise account. <br>Sign up at: <span style="color:var(--accent)">fh.dji.com</span></div>
+
+    <!-- DEMO TAB -->
+    <div id="fhTabContentDemo">
+      <div class="info-box success">✓ <strong>Demo Mode</strong> — Simulates a realistic DJI enterprise fleet on the map. Shows how FlightHub 2 would display your real drones.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        <div class="sim-stat"><span>Fleet Size</span><span class="sim-stat-val" id="fhDemoCount">8 drones</span></div>
+        <div class="sim-stat"><span>Drone Type</span><span class="sim-stat-val">Enterprise Mix</span></div>
+        <div class="sim-stat"><span>Telemetry</span><span class="sim-stat-val">Live Simulated</span></div>
+        <div class="sim-stat"><span>Source Label</span><span class="sim-stat-val">FlightHub 2</span></div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Number of demo drones</label>
+        <input class="form-input" id="fhDemoSize" type="number" value="8" min="1" max="30">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Fleet name / Org label</label>
+        <input class="form-input" id="fhDemoOrg" placeholder="e.g. My DJI Fleet" value="My DJI Fleet">
+      </div>
+      <div class="btn-row">
+        <button class="btn-secondary" onclick="closeModal('fhModal')">Cancel</button>
+        <button class="btn-primary" onclick="startFhDemo()">▶ LAUNCH DEMO FLEET</button>
+      </div>
+    </div>
+
+    <!-- CONNECT TAB -->
+    <div id="fhTabContentConnect" style="display:none">
+      <div class="info-box warn">⚠ <strong>Direct browser connection requires a backend proxy</strong> due to CORS restrictions on DJI's API. Enter your credentials below to save them for use with a proxy server.</div>
       <div class="form-row"><label class="form-label">FlightHub 2 Host URL</label><input class="form-input" id="fh2Host" placeholder="https://fh.dji.com" value="https://fh.dji.com"></div>
       <div class="form-row"><label class="form-label">Organization ID</label><input class="form-input" id="fh2OrgId" placeholder="Your FlightHub organization ID"></div>
-      <div class="btn-row"><button class="btn-primary" onclick="fhNextStep(2)">Next →</button></div>
-    </div>
-    <div id="fhPanel2" style="display:none">
-      <div class="info-box tip">🔑 In FlightHub 2, go to <strong>Settings → API Management</strong> to generate your access token.</div>
       <div class="form-row"><label class="form-label">API Access Token</label><input class="form-input" id="fh2Token" type="password" placeholder="Paste your Bearer token here"></div>
-      <div class="form-row"><label class="form-label">MQTT Broker (optional — for real-time telemetry)</label><input class="form-input" id="fh2Mqtt" placeholder="mqtt://your-broker:1883"></div>
-      <div class="btn-row"><button class="btn-secondary" onclick="fhNextStep(1)">← Back</button><button class="btn-primary" onclick="fhNextStep(3)">Next →</button></div>
-    </div>
-    <div id="fhPanel3" style="display:none">
-      <div class="info-box" id="fhTestResult">⏳ Click Connect to test your credentials...</div>
-      <div class="api-status-box">
+      <div class="form-row"><label class="form-label">MQTT Broker (optional — real-time telemetry)</label><input class="form-input" id="fh2Mqtt" placeholder="mqtt://your-broker:1883"></div>
+      <div class="api-status-box" style="margin-bottom:14px">
         <div class="api-status-row"><span>Host</span><span class="status-indicator si-wait" id="fhTestHost">—</span></div>
         <div class="api-status-row"><span>Auth Token</span><span class="status-indicator si-wait" id="fhTestToken">—</span></div>
         <div class="api-status-row"><span>Fleet Access</span><span class="status-indicator si-wait" id="fhTestFleet">—</span></div>
       </div>
       <div class="btn-row">
-        <button class="btn-secondary" onclick="fhNextStep(2)">← Back</button>
-        <button class="btn-secondary" onclick="testFlightHub()">🔌 Test Connection</button>
+        <button class="btn-secondary" onclick="testFlightHub()">🔌 Test Credentials</button>
         <button class="btn-primary" onclick="applyFlightHub()">✓ SAVE &amp; CONNECT</button>
+      </div>
+    </div>
+
+    <!-- GUIDE TAB -->
+    <div id="fhTabContentGuide" style="display:none">
+      <div class="info-box tip" style="margin-bottom:10px">
+        📋 <strong>Step 1 — Get an Account</strong><br>
+        DJI FlightHub 2 is an enterprise subscription service.<br>
+        Sign up at: <span style="color:var(--accent);font-weight:600">fh.dji.com</span>
+      </div>
+      <div class="info-box tip" style="margin-bottom:10px">
+        🔑 <strong>Step 2 — Generate an API Token</strong><br>
+        In FlightHub 2: <em>Settings → API Management → Create Token</em><br>
+        Copy the Bearer token — you'll need it for the Connect tab.
+      </div>
+      <div class="info-box tip" style="margin-bottom:10px">
+        🖥️ <strong>Step 3 — Set Up a Backend Proxy (required)</strong><br>
+        Because browsers block direct API calls (CORS), you need a small proxy server.<br>
+        A simple Node.js or Python server can forward requests from this app to DJI's API.
+      </div>
+      <div class="info-box tip" style="margin-bottom:10px">
+        🛸 <strong>Step 4 — Use Demo Mode in the meantime</strong><br>
+        The Demo Fleet tab simulates exactly how your real drones would appear — same icons, telemetry panels, battery tracking, and flight paths.
+      </div>
+      <div class="btn-row">
+        <button class="btn-secondary" onclick="closeModal('fhModal')">Close</button>
+        <button class="btn-primary" onclick="switchFhTab('demo',document.getElementById('fhTabDemo'))">🎮 Try Demo Fleet →</button>
       </div>
     </div>
   </div>
@@ -774,6 +819,12 @@ function drawGeofence(){
 
 function colFor(s){return s==='flying'?'#00ff88':s==='warning'?'#ffd700':s==='offline'?'#5a7090':s==='alert'?'#ff6b35':s==='live'?'#a855f7':s==='manual'?'#ffd700':s==='simulated'?'#ff6b35':'#00d4ff';}
 function getAllDrones(){return [...STATE.drones,...STATE.liveDrones,...STATE.manualDrones,...STATE.simDrones];}
+
+function getSourceColor(d){
+  // FlightHub drones get a distinct purple/violet tint
+  if(d.source==='flighthub') return d.status==='offline'?'#5a7090':d.status==='warning'?'#ffd700':d.status==='alert'?'#ff6b35':'#a855f7';
+  return colFor(d.status);
+}
 </script>
 
 <script>
@@ -804,6 +855,19 @@ function drawDrones(){
         ctx.save();ctx.translate(p.x,p.y);ctx.rotate(heading);
         ctx.beginPath();ctx.moveTo(0,-8);ctx.lineTo(-5,6);ctx.lineTo(0,3);ctx.lineTo(5,6);ctx.closePath();
         ctx.fillStyle=col;ctx.fill();ctx.restore();
+      }else if(d.source==='flighthub'){
+        // Enterprise drone — hexagon body with spinning arms
+        const r=sel?10:8;const spin=t*1.5;
+        ctx.strokeStyle='#a855f7';ctx.lineWidth=2;
+        for(let a=0;a<6;a++){
+          const ang=(a/6)*Math.PI*2+spin*0.3;const ex=p.x+Math.cos(ang)*r,ey=p.y+Math.sin(ang)*r;
+          ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(ex,ey);ctx.stroke();
+          ctx.beginPath();ctx.arc(ex,ey,3,0,Math.PI*2);ctx.fillStyle='#a855f7';ctx.fill();
+        }
+        ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+        // FH label badge
+        ctx.fillStyle='rgba(168,85,247,0.8)';ctx.font='bold 7px Orbitron,monospace';ctx.textAlign='center';
+        ctx.fillText('FH2',p.x,p.y-r-6);
       }else if(d.source==='manual'){
         // pin icon
         ctx.beginPath();ctx.arc(p.x,p.y,7,0,Math.PI*2);ctx.fillStyle=col;ctx.globalAlpha=0.8;ctx.fill();ctx.globalAlpha=1;
@@ -878,6 +942,20 @@ function simUpdate(){
     d.altHist.push(d.altitude);d.altHist.shift();
     if(Math.random()<0.004&&d.battery>0)d.battery--;
     if(d.battery<=15&&d.status==='flying'){d.status='warning';addAlert('warning',`${d.id} battery critical: ${d.battery}%`);}
+  });
+  // update FlightHub demo drones (same physics as demo)
+  STATE.liveDrones.filter(d=>d.source==='flighthub').forEach(d=>{
+    if(d.status==='offline')return;
+    d.path.push({lat:d.lat,lng:d.lng});if(d.path.length>50)d.path.shift();
+    d.lat+=d.vLat+(Math.random()-.5)*0.00003;d.lng+=d.vLng+(Math.random()-.5)*0.00003;
+    if(d.lat>b.maxLat-0.05||d.lat<b.minLat+0.05)d.vLat*=-1;
+    if(d.lng>b.maxLng-0.05||d.lng<b.minLng+0.05)d.vLng*=-1;
+    d.altitude=Math.max(10,Math.min(500,d.altitude+ri(-3,4)));
+    d.speed=Math.max(0,Math.min(70,d.speed+ri(-2,2)));
+    d.heading=(d.heading+rnd(-2,2)+360)%360;
+    d.altHist.push(d.altitude);d.altHist.shift();
+    if(Math.random()<0.003&&d.battery>0)d.battery--;
+    if(d.battery<=15&&d.status==='flying'){d.status='warning';addAlert('warning',`FlightHub ${d.id} battery critical: ${d.battery}%`);}
   });
   // update sim drones
   STATE.simDrones.forEach(d=>{
@@ -954,7 +1032,7 @@ function selectDrone(id){
   document.getElementById('detId').textContent=STATE.selectedDrone.id;
   document.getElementById('detModel').textContent=STATE.selectedDrone.model;
   const st=document.getElementById('detStatus');st.textContent=STATE.selectedDrone.status.toUpperCase();st.className='stag stag-'+STATE.selectedDrone.status;
-  const srcMap={opensky:'📡 Source: OpenSky Network',vatsim:'✈ Source: VATSIM Live',adsb:'📡 Source: ADS-B Exchange',flighthub:'🛰 Source: DJI FlightHub 2',manual:'📌 Source: Manual Entry',simulated:'🔭 Source: Simulated Radar',demo:'🎮 Source: Demo Simulation'};
+  const srcMap={opensky:'📡 Source: OpenSky Network',vatsim:'✈ Source: VATSIM Live',adsb:'📡 Source: ADS-B Exchange',flighthub:'🛰️ Source: DJI FlightHub 2 (Demo)',manual:'📌 Source: Manual Entry',simulated:'🔭 Source: Simulated Radar',demo:'🎮 Source: Demo Simulation'};
   document.getElementById('detSource').textContent=srcMap[STATE.selectedDrone.source]||'Unknown Source';
   const isManual=STATE.selectedDrone.source==='manual';
   document.getElementById('detDeleteBtn').style.display=isManual?'block':'none';
@@ -1070,6 +1148,8 @@ function selectMode(mode){
     openModal('adsbModal');
   }else if(mode==='flighthub'){
     openModal('fhModal');
+    // Default to demo tab
+    switchFhTab('demo', document.getElementById('fhTabDemo'));
   }else if(mode==='manual'){
     toast('📌 Manual mode — Click anywhere on the map to place a drone, or use the + button below');
     addAlert('info','Manual entry mode activated — click map to place drones');
@@ -1301,40 +1381,84 @@ async function fetchOpenSky(){await fetchVatsim();}
 
 <script>
 // ============================
-// FLIGHTHUB WIZARD
+// FLIGHTHUB 2 — TAB SWITCHER + DEMO
 // ============================
-let fhCurrentStep=1;
-function fhNextStep(step){
-  fhCurrentStep=step;
-  [1,2,3].forEach(i=>{
-    document.getElementById('fhPanel'+i).style.display=i===step?'block':'none';
-    const el=document.getElementById('fhStep'+i);
-    el.className='step'+(i===step?' active':i<step?' done':'');
+function switchFhTab(tab, btn){
+  ['demo','connect','guide'].forEach(t=>{
+    document.getElementById('fhTabContent'+t.charAt(0).toUpperCase()+t.slice(1)).style.display='none';
+    document.getElementById('fhTab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.remove('active');
   });
+  document.getElementById('fhTabContent'+tab.charAt(0).toUpperCase()+tab.slice(1)).style.display='block';
+  btn.classList.add('active');
 }
+
+const FH_ENTERPRISE_MODELS=['Matrice 350 RTK','Matrice 300 RTK','Phantom 4 RTK','Mavic 3 Enterprise','Agras T50','Agras T40','Matrice 30T','Matrice 30','Mavic 3 Multispectral','Zenmuse H20T'];
+const FH_SERIES=['FH-','ENT-','RTK-','AGR-','INS-'];
+
+function startFhDemo(){
+  const count=parseInt(document.getElementById('fhDemoSize').value)||8;
+  const orgName=document.getElementById('fhDemoOrg').value.trim()||'My DJI Fleet';
+  const b=STATE.bounds;
+  // Clear existing live drones, add demo fleet
+  STATE.liveDrones=STATE.liveDrones.filter(d=>d.source!=='flighthub');
+  const fhDrones=Array.from({length:count},(_,i)=>{
+    const statuses=['flying','flying','flying','flying','warning','offline'];
+    const s=statuses[i%statuses.length];
+    const model=FH_ENTERPRISE_MODELS[i%FH_ENTERPRISE_MODELS.length];
+    const bat=s==='offline'?ri(0,10):s==='warning'?ri(12,28):ri(50,100);
+    const lat=rnd(b.minLat+0.1,b.maxLat-0.1);
+    const lng=rnd(b.minLng+0.1,b.maxLng-0.1);
+    return{
+      id:FH_SERIES[i%FH_SERIES.length]+String(i+1).padStart(3,'0'),
+      model:'DJI '+model,
+      callsign:orgName+' #'+(i+1),
+      status:s,battery:bat,
+      altitude:s==='offline'?0:ri(30,480),
+      speed:s==='offline'?0:ri(0,65),
+      heading:rnd(0,360),distance:0,
+      signal:s==='offline'?ri(0,10):ri(70,100),
+      flightTime:ri(5,60),
+      lat,lng,
+      vLat:(Math.random()-.5)*0.0003,
+      vLng:(Math.random()-.5)*0.0003,
+      path:[],
+      altHist:Array.from({length:30},()=>s==='offline'?0:ri(60,400)),
+      source:'flighthub',icao:'',
+    };
+  });
+  STATE.liveDrones=[...STATE.liveDrones,...fhDrones];
+  closeModal('fhModal');
+  // Update header
+  document.getElementById('apiLabel').textContent='FlightHub 2';
+  document.getElementById('apiBadge').className='api-badge connected';
+  document.getElementById('modeLabel').textContent='FlightHub 2 (Demo)';
+  document.getElementById('modeBadge').style.cssText='background:rgba(0,255,136,0.08);border-color:rgba(0,255,136,0.3);color:var(--green)';
+  document.getElementById('fhStatus').textContent='DEMO ACTIVE';
+  document.getElementById('fhStatus').className='status-indicator si-ok';
+  toast(`🛰️ ${orgName} — ${count} drones on map`);
+  addAlert('info',`FlightHub 2 Demo: ${count} enterprise drones from "${orgName}"`);
+  addAlert('info','Demo shows how real FlightHub 2 fleet tracking would look');
+}
+
 function testFlightHub(){
   const host=document.getElementById('fh2Host').value.trim();
   const token=document.getElementById('fh2Token').value.trim();
-  const org=document.getElementById('fh2OrgId').value.trim();
   document.getElementById('fhTestHost').textContent=host?'SET':'MISSING';
   document.getElementById('fhTestHost').className='status-indicator '+(host?'si-ok':'si-err');
   document.getElementById('fhTestToken').textContent=token?'SET':'MISSING';
   document.getElementById('fhTestToken').className='status-indicator '+(token?'si-ok':'si-err');
   document.getElementById('fhTestFleet').textContent='PENDING';
   document.getElementById('fhTestFleet').className='status-indicator si-wait';
-  const info=document.getElementById('fhTestResult');
-  if(!host||!token){
-    info.className='info-box warn';info.textContent='⚠ Host URL and API token are required.';return;
-  }
-  // Simulate a connection test (actual connection requires server-side proxy due to CORS)
-  info.className='info-box tip';info.textContent='⚙ Testing connection to FlightHub 2... (Note: direct browser connection may require a CORS proxy)';
+  if(!host||!token){toast('⚠ Host URL and API token are required.');return;}
+  toast('⚙ Checking credentials...');
   setTimeout(()=>{
-    document.getElementById('fhTestFleet').textContent='DEMO';
+    document.getElementById('fhTestFleet').textContent='CORS BLOCKED';
     document.getElementById('fhTestFleet').className='status-indicator si-wait';
-    info.className='info-box warn';
-    info.innerHTML='⚠ Browser CORS policy prevents direct connection to FlightHub 2 API. To use this in production, you need a backend proxy server. <br><br>✓ Credentials saved — demo fleet shown until real connection is established.';
-  },1500);
+    toast('⚠ Browser CORS blocks direct DJI API — credentials saved, use Demo or a proxy server');
+    addAlert('warning','FlightHub 2: credentials saved but direct browser connection is blocked by CORS. Use Demo mode or set up a backend proxy.');
+  },1200);
 }
+
 function applyFlightHub(){
   const host=document.getElementById('fh2Host').value.trim();
   const token=document.getElementById('fh2Token').value.trim();
@@ -1345,11 +1469,11 @@ function applyFlightHub(){
   document.getElementById('apiLabel').textContent='FlightHub 2';
   document.getElementById('apiBadge').className='api-badge connected';
   document.getElementById('modeLabel').textContent='FlightHub 2';
-  document.getElementById('modeBadge').style.cssText='background:rgba(0,255,136,0.08);border-color:rgba(0,255,136,0.3);color:var(--green)';
-  document.getElementById('fhStatus').textContent='CONFIGURED';document.getElementById('fhStatus').className='status-indicator si-ok';
-  toast('🛰 DJI FlightHub 2 configured');
-  addAlert('info','FlightHub 2: credentials saved. Real-time fleet requires backend proxy.');
-  fhNextStep(1);
+  document.getElementById('modeBadge').style.cssText='background:rgba(168,85,247,0.08);border-color:rgba(168,85,247,0.3);color:var(--accent4)';
+  document.getElementById('fhStatus').textContent='CONFIGURED';
+  document.getElementById('fhStatus').className='status-indicator si-ok';
+  toast('🛰️ FlightHub 2 credentials saved — use Demo mode or a backend proxy to see live data');
+  addAlert('info','FlightHub 2: credentials saved. Direct browser connection requires a CORS proxy server.');
 }
 
 // ============================
