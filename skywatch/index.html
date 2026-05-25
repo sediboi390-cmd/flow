@@ -28,6 +28,7 @@ header{background:rgba(10,15,30,0.97);border-bottom:1px solid var(--border);padd
 .pulse.green{background:var(--green);}
 .pulse.blue{background:var(--accent);}
 .pulse.purple{background:var(--accent4);}
+.pulse.orange{background:var(--accent3);}
 @keyframes pdot{0%,100%{opacity:1}50%{opacity:0.3}}
 .header-stats{display:flex;gap:20px;}
 .hstat{text-align:center;}
@@ -49,9 +50,10 @@ header{background:rgba(10,15,30,0.97);border-bottom:1px solid var(--border);padd
 .ftab{flex:1;padding:4px 0;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Syne',sans-serif;font-size:8px;letter-spacing:1px;text-transform:uppercase;border-radius:5px;cursor:pointer;transition:all 0.2s;}
 .ftab.active{background:rgba(0,212,255,0.1);border-color:var(--accent);color:var(--accent);}
 </style>
-</head>
+
 
 <style>
+/* Drone list */
 .drone-list{flex:1;overflow-y:auto;padding:6px;}
 .drone-list::-webkit-scrollbar{width:3px;}
 .drone-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
@@ -62,6 +64,8 @@ header{background:rgba(10,15,30,0.97);border-bottom:1px solid var(--border);padd
 .dc.s-offline::before{background:var(--muted);}
 .dc.s-alert::before{background:var(--accent3);}
 .dc.s-live::before{background:var(--accent4);}
+.dc.s-manual::before{background:var(--yellow);}
+.dc.s-simulated::before{background:var(--accent3);}
 .dc:hover,.dc.selected{border-color:var(--accent);background:rgba(0,212,255,0.03);}
 .dc-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
 .dc-id{font-family:'Orbitron',monospace;font-size:10px;color:var(--accent);letter-spacing:1px;}
@@ -73,11 +77,14 @@ header{background:rgba(10,15,30,0.97);border-bottom:1px solid var(--border);padd
 .stag-offline{background:rgba(90,112,144,0.1);color:var(--muted);border:1px solid rgba(90,112,144,0.2);}
 .stag-alert{background:rgba(255,107,53,0.1);color:var(--accent3);border:1px solid rgba(255,107,53,0.25);}
 .stag-live{background:rgba(168,85,247,0.1);color:var(--accent4);border:1px solid rgba(168,85,247,0.25);}
+.stag-manual{background:rgba(255,215,0,0.1);color:var(--yellow);border:1px solid rgba(255,215,0,0.25);}
+.stag-simulated{background:rgba(255,107,53,0.1);color:var(--accent3);border:1px solid rgba(255,107,53,0.25);}
 .dc-metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;}
 .dcm-val{font-family:'Orbitron',monospace;font-size:10px;color:var(--text);display:block;}
 .dcm-label{font-size:7px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
 .batt-bar{height:2px;background:var(--border);border-radius:1px;margin-top:6px;}
 .batt-fill{height:100%;border-radius:1px;transition:width 1s;}
+/* Map */
 .map-area{flex:1;position:relative;overflow:hidden;background:var(--bg);}
 canvas#map{position:absolute;inset:0;width:100%;height:100%;}
 .scanlines{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.025) 2px,rgba(0,0,0,0.025) 4px);z-index:1;}
@@ -100,7 +107,9 @@ canvas#map{position:absolute;inset:0;width:100%;height:100%;}
 .wx-cond{font-size:11px;color:var(--accent);margin-top:2px;}
 </style>
 
+
 <style>
+/* Detail panel */
 .detail{position:absolute;bottom:0;left:0;right:0;background:rgba(8,12,24,0.98);border-top:1px solid var(--border);padding:14px 20px;display:none;backdrop-filter:blur(16px);z-index:20;}
 .detail.open{display:flex;gap:24px;align-items:flex-start;animation:slideUp 0.3s ease;}
 @keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
@@ -118,9 +127,12 @@ canvas#map{position:absolute;inset:0;width:100%;height:100%;}
 .det-actions{display:flex;flex-direction:column;gap:5px;flex-shrink:0;}
 .det-action-btn{padding:6px 12px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:'Syne',sans-serif;font-size:9px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
 .det-action-btn:hover{border-color:var(--accent);color:var(--accent);}
+.det-action-btn.danger:hover{border-color:var(--red);color:var(--red);}
+
+/* Modals */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
 .modal-overlay.open{display:flex;}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;width:500px;max-width:95vw;position:relative;animation:fadeIn 0.25s ease;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;width:520px;max-width:95vw;position:relative;animation:fadeIn 0.25s ease;max-height:90vh;overflow-y:auto;}
 @keyframes fadeIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
 .modal-title{font-family:'Orbitron',monospace;font-size:14px;color:var(--accent);letter-spacing:2px;margin-bottom:6px;}
 .modal-sub{font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.6;}
@@ -135,6 +147,8 @@ canvas#map{position:absolute;inset:0;width:100%;height:100%;}
 .btn-primary:hover{background:#00aadd;}
 .btn-secondary{padding:9px 18px;background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--muted);font-family:'Syne',sans-serif;font-size:11px;cursor:pointer;transition:all 0.2s;}
 .btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+.btn-danger{padding:9px 18px;background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.3);border-radius:7px;color:var(--red);font-family:'Syne',sans-serif;font-size:11px;cursor:pointer;transition:all 0.2s;}
+.btn-danger:hover{background:rgba(255,68,68,0.2);}
 .modal-close{position:absolute;top:14px;right:16px;background:transparent;border:none;color:var(--muted);font-size:18px;cursor:pointer;}
 .api-status-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:14px;}
 .api-status-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:11px;}
@@ -143,8 +157,13 @@ canvas#map{position:absolute;inset:0;width:100%;height:100%;}
 .si-ok{background:rgba(0,255,136,0.1);color:var(--green);border:1px solid rgba(0,255,136,0.2);}
 .si-err{background:rgba(255,68,68,0.1);color:var(--red);border:1px solid rgba(255,68,68,0.2);}
 .si-wait{background:rgba(0,212,255,0.1);color:var(--accent);border:1px solid rgba(0,212,255,0.2);}
+.si-active{background:rgba(255,107,53,0.1);color:var(--accent3);border:1px solid rgba(255,107,53,0.2);}
+
+/* Toast */
 .toast{position:absolute;top:12px;left:50%;transform:translateX(-50%) translateY(-70px);background:rgba(10,15,30,0.97);border:1px solid var(--accent);border-radius:8px;padding:8px 18px;font-size:11px;color:var(--accent);letter-spacing:1px;z-index:300;transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;}
 .toast.show{transform:translateX(-50%) translateY(0);}
+
+/* Alerts */
 .alerts-btn{position:absolute;bottom:14px;left:14px;background:rgba(10,15,30,0.92);border:1px solid rgba(255,107,53,0.3);border-radius:9px;padding:8px 14px;backdrop-filter:blur(8px);z-index:10;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--accent3);font-size:10px;letter-spacing:1px;text-transform:uppercase;}
 .alerts-count{background:var(--accent3);color:#000;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;}
 .alerts-panel{position:absolute;bottom:60px;left:14px;width:280px;background:rgba(10,15,30,0.97);border:1px solid var(--border);border-radius:10px;padding:12px;backdrop-filter:blur(12px);z-index:15;display:none;}
@@ -154,11 +173,69 @@ canvas#map{position:absolute;inset:0;width:100%;height:100%;}
 .alert-item.warning{background:rgba(255,215,0,0.08);border-color:var(--yellow);}
 .alert-item.info{background:rgba(0,212,255,0.08);border-color:var(--accent);}
 .alert-time{font-size:9px;color:var(--muted);margin-top:3px;}
+
+/* Minimap */
 .minimap{position:absolute;bottom:14px;right:12px;width:140px;height:100px;background:rgba(10,15,30,0.92);border:1px solid var(--border);border-radius:8px;overflow:hidden;z-index:10;}
 .minimap canvas{width:100%;height:100%;}
 .minimap-label{position:absolute;top:4px;left:6px;font-size:7px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;}
+
+/* ======================== MODES MENU ======================== */
+.modes-fab{position:absolute;bottom:120px;left:14px;z-index:50;}
+.modes-fab-btn{background:linear-gradient(135deg,rgba(0,212,255,0.15),rgba(0,102,255,0.15));border:1px solid var(--accent);border-radius:10px;padding:9px 16px;color:var(--accent);font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;gap:8px;backdrop-filter:blur(8px);transition:all 0.2s;text-transform:uppercase;}
+.modes-fab-btn:hover{background:rgba(0,212,255,0.2);box-shadow:0 0 16px rgba(0,212,255,0.2);}
+.modes-fab-btn .fab-icon{font-size:14px;}
+.modes-menu{position:absolute;bottom:46px;left:0;width:280px;background:rgba(8,12,24,0.98);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:none;animation:fadeIn 0.2s ease;backdrop-filter:blur(16px);}
+.modes-menu.open{display:block;}
+.modes-menu-header{padding:10px 14px;border-bottom:1px solid var(--border);font-family:'Orbitron',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
+.mode-item{display:flex;align-items:center;gap:12px;padding:11px 14px;cursor:pointer;transition:background 0.2s;border-bottom:1px solid rgba(26,37,64,0.5);}
+.mode-item:last-child{border-bottom:none;}
+.mode-item:hover{background:rgba(0,212,255,0.05);}
+.mode-item.active-mode{background:rgba(0,212,255,0.07);border-left:3px solid var(--accent);}
+.mode-icon{font-size:18px;width:28px;text-align:center;flex-shrink:0;}
+.mode-info{flex:1;}
+.mode-name{font-size:12px;color:var(--text);font-weight:500;margin-bottom:2px;}
+.mode-desc{font-size:9px;color:var(--muted);line-height:1.4;}
+.mode-badge{font-size:8px;padding:2px 7px;border-radius:8px;letter-spacing:1px;text-transform:uppercase;flex-shrink:0;}
+.mb-live{background:rgba(0,255,136,0.1);color:var(--green);border:1px solid rgba(0,255,136,0.25);}
+.mb-free{background:rgba(0,212,255,0.1);color:var(--accent);border:1px solid rgba(0,212,255,0.25);}
+.mb-sim{background:rgba(255,107,53,0.1);color:var(--accent3);border:1px solid rgba(255,107,53,0.25);}
+.mb-ent{background:rgba(168,85,247,0.1);color:var(--accent4);border:1px solid rgba(168,85,247,0.25);}
+.mb-manual{background:rgba(255,215,0,0.1);color:var(--yellow);border:1px solid rgba(255,215,0,0.25);}
+
+/* Radar sweep for simulation mode */
+@keyframes radar-sweep{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.radar-sweep-line{position:absolute;top:50%;left:50%;width:50%;height:1px;background:linear-gradient(to right,rgba(0,255,136,0.7),transparent);transform-origin:left center;animation:radar-sweep 3s linear infinite;pointer-events:none;z-index:5;}
+.radar-ring{position:absolute;border-radius:50%;border:1px solid rgba(0,255,136,0.12);pointer-events:none;z-index:4;}
+
+/* Step wizard for FlightHub */
+.step-wizard{display:flex;gap:0;margin-bottom:20px;}
+.step{flex:1;text-align:center;padding:8px 4px;position:relative;}
+.step::after{content:'';position:absolute;top:14px;right:-50%;width:100%;height:1px;background:var(--border);z-index:0;}
+.step:last-child::after{display:none;}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:10px;color:var(--muted);margin:0 auto 4px;position:relative;z-index:1;}
+.step.active .step-num{background:rgba(0,212,255,0.15);border-color:var(--accent);color:var(--accent);}
+.step.done .step-num{background:rgba(0,255,136,0.15);border-color:var(--green);color:var(--green);}
+.step-lbl{font-size:8px;color:var(--muted);letter-spacing:1px;}
+.step.active .step-lbl{color:var(--accent);}
+
+/* Info box */
+.info-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:11px;color:var(--muted);line-height:1.6;}
+.info-box.warn{border-color:rgba(255,215,0,0.3);background:rgba(255,215,0,0.04);}
+.info-box.success{border-color:rgba(0,255,136,0.3);background:rgba(0,255,136,0.04);}
+.info-box.tip{border-color:rgba(0,212,255,0.25);background:rgba(0,212,255,0.04);}
+
+/* ADS-B source tabs */
+.source-tabs{display:flex;gap:5px;margin-bottom:14px;}
+.stab2{flex:1;padding:8px 4px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Syne',sans-serif;font-size:9px;letter-spacing:1px;text-transform:uppercase;border-radius:7px;cursor:pointer;transition:all 0.2s;text-align:center;}
+.stab2.active{background:rgba(0,212,255,0.1);border-color:var(--accent);color:var(--accent);}
+
+/* Sim controls */
+.sim-stat{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--card);border-radius:7px;margin-bottom:5px;font-size:11px;}
+.sim-stat-val{font-family:'Orbitron',monospace;font-size:12px;color:var(--accent);}
+
 @media(max-width:768px){.sidebar{display:none}.header-stats{display:none}.det-metrics{grid-template-columns:repeat(3,1fr)}}
 </style>
+
 
 <body>
 <header>
@@ -185,9 +262,13 @@ canvas#map{position:absolute;inset:0;width:100%;height:100%;}
       <div class="pulse blue" id="apiPulse"></div>
       <span id="apiLabel">Demo Mode</span>
     </div>
-    <div class="api-badge opensky" id="oskyBadge" title="OpenSky Network">
+    <div class="api-badge opensky" id="oskyBadge" title="Live Data Source">
       <div class="pulse purple" id="oskyPulse"></div>
       <span id="oskyLabel">VATSIM Live</span>
+    </div>
+    <div class="api-badge" id="modeBadge" style="background:rgba(255,107,53,0.08);border-color:rgba(255,107,53,0.3);color:var(--accent3);" title="Current mode">
+      <div class="pulse orange" id="modePulse"></div>
+      <span id="modeLabel">Demo Mode</span>
     </div>
   </div>
   <div class="header-stats">
@@ -224,12 +305,16 @@ canvas#map{position:absolute;inset:0;width:100%;height:100%;}
   <div class="map-area" id="mapArea">
     <canvas id="map"></canvas>
     <div class="scanlines"></div>
+    <!-- Radar elements (shown in sim mode) -->
+    <div class="radar-sweep-line" id="radarSweep" style="display:none"></div>
+
     <div class="map-top">
       <button class="layer-btn active" onclick="setLayer('satellite',this)">Satellite</button>
       <button class="layer-btn" onclick="setLayer('terrain',this)">Terrain</button>
       <button class="layer-btn" onclick="setLayer('minimal',this)">Minimal</button>
       <button class="layer-btn" onclick="setLayer('heatmap',this)">Heatmap</button>
     </div>
+
     <div class="weather-widget" id="weatherWidget">
       <div class="wx-title">📍 Local Weather</div>
       <div class="wx-val" id="wxTemp">—°</div>
@@ -237,6 +322,7 @@ canvas#map{position:absolute;inset:0;width:100%;height:100%;}
       <div class="wx-row"><span id="wxWind">Wind: —</span><span id="wxHumid">Humidity: —</span></div>
       <div class="wx-row" style="margin-top:4px"><span id="wxVis">Visibility: —</span><span id="wxFlyable" style="color:var(--green)">—</span></div>
     </div>
+
     <div class="map-ctrl">
       <button class="mctrl-btn" onclick="zoom(1.2)" title="Zoom In">+</button>
       <button class="mctrl-btn" onclick="zoom(0.8)" title="Zoom Out">−</button>
@@ -245,14 +331,74 @@ canvas#map{position:absolute;inset:0;width:100%;height:100%;}
       <button class="mctrl-btn" onclick="toggleGeofence()" title="Geofence">⬡</button>
       <button class="mctrl-btn" onclick="fetchOpenSky()" title="Refresh Live Data">↺</button>
     </div>
+
     <div class="legend">
       <div class="leg-title">Legend</div>
       <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>Flying</div>
-      <div class="leg-item"><div class="leg-dot" style="background:var(--yellow)"></div>Low Battery</div>
-      <div class="leg-item"><div class="leg-dot" style="background:var(--accent3)"></div>Alert</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--yellow)"></div>Low Battery / Manual</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--accent3)"></div>Alert / Simulated</div>
       <div class="leg-item"><div class="leg-dot" style="background:var(--accent4)"></div>Live ATC</div>
       <div class="leg-item"><div class="leg-dot" style="background:var(--muted)"></div>Offline</div>
     </div>
+
+    <!-- MODES FAB MENU -->
+    <div class="modes-fab" id="modesFab">
+      <div class="modes-menu" id="modesMenu">
+        <div class="modes-menu-header">🛸 Detection &amp; Data Modes</div>
+        <div class="mode-item active-mode" id="modeItem-demo" onclick="selectMode('demo')">
+          <div class="mode-icon">🎮</div>
+          <div class="mode-info">
+            <div class="mode-name">Demo / Simulation</div>
+            <div class="mode-desc">Simulated DJI drones flying in Philippine airspace</div>
+          </div>
+          <span class="mode-badge mb-free">Free</span>
+        </div>
+        <div class="mode-item" id="modeItem-vatsim" onclick="selectMode('vatsim')">
+          <div class="mode-icon">✈️</div>
+          <div class="mode-info">
+            <div class="mode-name">VATSIM Live Aircraft</div>
+            <div class="mode-desc">Real-time pilots from VATSIM network — free, no key</div>
+          </div>
+          <span class="mode-badge mb-live">Live</span>
+        </div>
+        <div class="mode-item" id="modeItem-adsb" onclick="selectMode('adsb')">
+          <div class="mode-icon">📡</div>
+          <div class="mode-info">
+            <div class="mode-name">ADS-B Live Aircraft</div>
+            <div class="mode-desc">OpenSky Network / ADS-B Exchange real flight data</div>
+          </div>
+          <span class="mode-badge mb-live">Live</span>
+        </div>
+        <div class="mode-item" id="modeItem-flighthub" onclick="selectMode('flighthub')">
+          <div class="mode-icon">🛰️</div>
+          <div class="mode-info">
+            <div class="mode-name">DJI FlightHub 2</div>
+            <div class="mode-desc">Your own registered DJI fleet — real-time GPS position</div>
+          </div>
+          <span class="mode-badge mb-ent">Enterprise</span>
+        </div>
+        <div class="mode-item" id="modeItem-manual" onclick="selectMode('manual')">
+          <div class="mode-icon">📌</div>
+          <div class="mode-info">
+            <div class="mode-name">Manual Drone Entry</div>
+            <div class="mode-desc">Pin drone positions on the map by hand</div>
+          </div>
+          <span class="mode-badge mb-manual">Manual</span>
+        </div>
+        <div class="mode-item" id="modeItem-radar" onclick="selectMode('radar')">
+          <div class="mode-icon">🔭</div>
+          <div class="mode-info">
+            <div class="mode-name">Simulated Radar Detection</div>
+            <div class="mode-desc">Radar sweep with mock nearby drone detections</div>
+          </div>
+          <span class="mode-badge mb-sim">Simulated</span>
+        </div>
+      </div>
+      <button class="modes-fab-btn" onclick="toggleModesMenu()">
+        <span class="fab-icon">🛸</span> Detection Modes ▲
+      </button>
+    </div>
+
     <button class="alerts-btn" onclick="openAlertsPanel()">⚠ Alerts <span class="alerts-count" id="alertsCount">0</span></button>
     <div class="alerts-panel" id="alertsPanel">
       <div style="font-family:'Orbitron',monospace;font-size:10px;color:var(--accent);letter-spacing:2px;margin-bottom:10px;">SYSTEM ALERTS</div>
@@ -263,6 +409,7 @@ canvas#map{position:absolute;inset:0;width:100%;height:100%;}
       <canvas id="minimap" width="140" height="100"></canvas>
     </div>
     <div class="toast" id="toast"></div>
+
     <div class="detail" id="detail">
       <div class="det-info">
         <div class="det-id" id="detId">—</div>
@@ -280,6 +427,7 @@ canvas#map{position:absolute;inset:0;width:100%;height:100%;}
         <button class="det-action-btn" onclick="addGeofenceFor()">⬡ Geofence</button>
         <button class="det-action-btn" onclick="exportSingleLog()">↓ Export Log</button>
         <button class="det-action-btn" onclick="copyCoords()">📋 Copy Coords</button>
+        <button class="det-action-btn danger" id="detDeleteBtn" onclick="deleteSelectedDrone()" style="display:none">🗑 Remove</button>
       </div>
       <button class="det-close" onclick="closeDetail()">✕</button>
     </div>
@@ -287,16 +435,17 @@ canvas#map{position:absolute;inset:0;width:100%;height:100%;}
 </div>
 
 
+<!-- ===== API CONFIG MODAL ===== -->
 <div class="modal-overlay" id="apiModal">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('apiModal')">✕</button>
     <div class="modal-title">API CONFIGURATION</div>
-    <div class="modal-sub">Connect your DJI FlightHub 2 account or use free OpenSky Network data.</div>
+    <div class="modal-sub">Connect your data source. Use the Detection Modes button on the map to switch modes.</div>
     <div class="form-row">
       <label class="form-label">Data Source</label>
       <select class="form-select" id="dataSource" onchange="updateSourceUI()">
         <option value="demo">Demo Mode (Simulated Data)</option>
-        <option value="opensky">OpenSky Network (Free — Live Aircraft)</option>
+        <option value="opensky">VATSIM / ADS-B (Free — Live Aircraft)</option>
         <option value="flighthub">DJI FlightHub 2 (Enterprise)</option>
       </select>
     </div>
@@ -304,11 +453,9 @@ canvas#map{position:absolute;inset:0;width:100%;height:100%;}
       <div class="form-row"><label class="form-label">FlightHub 2 Host URL</label><input class="form-input" id="fhHost" placeholder="https://fh.dji.com"></div>
       <div class="form-row"><label class="form-label">API Key / Access Token</label><input class="form-input" id="fhToken" type="password" placeholder="Bearer token"></div>
       <div class="form-row"><label class="form-label">Organization ID</label><input class="form-input" id="fhOrgId" placeholder="Your FlightHub organization ID"></div>
-      <div class="form-row"><label class="form-label">MQTT Broker</label><input class="form-input" id="fhMqtt" placeholder="mqtt://your-broker:1883 (optional)"></div>
+      <div class="form-row"><label class="form-label">MQTT Broker (optional)</label><input class="form-input" id="fhMqtt" placeholder="mqtt://your-broker:1883"></div>
     </div>
     <div id="openskyFields" style="display:none">
-      <div class="form-row"><label class="form-label">OpenSky Username (optional)</label><input class="form-input" id="osUser" placeholder="Leave blank for anonymous"></div>
-      <div class="form-row"><label class="form-label">OpenSky Password</label><input class="form-input" id="osPass" type="password" placeholder="Leave blank for anonymous"></div>
       <div class="form-row">
         <label class="form-label">Map Region (lat/lng bounding box)</label>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px">
@@ -321,7 +468,7 @@ canvas#map{position:absolute;inset:0;width:100%;height:100%;}
     </div>
     <div class="api-status-box" id="apiStatusBox">
       <div class="api-status-row"><span>Demo Simulation</span><span class="status-indicator si-ok">ACTIVE</span></div>
-      <div class="api-status-row"><span>OpenSky Network</span><span class="status-indicator si-wait" id="oskyStatus">READY</span></div>
+      <div class="api-status-row"><span>VATSIM Network</span><span class="status-indicator si-wait" id="oskyStatus">READY</span></div>
       <div class="api-status-row"><span>DJI FlightHub 2</span><span class="status-indicator si-wait" id="fhStatus">NOT CONFIGURED</span></div>
       <div class="api-status-row"><span>Weather API</span><span class="status-indicator si-wait" id="wxStatus">LOADING</span></div>
     </div>
@@ -332,15 +479,201 @@ canvas#map{position:absolute;inset:0;width:100%;height:100%;}
   </div>
 </div>
 
+<!-- ===== MANUAL DRONE ENTRY MODAL ===== -->
+<div class="modal-overlay" id="manualModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('manualModal')">✕</button>
+    <div class="modal-title">📌 MANUAL DRONE ENTRY</div>
+    <div class="modal-sub">Add a drone to the map by entering its position and details manually.</div>
+    <div class="info-box tip">💡 Tip: You can also click anywhere on the map while in Manual mode to drop a pin at that location.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-row">
+        <label class="form-label">Drone ID / Name</label>
+        <input class="form-input" id="manId" placeholder="e.g. MY-DRONE-01">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Model</label>
+        <input class="form-input" id="manModel" placeholder="e.g. DJI Mini 4 Pro">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Latitude</label>
+        <input class="form-input" id="manLat" placeholder="e.g. 14.5995" type="number" step="0.0001">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Longitude</label>
+        <input class="form-input" id="manLng" placeholder="e.g. 120.9842" type="number" step="0.0001">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Altitude (meters)</label>
+        <input class="form-input" id="manAlt" placeholder="e.g. 120" type="number" value="100">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Speed (km/h)</label>
+        <input class="form-input" id="manSpeed" placeholder="e.g. 30" type="number" value="0">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Heading (°)</label>
+        <input class="form-input" id="manHeading" placeholder="0–360" type="number" value="0">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Battery (%)</label>
+        <input class="form-input" id="manBattery" placeholder="0–100" type="number" value="85">
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Status</label>
+      <select class="form-select" id="manStatus">
+        <option value="flying">Flying</option>
+        <option value="warning">Warning / Low Battery</option>
+        <option value="alert">Alert</option>
+        <option value="offline">Offline / Grounded</option>
+      </select>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="closeModal('manualModal')">Cancel</button>
+      <button class="btn-primary" onclick="addManualDrone()">ADD TO MAP</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SIMULATED RADAR MODAL ===== -->
+<div class="modal-overlay" id="radarModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('radarModal')">✕</button>
+    <div class="modal-title">🔭 SIMULATED RADAR DETECTION</div>
+    <div class="modal-sub">Activates a radar sweep animation with simulated nearby drone detections — shows how real drone detection hardware would work.</div>
+    <div class="info-box warn">⚠ This is a simulation only. Real drone detection requires physical hardware such as DJI AeroScope or an RF scanner.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div class="sim-stat"><span>Simulated Range</span><span class="sim-stat-val" id="simRange">5 km</span></div>
+      <div class="sim-stat"><span>Scan Rate</span><span class="sim-stat-val">1 rev / 3s</span></div>
+      <div class="sim-stat"><span>Detected Drones</span><span class="sim-stat-val" id="simDetected">0</span></div>
+      <div class="sim-stat"><span>Detection Protocol</span><span class="sim-stat-val">RF Sim</span></div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Number of simulated drones to detect</label>
+      <input class="form-input" id="simCount" type="number" value="5" min="1" max="20">
+    </div>
+    <div class="form-row">
+      <label class="form-label">Detection range (km)</label>
+      <input class="form-input" id="simRangeInput" type="number" value="5" min="1" max="50" oninput="document.getElementById('simRange').textContent=this.value+' km'">
+    </div>
+    <div class="form-row">
+      <label class="form-label">Drone behavior</label>
+      <select class="form-select" id="simBehavior">
+        <option value="random">Random movement</option>
+        <option value="circle">Circular orbit</option>
+        <option value="static">Stationary (hovering)</option>
+        <option value="fast">Fast erratic movement</option>
+      </select>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="closeModal('radarModal')">Cancel</button>
+      <button class="btn-danger" id="simStopBtn" onclick="stopSimRadar()" style="display:none">⏹ Stop Radar</button>
+      <button class="btn-primary" id="simStartBtn" onclick="startSimRadar()">▶ START RADAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADS-B MODAL ===== -->
+<div class="modal-overlay" id="adsbModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('adsbModal')">✕</button>
+    <div class="modal-title">📡 ADS-B LIVE AIRCRAFT</div>
+    <div class="modal-sub">Choose a live ADS-B data source to display real aircraft in Philippine airspace.</div>
+    <div class="source-tabs">
+      <button class="stab2 active" onclick="setAdsbTab('vatsim',this)">VATSIM</button>
+      <button class="stab2" onclick="setAdsbTab('opensky',this)">OpenSky</button>
+      <button class="stab2" onclick="setAdsbTab('adsbx',this)">ADS-B Exchange</button>
+    </div>
+    <div id="adsbTabContent">
+      <div class="info-box success">✓ <strong>VATSIM</strong> — Free, no API key needed, real virtual pilots worldwide. Best for Philippine airspace coverage.</div>
+      <div class="form-row">
+        <label class="form-label">Bounding Box (Philippines default)</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px">
+          <input class="form-input" id="adsbMinLat" placeholder="Min Lat" value="10.0">
+          <input class="form-input" id="adsbMaxLat" placeholder="Max Lat" value="19.0">
+          <input class="form-input" id="adsbMinLng" placeholder="Min Lng" value="117.0">
+          <input class="form-input" id="adsbMaxLng" placeholder="Max Lng" value="127.0">
+        </div>
+      </div>
+    </div>
+    <div class="api-status-box">
+      <div class="api-status-row"><span>Selected Source</span><span class="status-indicator si-wait" id="adsbSourceStatus">VATSIM</span></div>
+      <div class="api-status-row"><span>Last Fetch</span><span class="status-indicator si-wait" id="adsbLastFetch">NEVER</span></div>
+      <div class="api-status-row"><span>Aircraft in view</span><span class="status-indicator si-wait" id="adsbCount">0</span></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="closeModal('adsbModal')">Cancel</button>
+      <button class="btn-primary" onclick="applyAdsbSource()">FETCH LIVE DATA</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FLIGHTHUB SETUP WIZARD MODAL ===== -->
+<div class="modal-overlay" id="fhModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('fhModal')">✕</button>
+    <div class="modal-title">🛰️ DJI FLIGHTHUB 2 SETUP</div>
+    <div class="modal-sub">Connect your DJI FlightHub 2 account to see your registered drones on this map in real time.</div>
+    <div class="step-wizard">
+      <div class="step active" id="fhStep1"><div class="step-num">1</div><div class="step-lbl">Account</div></div>
+      <div class="step" id="fhStep2"><div class="step-num">2</div><div class="step-lbl">API Key</div></div>
+      <div class="step" id="fhStep3"><div class="step-num">3</div><div class="step-lbl">Connect</div></div>
+    </div>
+    <div id="fhPanel1">
+      <div class="info-box tip">📋 You need a <strong>DJI FlightHub 2</strong> enterprise account. <br>Sign up at: <span style="color:var(--accent)">fh.dji.com</span></div>
+      <div class="form-row"><label class="form-label">FlightHub 2 Host URL</label><input class="form-input" id="fh2Host" placeholder="https://fh.dji.com" value="https://fh.dji.com"></div>
+      <div class="form-row"><label class="form-label">Organization ID</label><input class="form-input" id="fh2OrgId" placeholder="Your FlightHub organization ID"></div>
+      <div class="btn-row"><button class="btn-primary" onclick="fhNextStep(2)">Next →</button></div>
+    </div>
+    <div id="fhPanel2" style="display:none">
+      <div class="info-box tip">🔑 In FlightHub 2, go to <strong>Settings → API Management</strong> to generate your access token.</div>
+      <div class="form-row"><label class="form-label">API Access Token</label><input class="form-input" id="fh2Token" type="password" placeholder="Paste your Bearer token here"></div>
+      <div class="form-row"><label class="form-label">MQTT Broker (optional — for real-time telemetry)</label><input class="form-input" id="fh2Mqtt" placeholder="mqtt://your-broker:1883"></div>
+      <div class="btn-row"><button class="btn-secondary" onclick="fhNextStep(1)">← Back</button><button class="btn-primary" onclick="fhNextStep(3)">Next →</button></div>
+    </div>
+    <div id="fhPanel3" style="display:none">
+      <div class="info-box" id="fhTestResult">⏳ Click Connect to test your credentials...</div>
+      <div class="api-status-box">
+        <div class="api-status-row"><span>Host</span><span class="status-indicator si-wait" id="fhTestHost">—</span></div>
+        <div class="api-status-row"><span>Auth Token</span><span class="status-indicator si-wait" id="fhTestToken">—</span></div>
+        <div class="api-status-row"><span>Fleet Access</span><span class="status-indicator si-wait" id="fhTestFleet">—</span></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-secondary" onclick="fhNextStep(2)">← Back</button>
+        <button class="btn-secondary" onclick="testFlightHub()">🔌 Test Connection</button>
+        <button class="btn-primary" onclick="applyFlightHub()">✓ SAVE &amp; CONNECT</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 <script>
-const STATE={drones:[],liveDrones:[],selectedDrone:null,layer:'satellite',filter:'all',search:'',showPaths:true,showGeofence:false,mapScale:1,mapOffset:{x:0,y:0},dragging:false,dragStart:{x:0,y:0},bounds:{minLat:10.0,maxLat:19.0,minLng:117.0,maxLng:127.0},alerts:[],flightLog:[],tracking:false,trackedId:null,apiMode:'demo',fhConfig:{host:'',token:'',orgId:'',mqtt:''},osConfig:{user:'',pass:''},weather:null};
+// ============================
+// CORE STATE
+// ============================
+const STATE={
+  drones:[],liveDrones:[],manualDrones:[],simDrones:[],
+  selectedDrone:null,layer:'satellite',filter:'all',search:'',
+  showPaths:true,showGeofence:false,mapScale:1,mapOffset:{x:0,y:0},
+  dragging:false,dragStart:{x:0,y:0},
+  bounds:{minLat:10.0,maxLat:19.0,minLng:117.0,maxLng:127.0},
+  alerts:[],flightLog:[],tracking:false,trackedId:null,
+  apiMode:'demo',currentMode:'demo',
+  fhConfig:{host:'',token:'',orgId:'',mqtt:''},
+  weather:null,simRunning:false,simInterval:null,
+  adsbSource:'vatsim',mapClickMode:null,
+  manualPlaceCallback:null
+};
+
 const DJI_MODELS=['Mavic 3 Pro','Mavic 3 Classic','Mini 4 Pro','Air 3','Phantom 4 RTK','Matrice 350 RTK','Avata 2','Neo 2','Inspire 3','Agras T50','Mini 3 Pro','FPV Combo','Matrice 300 RTK','Mavic 3 Enterprise','Mini 3','Air 2S'];
 const SERIES=['DJI-','MV-','PH-','MT-','AV-','FP-','AG-'];
 const STATUSES=['flying','flying','flying','flying','flying','warning','warning','offline','alert'];
 function rnd(a,b){return Math.random()*(b-a)+a;}
 function ri(a,b){return Math.floor(rnd(a,b));}
 function pick(a){return a[ri(0,a.length)];}
+
 function genDrones(n){
   return Array.from({length:n},(_,i)=>{
     const s=STATUSES[i%STATUSES.length];
@@ -349,6 +682,10 @@ function genDrones(n){
     return{id:SERIES[i%SERIES.length]+String(i+1).padStart(3,'0'),model:'DJI '+DJI_MODELS[i%DJI_MODELS.length],status:s,battery:bat,altitude:s==='offline'?0:ri(30,500),speed:s==='offline'?0:ri(0,72),heading:rnd(0,360),distance:ri(0,9000),signal:s==='offline'?ri(0,15):ri(60,100),flightTime:ri(5,48),lat:rnd(b.minLat+0.1,b.maxLat-0.1),lng:rnd(b.minLng+0.1,b.maxLng-0.1),vLat:(Math.random()-.5)*0.0004,vLng:(Math.random()-.5)*0.0004,path:[],altHist:Array.from({length:30},()=>ri(60,400)),source:'demo',callsign:'',icao:''};
   });
 }
+
+// ============================
+// CANVAS SETUP
+// ============================
 const canvas=document.getElementById('map');
 const ctx=canvas.getContext('2d');
 const mm=document.getElementById('minimap');
@@ -356,13 +693,28 @@ const mmCtx=mm.getContext('2d');
 let W,H;
 function resize(){const area=document.getElementById('mapArea');W=canvas.width=area.clientWidth;H=canvas.height=area.clientHeight;}
 window.addEventListener('resize',resize);resize();
+
 function toXY(lat,lng,w=W,h=H,sc=STATE.mapScale,off=STATE.mapOffset){
   const b=STATE.bounds;
   const x=((lng-b.minLng)/(b.maxLng-b.minLng))*w;
   const y=(1-(lat-b.minLat)/(b.maxLat-b.minLat))*h;
   return{x:(x-w/2)*sc+w/2+off.x,y:(y-h/2)*sc+h/2+off.y};
 }
+function toLatLng(px,py){
+  const b=STATE.bounds;
+  const normX=(px-W/2-STATE.mapOffset.x)/STATE.mapScale+W/2;
+  const normY=(py-H/2-STATE.mapOffset.y)/STATE.mapScale+H/2;
+  const lng=b.minLng+(normX/W)*(b.maxLng-b.minLng);
+  const lat=b.minLat+(1-normY/H)*(b.maxLat-b.minLat);
+  return{lat,lng};
+}
 function toMM(lat,lng){return toXY(lat,lng,140,100,1,{x:0,y:0});}
+</script>
+
+<script>
+// ============================
+// DRAWING
+// ============================
 function drawBg(){
   ctx.clearRect(0,0,W,H);
   if(STATE.layer==='satellite'){
@@ -384,7 +736,7 @@ function drawBg(){
     }
   }else if(STATE.layer==='heatmap'){
     ctx.fillStyle='#040208';ctx.fillRect(0,0,W,H);
-    [...STATE.drones,...STATE.liveDrones].filter(d=>d.status!=='offline').forEach(d=>{
+    getAllDrones().filter(d=>d.status!=='offline').forEach(d=>{
       const p=toXY(d.lat,d.lng);const r=80*STATE.mapScale;
       const g2=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r);
       g2.addColorStop(0,'rgba(255,100,0,0.15)');g2.addColorStop(1,'rgba(255,0,0,0)');
@@ -396,7 +748,17 @@ function drawBg(){
     for(let x=0;x<W;x+=60){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
     for(let y=0;y<H;y+=60){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
   }
+  // radar rings in radar mode
+  if(STATE.simRunning){
+    const cx=W/2+STATE.mapOffset.x,cy=H/2+STATE.mapOffset.y;
+    [0.15,0.3,0.45,0.6].forEach(f=>{
+      const r=Math.min(W,H)*f*STATE.mapScale;
+      ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+      ctx.strokeStyle='rgba(0,255,136,0.1)';ctx.lineWidth=1;ctx.stroke();
+    });
+  }
 }
+
 function drawGeofence(){
   if(!STATE.showGeofence)return;
   const b=STATE.bounds;
@@ -409,13 +771,15 @@ function drawGeofence(){
     ctx.fillText(z.label,p.x,p.y-Math.abs(rPx)-5);
   });
 }
-function colFor(s){return s==='flying'?'#00ff88':s==='warning'?'#ffd700':s==='offline'?'#5a7090':s==='alert'?'#ff6b35':s==='live'?'#a855f7':'#00d4ff';}
+
+function colFor(s){return s==='flying'?'#00ff88':s==='warning'?'#ffd700':s==='offline'?'#5a7090':s==='alert'?'#ff6b35':s==='live'?'#a855f7':s==='manual'?'#ffd700':s==='simulated'?'#ff6b35':'#00d4ff';}
+function getAllDrones(){return [...STATE.drones,...STATE.liveDrones,...STATE.manualDrones,...STATE.simDrones];}
 </script>
 
 <script>
 function drawDrones(){
   const t=Date.now()/1000;
-  const all=[...STATE.drones,...STATE.liveDrones];
+  const all=getAllDrones();
   all.forEach(d=>{
     if(STATE.filter!=='all'&&d.status!==STATE.filter)return;
     if(STATE.search){const q=STATE.search.toLowerCase();if(!d.id.toLowerCase().includes(q)&&!d.model.toLowerCase().includes(q)&&!(d.callsign||'').toLowerCase().includes(q))return;}
@@ -435,11 +799,24 @@ function drawDrones(){
       ctx.beginPath();ctx.arc(p.x,p.y,14+pulse*9,0,Math.PI*2);
       ctx.strokeStyle=col;ctx.globalAlpha=0.12+pulse*.08;ctx.lineWidth=1;ctx.stroke();ctx.globalAlpha=1;
       if(sel){ctx.beginPath();ctx.arc(p.x,p.y,22,0,Math.PI*2);ctx.strokeStyle='#00d4ff';ctx.lineWidth=1.5;ctx.setLineDash([5,3]);ctx.stroke();ctx.setLineDash([]);}
-      if(d.source==='opensky'){
+      if(d.source==='opensky'||d.source==='vatsim'||d.source==='adsb'){
         const heading=(d.heading||0)*Math.PI/180;
         ctx.save();ctx.translate(p.x,p.y);ctx.rotate(heading);
         ctx.beginPath();ctx.moveTo(0,-8);ctx.lineTo(-5,6);ctx.lineTo(0,3);ctx.lineTo(5,6);ctx.closePath();
         ctx.fillStyle=col;ctx.fill();ctx.restore();
+      }else if(d.source==='manual'){
+        // pin icon
+        ctx.beginPath();ctx.arc(p.x,p.y,7,0,Math.PI*2);ctx.fillStyle=col;ctx.globalAlpha=0.8;ctx.fill();ctx.globalAlpha=1;
+        ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
+        ctx.beginPath();ctx.moveTo(p.x,p.y+7);ctx.lineTo(p.x,p.y+16);ctx.strokeStyle=col;ctx.lineWidth=2;ctx.stroke();
+      }else if(d.source==='simulated'){
+        // triangle with radar ping
+        const ping=(Math.sin(t*4+all.indexOf(d)*0.5)+1)/2;
+        ctx.beginPath();ctx.arc(p.x,p.y,18+ping*12,0,Math.PI*2);
+        ctx.strokeStyle='rgba(255,107,53,0.3)';ctx.lineWidth=1;ctx.stroke();
+        ctx.save();ctx.translate(p.x,p.y);ctx.rotate((d.heading||0)*Math.PI/180);
+        ctx.beginPath();ctx.moveTo(0,-9);ctx.lineTo(-6,7);ctx.lineTo(6,7);ctx.closePath();
+        ctx.fillStyle=col;ctx.globalAlpha=0.9;ctx.fill();ctx.globalAlpha=1;ctx.restore();
       }else{
         const r=sel?9:7;const spin=t*(d.status==='alert'?5:2);
         ctx.strokeStyle=col;ctx.lineWidth=1.8;
@@ -452,21 +829,27 @@ function drawDrones(){
       }
     }
     ctx.font=(sel?'bold ':'')+'9px Orbitron,monospace';ctx.fillStyle=col;ctx.textAlign='center';
-    ctx.fillText(d.callsign||d.id,p.x,p.y+24);
-    if(d.status!=='offline'&&d.source!=='opensky'){
-      const bw=28,bx=p.x-14,by=p.y+27;
+    ctx.fillText(d.callsign||d.id,p.x,p.y+28);
+    if(d.status!=='offline'&&d.source!=='opensky'&&d.source!=='vatsim'&&d.source!=='adsb'){
+      const bw=28,bx=p.x-14,by=p.y+31;
       ctx.fillStyle='rgba(0,0,0,0.4)';ctx.fillRect(bx,by,bw,3);
       const bc=d.battery>50?'#00ff88':d.battery>20?'#ffd700':'#ff4444';
       ctx.fillStyle=bc;ctx.fillRect(bx,by,bw*d.battery/100,3);
     }
+    // "NEW" flash for simulated detections
+    if(d.source==='simulated'&&d.newDetection){
+      ctx.font='bold 8px Orbitron,monospace';ctx.fillStyle='#ff6b35';ctx.textAlign='center';
+      ctx.fillText('DETECTED',p.x,p.y-20);
+    }
   });
 }
+
 function drawMinimap(){
   mmCtx.fillStyle='#060c18';mmCtx.fillRect(0,0,140,100);
   mmCtx.strokeStyle='rgba(0,212,255,0.08)';mmCtx.lineWidth=0.5;
   for(let x=0;x<140;x+=28){mmCtx.beginPath();mmCtx.moveTo(x,0);mmCtx.lineTo(x,100);mmCtx.stroke();}
   for(let y=0;y<100;y+=20){mmCtx.beginPath();mmCtx.moveTo(0,y);mmCtx.lineTo(140,y);mmCtx.stroke();}
-  [...STATE.drones,...STATE.liveDrones].filter(d=>d.status!=='offline').forEach(d=>{
+  getAllDrones().filter(d=>d.status!=='offline').forEach(d=>{
     const p=toMM(d.lat,d.lng);mmCtx.beginPath();mmCtx.arc(p.x,p.y,2,0,Math.PI*2);mmCtx.fillStyle=colFor(d.status);mmCtx.fill();
   });
   const vx=(-STATE.mapOffset.x/STATE.mapScale+W/2)/W*140;
@@ -474,6 +857,13 @@ function drawMinimap(){
   const vw=140/STATE.mapScale,vh=100/STATE.mapScale;
   mmCtx.strokeStyle='rgba(0,212,255,0.4)';mmCtx.lineWidth=1;mmCtx.strokeRect(vx-vw/2,vy-vh/2,vw,vh);
 }
+</script>
+
+
+<script>
+// ============================
+// SIMULATION UPDATE
+// ============================
 function simUpdate(){
   const b=STATE.bounds;
   STATE.drones.forEach(d=>{
@@ -489,10 +879,38 @@ function simUpdate(){
     if(Math.random()<0.004&&d.battery>0)d.battery--;
     if(d.battery<=15&&d.status==='flying'){d.status='warning';addAlert('warning',`${d.id} battery critical: ${d.battery}%`);}
   });
+  // update sim drones
+  STATE.simDrones.forEach(d=>{
+    if(d.status==='offline')return;
+    d.path.push({lat:d.lat,lng:d.lng});if(d.path.length>30)d.path.shift();
+    const behavior=d.behavior||'random';
+    if(behavior==='circle'){
+      d._angle=(d._angle||0)+0.015;
+      d.lat=d._centerLat+Math.sin(d._angle)*0.015;
+      d.lng=d._centerLng+Math.cos(d._angle)*0.015;
+    }else if(behavior==='fast'){
+      d.lat+=d.vLat+(Math.random()-.5)*0.001;d.lng+=d.vLng+(Math.random()-.5)*0.001;
+      if(d.lat>b.maxLat-0.05||d.lat<b.minLat+0.05)d.vLat*=-1;
+      if(d.lng>b.maxLng-0.05||d.lng<b.minLng+0.05)d.vLng*=-1;
+    }else if(behavior==='random'){
+      d.lat+=d.vLat+(Math.random()-.5)*0.0003;d.lng+=d.vLng+(Math.random()-.5)*0.0003;
+      if(d.lat>b.maxLat-0.05||d.lat<b.minLat+0.05)d.vLat*=-1;
+      if(d.lng>b.maxLng-0.05||d.lng<b.minLng+0.05)d.vLng*=-1;
+    }
+    d.heading=(d.heading+rnd(-5,5)+360)%360;
+    d.altitude=Math.max(10,Math.min(400,d.altitude+ri(-8,8)));
+    d.altHist.push(d.altitude);d.altHist.shift();
+    if(d.newDetection&&Date.now()-d.detectedAt>4000)d.newDetection=false;
+  });
 }
+
 function frame(){simUpdate();drawBg();drawGeofence();drawDrones();drawMinimap();if(STATE.selectedDrone)updateDetail();requestAnimationFrame(frame);}
+
+// ============================
+// SIDEBAR RENDER
+// ============================
 function renderSidebar(){
-  const all=[...STATE.drones,...STATE.liveDrones];
+  const all=getAllDrones();
   const filtered=all.filter(d=>{
     const mf=STATE.filter==='all'||d.status===STATE.filter;
     const q=STATE.search.toLowerCase();
@@ -508,16 +926,17 @@ function renderSidebar(){
   list.innerHTML=filtered.map(d=>{
     const bc=d.battery>50?'#00ff88':d.battery>20?'#ffd700':'#ff4444';
     const sel=STATE.selectedDrone&&STATE.selectedDrone.id===d.id;
+    const showBatt=d.source!=='opensky'&&d.source!=='vatsim'&&d.source!=='adsb';
     return `<div class="dc s-${d.status}${sel?' selected':''}" onclick="selectDrone('${d.id}')">
       <div class="dc-row"><span class="dc-id">${d.id}</span><span class="stag stag-${d.status}">${d.status.toUpperCase()}</span></div>
       <div class="dc-model">${d.model}</div>
-      ${d.callsign?`<div class="dc-source">✈ ${d.callsign} · ${d.source.toUpperCase()}</div>`:`<div class="dc-source">⬡ ${d.source.toUpperCase()}</div>`}
+      ${d.callsign?`<div class="dc-source">✈ ${d.callsign} · ${d.source.toUpperCase()}</div>`:`<div class="dc-source">${d.source==='manual'?'📌':'⬡'} ${d.source.toUpperCase()}</div>`}
       <div class="dc-metrics">
         <div><span class="dcm-val">${d.status==='offline'?'—':d.altitude+'m'}</span><span class="dcm-label">Alt</span></div>
         <div><span class="dcm-val">${d.status==='offline'?'—':Math.round(d.speed)+'km/h'}</span><span class="dcm-label">Speed</span></div>
-        <div><span class="dcm-val" style="color:${bc}">${d.source==='opensky'?'—':d.battery+'%'}</span><span class="dcm-label">${d.source==='opensky'?'ICAO':'Batt'}</span></div>
+        <div><span class="dcm-val" style="color:${bc}">${showBatt?d.battery+'%':'—'}</span><span class="dcm-label">${showBatt?'Batt':'ICAO'}</span></div>
       </div>
-      ${d.source!=='opensky'?`<div class="batt-bar"><div class="batt-fill" style="width:${d.battery}%;background:${bc}"></div></div>`:''}
+      ${showBatt?`<div class="batt-bar"><div class="batt-fill" style="width:${d.battery}%;background:${bc}"></div></div>`:''}
     </div>`;
   }).join('');
 }
@@ -525,25 +944,31 @@ setInterval(renderSidebar,900);
 </script>
 
 <script>
+// ============================
+// DRONE SELECTION & DETAIL
+// ============================
 function selectDrone(id){
-  const all=[...STATE.drones,...STATE.liveDrones];
+  const all=getAllDrones();
   STATE.selectedDrone=all.find(d=>d.id===id);if(!STATE.selectedDrone)return;
   document.getElementById('detail').classList.add('open');
   document.getElementById('detId').textContent=STATE.selectedDrone.id;
   document.getElementById('detModel').textContent=STATE.selectedDrone.model;
   const st=document.getElementById('detStatus');st.textContent=STATE.selectedDrone.status.toUpperCase();st.className='stag stag-'+STATE.selectedDrone.status;
-  document.getElementById('detSource').textContent=STATE.selectedDrone.source==='opensky'?'📡 Source: OpenSky Network (Live ATC)':STATE.selectedDrone.source==='flighthub'?'🛰 Source: DJI FlightHub 2':'🎮 Source: Demo Simulation';
-  updateDetail();toast('📡 Tracking '+STATE.selectedDrone.id);
+  const srcMap={opensky:'📡 Source: OpenSky Network',vatsim:'✈ Source: VATSIM Live',adsb:'📡 Source: ADS-B Exchange',flighthub:'🛰 Source: DJI FlightHub 2',manual:'📌 Source: Manual Entry',simulated:'🔭 Source: Simulated Radar',demo:'🎮 Source: Demo Simulation'};
+  document.getElementById('detSource').textContent=srcMap[STATE.selectedDrone.source]||'Unknown Source';
+  const isManual=STATE.selectedDrone.source==='manual';
+  document.getElementById('detDeleteBtn').style.display=isManual?'block':'none';
+  updateDetail();toast('📡 Selected: '+STATE.selectedDrone.id);
 }
 function updateDetail(){
   const d=STATE.selectedDrone;if(!d)return;
-  const isOsky=d.source==='opensky';
+  const isATC=d.source==='opensky'||d.source==='vatsim'||d.source==='adsb';
   document.getElementById('detMetrics').innerHTML=[
     {v:d.status==='offline'?'—':Math.round(d.altitude)+'m',l:'Altitude'},
     {v:d.status==='offline'?'—':Math.round(d.speed)+' km/h',l:'Speed'},
-    {v:isOsky?'—':d.battery+'%',l:'Battery'},
-    {v:isOsky?'—':d.signal+'%',l:'Signal'},
-    {v:isOsky?'—':d.flightTime+'min',l:'Flight Time'},
+    {v:isATC?'—':d.battery+'%',l:'Battery'},
+    {v:isATC?'—':d.signal+'%',l:'Signal'},
+    {v:isATC?'—':d.flightTime+'min',l:'Flight Time'},
     {v:d.lat.toFixed(5),l:'Latitude'},
     {v:d.lng.toFixed(5),l:'Longitude'},
   ].map(m=>`<div class="detm"><span class="detm-val">${m.v}</span><span class="detm-label">${m.l}</span></div>`).join('');
@@ -553,7 +978,7 @@ function drawTelemetry(d){
   const tc=document.getElementById('telCanvas');const tx=tc.getContext('2d');const tw=tc.width,th=tc.height;
   tx.clearRect(0,0,tw,th);tx.fillStyle='#0d1528';tx.fillRect(0,0,tw,th);
   if(!d.altHist||d.altHist.length<2)return;
-  const data=d.altHist;const mx=Math.max(...data)+20,mn=Math.max(0,Math.min(...data)-20);const rng=mx-mn;
+  const data=d.altHist;const mx=Math.max(...data)+20,mn=Math.max(0,Math.min(...data)-20);const rng=mx-mn||1;
   tx.beginPath();
   data.forEach((v,i)=>{const x=(i/(data.length-1))*tw;const y=th-((v-mn)/rng)*th;i===0?tx.moveTo(x,y):tx.lineTo(x,y);});
   tx.strokeStyle='#00d4ff';tx.lineWidth=1.5;tx.stroke();
@@ -562,16 +987,48 @@ function drawTelemetry(d){
   tx.fillStyle=g;tx.fill();
 }
 function closeDetail(){document.getElementById('detail').classList.remove('open');STATE.selectedDrone=null;}
+function deleteSelectedDrone(){
+  if(!STATE.selectedDrone)return;
+  STATE.manualDrones=STATE.manualDrones.filter(d=>d.id!==STATE.selectedDrone.id);
+  closeDetail();toast('🗑 Drone removed from map');
+  addAlert('info','Manual drone removed: '+STATE.selectedDrone?.id);
+}
+</script>
+
+
+<script>
+// ============================
+// MAP INTERACTION
+// ============================
 canvas.addEventListener('click',e=>{
+  // manual place mode
+  if(STATE.mapClickMode==='manual'){
+    const r=canvas.getBoundingClientRect();
+    const {lat,lng}=toLatLng(e.clientX-r.left,e.clientY-r.top);
+    document.getElementById('manLat').value=lat.toFixed(5);
+    document.getElementById('manLng').value=lng.toFixed(5);
+    STATE.mapClickMode=null;
+    canvas.style.cursor='default';
+    openModal('manualModal');
+    toast('📌 Location set! Fill in drone details.');
+    return;
+  }
   const r=canvas.getBoundingClientRect();const mx=e.clientX-r.left,my=e.clientY-r.top;
   let hit=null,md=30;
-  [...STATE.drones,...STATE.liveDrones].forEach(d=>{const p=toXY(d.lat,d.lng);const dist=Math.hypot(p.x-mx,p.y-my);if(dist<md){md=dist;hit=d;}});
+  getAllDrones().forEach(d=>{const p=toXY(d.lat,d.lng);const dist=Math.hypot(p.x-mx,p.y-my);if(dist<md){md=dist;hit=d;}});
   if(hit)selectDrone(hit.id);else closeDetail();
 });
-canvas.addEventListener('mousedown',e=>{STATE.dragging=true;STATE.dragStart={x:e.clientX-STATE.mapOffset.x,y:e.clientY-STATE.mapOffset.y};});
-canvas.addEventListener('mousemove',e=>{if(!STATE.dragging)return;STATE.mapOffset={x:e.clientX-STATE.dragStart.x,y:e.clientY-STATE.dragStart.y};});
+canvas.addEventListener('mousedown',e=>{
+  if(STATE.mapClickMode)return;
+  STATE.dragging=true;STATE.dragStart={x:e.clientX-STATE.mapOffset.x,y:e.clientY-STATE.mapOffset.y};
+});
+canvas.addEventListener('mousemove',e=>{
+  if(!STATE.dragging)return;
+  STATE.mapOffset={x:e.clientX-STATE.dragStart.x,y:e.clientY-STATE.dragStart.y};
+});
 canvas.addEventListener('mouseup',()=>STATE.dragging=false);
 canvas.addEventListener('wheel',e=>{e.preventDefault();zoom(e.deltaY<0?1.1:0.9);},{passive:false});
+
 function zoom(f){STATE.mapScale=Math.max(0.3,Math.min(8,STATE.mapScale*f));}
 function resetView(){STATE.mapScale=1;STATE.mapOffset={x:0,y:0};toast('🗺 View reset');}
 function togglePaths(){STATE.showPaths=!STATE.showPaths;toast(STATE.showPaths?'〰 Paths on':'— Paths off');}
@@ -580,47 +1037,324 @@ function setLayer(l,btn){STATE.layer=l;document.querySelectorAll('.layer-btn').f
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('collapsed');}
 function setTab(s,btn){STATE.filter=s;document.querySelectorAll('.ftab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
 function searchDrones(v){STATE.search=v;}
-async function fetchOpenSky(){
+
+// ============================
+// MODES MENU
+// ============================
+let modesOpen=false;
+function toggleModesMenu(){
+  modesOpen=!modesOpen;
+  document.getElementById('modesMenu').classList.toggle('open',modesOpen);
+  document.querySelector('.modes-fab-btn').innerHTML=`<span class="fab-icon">🛸</span> Detection Modes ${modesOpen?'▼':'▲'}`;
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.modes-fab')&&modesOpen){modesOpen=false;document.getElementById('modesMenu').classList.remove('open');document.querySelector('.modes-fab-btn').innerHTML='<span class="fab-icon">🛸</span> Detection Modes ▲';}
+});
+
+function selectMode(mode){
+  modesOpen=false;document.getElementById('modesMenu').classList.remove('open');
+  document.querySelector('.modes-fab-btn').innerHTML='<span class="fab-icon">🛸</span> Detection Modes ▲';
+  document.querySelectorAll('.mode-item').forEach(el=>el.classList.remove('active-mode'));
+  document.getElementById('modeItem-'+mode)?.classList.add('active-mode');
+  STATE.currentMode=mode;
+  if(mode==='demo'){
+    STATE.liveDrones=[];STATE.simDrones=[];stopSimRadar();
+    document.getElementById('modeLabel').textContent='Demo Mode';
+    document.getElementById('apiBadge').className='api-badge demo';
+    document.getElementById('apiLabel').textContent='Demo Mode';
+    toast('🎮 Demo mode — Simulated DJI drones');
+    addAlert('info','Mode: Demo simulation active');
+  }else if(mode==='vatsim'){
+    STATE.adsbSource='vatsim';fetchOpenSky();
+  }else if(mode==='adsb'){
+    openModal('adsbModal');
+  }else if(mode==='flighthub'){
+    openModal('fhModal');
+  }else if(mode==='manual'){
+    toast('📌 Manual mode — Click anywhere on the map to place a drone, or use the + button below');
+    addAlert('info','Manual entry mode activated — click map to place drones');
+    STATE.mapClickMode='manual';
+    canvas.style.cursor='crosshair';
+    document.getElementById('modeLabel').textContent='Manual Entry';
+  }else if(mode==='radar'){
+    openModal('radarModal');
+  }
+}
+
+// ============================
+// MANUAL DRONE ENTRY
+// ============================
+function openManualEntry(){
+  document.getElementById('manId').value='DRONE-'+Math.floor(Math.random()*9000+1000);
+  document.getElementById('manLat').value='';
+  document.getElementById('manLng').value='';
+  openModal('manualModal');
+}
+function addManualDrone(){
+  const id=document.getElementById('manId').value.trim()||('MAN-'+Date.now());
+  const lat=parseFloat(document.getElementById('manLat').value);
+  const lng=parseFloat(document.getElementById('manLng').value);
+  const alt=parseFloat(document.getElementById('manAlt').value)||100;
+  const speed=parseFloat(document.getElementById('manSpeed').value)||0;
+  const heading=parseFloat(document.getElementById('manHeading').value)||0;
+  const battery=parseFloat(document.getElementById('manBattery').value)||85;
+  const status=document.getElementById('manStatus').value;
+  const model=document.getElementById('manModel').value.trim()||'Unknown Drone';
+  if(isNaN(lat)||isNaN(lng)){toast('⚠ Please enter valid coordinates');return;}
   const b=STATE.bounds;
-  toast('📡 Fetching live flight data...');document.getElementById('oskyLabel').textContent='Fetching...';
+  if(lat<b.minLat||lat>b.maxLat||lng<b.minLng||lng>b.maxLng){
+    toast('⚠ Coordinates outside visible map area');
+    addAlert('warning','Manual drone placed outside current map bounds');
+  }
+  const drone={id,model,status,battery,altitude:alt,speed,heading,distance:0,signal:90,flightTime:0,lat,lng,vLat:0,vLng:0,path:[],altHist:Array.from({length:30},()=>alt),source:'manual',callsign:'',icao:''};
+  STATE.manualDrones.push(drone);
+  closeModal('manualModal');
+  STATE.mapClickMode=null;canvas.style.cursor='default';
+  toast(`📌 ${id} added to map`);
+  addAlert('info',`Manual drone added: ${id} at ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+  selectDrone(id);
+}
+
+// ============================
+// SIMULATED RADAR
+// ============================
+function startSimRadar(){
+  const count=parseInt(document.getElementById('simCount').value)||5;
+  const behavior=document.getElementById('simBehavior').value;
+  const b=STATE.bounds;
+  STATE.simDrones=Array.from({length:count},(_,i)=>{
+    const lat=rnd(b.minLat+0.2,b.maxLat-0.2);
+    const lng=rnd(b.minLng+0.2,b.maxLng-0.2);
+    return{id:'SIM-'+String(i+1).padStart(3,'0'),model:'Unknown Drone (Detected)',status:'simulated',battery:ri(20,90),altitude:ri(30,300),speed:ri(10,60),heading:rnd(0,360),distance:0,signal:ri(40,90),flightTime:ri(1,20),lat,lng,_centerLat:lat,_centerLng:lng,_angle:rnd(0,Math.PI*2),vLat:(Math.random()-.5)*0.0005,vLng:(Math.random()-.5)*0.0005,path:[],altHist:Array.from({length:30},()=>ri(50,300)),source:'simulated',callsign:'',icao:'',behavior,newDetection:true,detectedAt:Date.now()};
+  });
+  STATE.simRunning=true;
+  document.getElementById('radarSweep').style.display='block';
+  document.getElementById('simStartBtn').style.display='none';
+  document.getElementById('simStopBtn').style.display='block';
+  document.getElementById('simDetected').textContent=count;
+  document.getElementById('modeBadge').style.cssText='background:rgba(0,255,136,0.08);border-color:rgba(0,255,136,0.3);color:var(--green)';
+  document.getElementById('modeLabel').textContent='Radar Active';
+  closeModal('radarModal');
+  toast(`🔭 Radar active — ${count} drones detected`);
+  addAlert('warning',`Simulated radar: ${count} unknown drones detected in vicinity`);
+  STATE.simDrones.forEach(d=>addAlert('warning',`RADAR DETECT: ${d.id} at ${d.lat.toFixed(4)},${d.lng.toFixed(4)} alt:${d.altitude}m`));
+}
+function stopSimRadar(){
+  STATE.simDrones=[];STATE.simRunning=false;
+  document.getElementById('radarSweep').style.display='none';
+  document.getElementById('simStartBtn').style.display='block';
+  document.getElementById('simStopBtn').style.display='none';
+  document.getElementById('modeBadge').style.cssText='background:rgba(255,107,53,0.08);border-color:rgba(255,107,53,0.3);color:var(--accent3)';
+  document.getElementById('modeLabel').textContent=STATE.currentMode==='radar'?'Radar Stopped':'Demo Mode';
+  toast('⏹ Radar stopped');
+}
+</script>
+
+
+<script>
+// ============================
+// ADS-B SOURCE
+// ============================
+let currentAdsbTab='vatsim';
+function setAdsbTab(tab,btn){
+  currentAdsbTab=tab;
+  document.querySelectorAll('.stab2').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('adsbSourceStatus').textContent=tab.toUpperCase();
+  const content=document.getElementById('adsbTabContent');
+  if(tab==='vatsim'){
+    content.innerHTML=`<div class="info-box success">✓ <strong>VATSIM</strong> — Free, no API key needed, real virtual pilots worldwide. Best for Philippine airspace coverage.</div>
+    <div class="form-row"><label class="form-label">Bounding Box</label><div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px">
+    <input class="form-input" id="adsbMinLat" placeholder="Min Lat" value="10.0">
+    <input class="form-input" id="adsbMaxLat" placeholder="Max Lat" value="19.0">
+    <input class="form-input" id="adsbMinLng" placeholder="Min Lng" value="117.0">
+    <input class="form-input" id="adsbMaxLng" placeholder="Max Lng" value="127.0"></div></div>`;
+  }else if(tab==='opensky'){
+    content.innerHTML=`<div class="info-box warn">⚠ <strong>OpenSky Network</strong> — Free public API, but can be unreliable/rate-limited. Try VATSIM if this fails.</div>
+    <div class="form-row"><label class="form-label">OpenSky Username (optional)</label><input class="form-input" id="adsbOsUser" placeholder="Leave blank for anonymous"></div>
+    <div class="form-row"><label class="form-label">Bounding Box</label><div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px">
+    <input class="form-input" id="adsbMinLat" placeholder="Min Lat" value="10.0">
+    <input class="form-input" id="adsbMaxLat" placeholder="Max Lat" value="19.0">
+    <input class="form-input" id="adsbMinLng" placeholder="Min Lng" value="117.0">
+    <input class="form-input" id="adsbMaxLng" placeholder="Max Lng" value="127.0"></div></div>`;
+  }else{
+    content.innerHTML=`<div class="info-box warn">⚠ <strong>ADS-B Exchange</strong> — Requires a free API key from <span style="color:var(--accent)">adsbexchange.com</span>. More complete data than OpenSky.</div>
+    <div class="form-row"><label class="form-label">ADS-B Exchange API Key</label><input class="form-input" id="adsbxKey" placeholder="Your API key from adsbexchange.com"></div>
+    <div class="form-row"><label class="form-label">Bounding Box</label><div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px">
+    <input class="form-input" id="adsbMinLat" placeholder="Min Lat" value="10.0">
+    <input class="form-input" id="adsbMaxLat" placeholder="Max Lat" value="19.0">
+    <input class="form-input" id="adsbMinLng" placeholder="Min Lng" value="117.0">
+    <input class="form-input" id="adsbMaxLng" placeholder="Max Lng" value="127.0"></div></div>`;
+  }
+}
+
+async function applyAdsbSource(){
+  STATE.adsbSource=currentAdsbTab;
+  const minLat=parseFloat(document.getElementById('adsbMinLat')?.value||'10');
+  const maxLat=parseFloat(document.getElementById('adsbMaxLat')?.value||'19');
+  const minLng=parseFloat(document.getElementById('adsbMinLng')?.value||'117');
+  const maxLng=parseFloat(document.getElementById('adsbMaxLng')?.value||'127');
+  STATE.bounds={minLat,maxLat,minLng,maxLng};
+  closeModal('adsbModal');
+  if(currentAdsbTab==='vatsim'){
+    await fetchVatsim();
+  }else if(currentAdsbTab==='opensky'){
+    await fetchOpenSkyDirect();
+  }else{
+    const key=document.getElementById('adsbxKey')?.value;
+    if(!key){toast('⚠ ADS-B Exchange API key required');return;}
+    await fetchAdsbExchange(key);
+  }
+}
+
+async function fetchVatsim(){
+  const b=STATE.bounds;
+  toast('✈ Fetching VATSIM live data...');
+  document.getElementById('oskyLabel').textContent='Fetching...';
   try{
-    // VATSIM Data API — free, no auth, full CORS support, real pilots worldwide
     const resp=await fetch('https://data.vatsim.net/v3/vatsim-data.json');
     if(!resp.ok)throw new Error('HTTP '+resp.status);
     const data=await resp.json();
-    const pilots=(data.pilots||[]).filter(p=>
-      p.latitude>=b.minLat&&p.latitude<=b.maxLat&&
-      p.longitude>=b.minLng&&p.longitude<=b.maxLng
-    );
-    STATE.liveDrones=pilots.slice(0,60).map(p=>({
-      id:'VATSIM-'+p.callsign,
-      model:'Aircraft ('+( p.flight_plan?.aircraft_short||'Unknown')+')',
-      callsign:p.callsign,
-      icao:p.callsign,
-      status:'live',
-      battery:100,
-      altitude:Math.round(p.altitude||0),
-      speed:Math.round(p.groundspeed||0),
-      heading:p.heading||0,
-      distance:0,signal:100,flightTime:0,
-      lat:p.latitude,lng:p.longitude,
-      vLat:0,vLng:0,path:[],
-      altHist:Array.from({length:30},()=>Math.round(p.altitude||0)),
-      source:'opensky',onGround:p.groundspeed<10
+    const pilots=(data.pilots||[]).filter(p=>p.latitude>=b.minLat&&p.latitude<=b.maxLat&&p.longitude>=b.minLng&&p.longitude<=b.maxLng);
+    STATE.liveDrones=pilots.slice(0,80).map(p=>({
+      id:'VATSIM-'+p.callsign,model:'Aircraft ('+(p.flight_plan?.aircraft_short||'Unknown')+')',callsign:p.callsign,icao:p.callsign,
+      status:'live',battery:100,altitude:Math.round(p.altitude||0),speed:Math.round(p.groundspeed||0),heading:p.heading||0,
+      distance:0,signal:100,flightTime:0,lat:p.latitude,lng:p.longitude,vLat:0,vLng:0,path:[],
+      altHist:Array.from({length:30},()=>Math.round(p.altitude||0)),source:'vatsim',onGround:p.groundspeed<10
     }));
     const count=STATE.liveDrones.length;
-    document.getElementById('oskyLabel').textContent=`VATSIM: ${count} Aircraft`;
+    document.getElementById('oskyLabel').textContent=`VATSIM: ${count} AC`;
     document.getElementById('oskyBadge').className='api-badge opensky';
     document.getElementById('oskyStatus').textContent='CONNECTED';document.getElementById('oskyStatus').className='status-indicator si-ok';
+    document.getElementById('adsbLastFetch').textContent=new Date().toLocaleTimeString();
+    document.getElementById('adsbCount').textContent=count;
+    document.getElementById('adsbSourceStatus').textContent='VATSIM ✓';
+    document.getElementById('modeLabel').textContent='VATSIM Live';
     toast(`✈ ${count} live flights in PH airspace`);
     addAlert('info',`VATSIM: ${count} aircraft in Philippine airspace`);
   }catch(err){
-    document.getElementById('oskyLabel').textContent='Live Data: Error';
+    document.getElementById('oskyLabel').textContent='VATSIM: Error';
     document.getElementById('oskyStatus').textContent='ERROR';document.getElementById('oskyStatus').className='status-indicator si-err';
-    toast('⚠ Live data unavailable: '+err.message);
-    addAlert('warning','VATSIM fetch failed: '+err.message);
+    toast('⚠ VATSIM error: '+err.message);
+    addAlert('error','VATSIM fetch failed: '+err.message);
   }
 }
+
+async function fetchOpenSkyDirect(){
+  const b=STATE.bounds;
+  toast('📡 Fetching OpenSky data...');
+  try{
+    const url=`https://opensky-network.org/api/states/all?lamin=${b.minLat}&lomin=${b.minLng}&lamax=${b.maxLat}&lomax=${b.maxLng}`;
+    const resp=await fetch(url);
+    if(!resp.ok)throw new Error('OpenSky HTTP '+resp.status);
+    const data=await resp.json();
+    const states=(data.states||[]);
+    STATE.liveDrones=states.slice(0,80).map(s=>({
+      id:'OSKY-'+(s[1]||s[0]||'???').trim(),model:'Aircraft (OpenSky)',callsign:(s[1]||'').trim(),icao:s[0],
+      status:'live',battery:100,altitude:Math.round(s[7]||s[13]||0),speed:Math.round((s[9]||0)*3.6),heading:Math.round(s[10]||0),
+      distance:0,signal:100,flightTime:0,lat:s[6]||0,lng:s[5]||0,vLat:0,vLng:0,path:[],
+      altHist:Array.from({length:30},()=>Math.round(s[7]||0)),source:'adsb',onGround:s[8]||false
+    })).filter(d=>d.lat&&d.lng);
+    const count=STATE.liveDrones.length;
+    document.getElementById('oskyLabel').textContent=`OpenSky: ${count} AC`;
+    toast(`📡 ${count} aircraft from OpenSky`);
+    addAlert('info',`OpenSky: ${count} aircraft fetched`);
+    document.getElementById('modeLabel').textContent='OpenSky Live';
+  }catch(err){
+    toast('⚠ OpenSky failed: '+err.message+' — Try VATSIM instead');
+    addAlert('error','OpenSky failed: '+err.message);
+  }
+}
+
+async function fetchAdsbExchange(apiKey){
+  const b=STATE.bounds;
+  toast('📡 Fetching ADS-B Exchange...');
+  try{
+    const lat=(b.minLat+b.maxLat)/2,lng=(b.minLng+b.maxLng)/2;
+    const resp=await fetch(`https://adsbexchange-com1.p.rapidapi.com/v2/lat/${lat}/lon/${lng}/dist/500/`,{
+      headers:{'X-RapidAPI-Key':apiKey,'X-RapidAPI-Host':'adsbexchange-com1.p.rapidapi.com'}
+    });
+    if(!resp.ok)throw new Error('ADSBX HTTP '+resp.status);
+    const data=await resp.json();
+    const ac=(data.ac||[]).filter(a=>a.lat>=b.minLat&&a.lat<=b.maxLat&&a.lon>=b.minLng&&a.lon<=b.maxLng);
+    STATE.liveDrones=ac.slice(0,80).map(a=>({
+      id:'ADSBX-'+(a.flight||a.hex||'???').trim(),model:'Aircraft ('+(a.t||'Unknown')+')',callsign:(a.flight||'').trim(),icao:a.hex,
+      status:'live',battery:100,altitude:Math.round(a.alt_baro||a.alt_geom||0),speed:Math.round(a.gs||0),heading:Math.round(a.track||0),
+      distance:0,signal:100,flightTime:0,lat:a.lat,lng:a.lon,vLat:0,vLng:0,path:[],
+      altHist:Array.from({length:30},()=>Math.round(a.alt_baro||0)),source:'adsb'
+    }));
+    const count=STATE.liveDrones.length;
+    toast(`📡 ${count} aircraft from ADS-B Exchange`);
+    addAlert('info',`ADS-B Exchange: ${count} aircraft`);
+    document.getElementById('modeLabel').textContent='ADS-B Exchange';
+    document.getElementById('oskyLabel').textContent=`ADSBX: ${count} AC`;
+  }catch(err){
+    toast('⚠ ADS-B Exchange failed: '+err.message);
+    addAlert('error','ADS-B Exchange failed: '+err.message);
+  }
+}
+
+// legacy wrapper
+async function fetchOpenSky(){await fetchVatsim();}
+</script>
+
+
+<script>
+// ============================
+// FLIGHTHUB WIZARD
+// ============================
+let fhCurrentStep=1;
+function fhNextStep(step){
+  fhCurrentStep=step;
+  [1,2,3].forEach(i=>{
+    document.getElementById('fhPanel'+i).style.display=i===step?'block':'none';
+    const el=document.getElementById('fhStep'+i);
+    el.className='step'+(i===step?' active':i<step?' done':'');
+  });
+}
+function testFlightHub(){
+  const host=document.getElementById('fh2Host').value.trim();
+  const token=document.getElementById('fh2Token').value.trim();
+  const org=document.getElementById('fh2OrgId').value.trim();
+  document.getElementById('fhTestHost').textContent=host?'SET':'MISSING';
+  document.getElementById('fhTestHost').className='status-indicator '+(host?'si-ok':'si-err');
+  document.getElementById('fhTestToken').textContent=token?'SET':'MISSING';
+  document.getElementById('fhTestToken').className='status-indicator '+(token?'si-ok':'si-err');
+  document.getElementById('fhTestFleet').textContent='PENDING';
+  document.getElementById('fhTestFleet').className='status-indicator si-wait';
+  const info=document.getElementById('fhTestResult');
+  if(!host||!token){
+    info.className='info-box warn';info.textContent='⚠ Host URL and API token are required.';return;
+  }
+  // Simulate a connection test (actual connection requires server-side proxy due to CORS)
+  info.className='info-box tip';info.textContent='⚙ Testing connection to FlightHub 2... (Note: direct browser connection may require a CORS proxy)';
+  setTimeout(()=>{
+    document.getElementById('fhTestFleet').textContent='DEMO';
+    document.getElementById('fhTestFleet').className='status-indicator si-wait';
+    info.className='info-box warn';
+    info.innerHTML='⚠ Browser CORS policy prevents direct connection to FlightHub 2 API. To use this in production, you need a backend proxy server. <br><br>✓ Credentials saved — demo fleet shown until real connection is established.';
+  },1500);
+}
+function applyFlightHub(){
+  const host=document.getElementById('fh2Host').value.trim();
+  const token=document.getElementById('fh2Token').value.trim();
+  const orgId=document.getElementById('fh2OrgId').value.trim();
+  const mqtt=document.getElementById('fh2Mqtt').value.trim();
+  STATE.fhConfig={host,token,orgId,mqtt};
+  closeModal('fhModal');
+  document.getElementById('apiLabel').textContent='FlightHub 2';
+  document.getElementById('apiBadge').className='api-badge connected';
+  document.getElementById('modeLabel').textContent='FlightHub 2';
+  document.getElementById('modeBadge').style.cssText='background:rgba(0,255,136,0.08);border-color:rgba(0,255,136,0.3);color:var(--green)';
+  document.getElementById('fhStatus').textContent='CONFIGURED';document.getElementById('fhStatus').className='status-indicator si-ok';
+  toast('🛰 DJI FlightHub 2 configured');
+  addAlert('info','FlightHub 2: credentials saved. Real-time fleet requires backend proxy.');
+  fhNextStep(1);
+}
+
+// ============================
+// WEATHER
+// ============================
 async function fetchWeather(){
   const b=STATE.bounds;const lat=(b.minLat+b.maxLat)/2,lng=(b.minLng+b.maxLng)/2;
   try{
@@ -637,13 +1371,21 @@ async function fetchWeather(){
     document.getElementById('wxStatus').textContent='CONNECTED';document.getElementById('wxStatus').className='status-indicator si-ok';
   }catch(e){document.getElementById('wxCond').textContent='Weather unavailable';document.getElementById('wxStatus').textContent='ERROR';document.getElementById('wxStatus').className='status-indicator si-err';}
 }
+
+// ============================
+// ALERTS
+// ============================
 function addAlert(type,msg){STATE.alerts.unshift({type,msg,time:new Date().toLocaleTimeString()});if(STATE.alerts.length>20)STATE.alerts.pop();renderAlerts();}
 function renderAlerts(){document.getElementById('alertsList').innerHTML=STATE.alerts.slice(0,10).map(a=>`<div class="alert-item ${a.type}">${a.msg}<div class="alert-time">${a.time}</div></div>`).join('');}
 let alertsOpen=false;
 function openAlertsPanel(){alertsOpen=!alertsOpen;document.getElementById('alertsPanel').classList.toggle('open',alertsOpen);}
 document.addEventListener('click',e=>{if(!e.target.closest('.alerts-btn')&&!e.target.closest('.alerts-panel')){alertsOpen=false;document.getElementById('alertsPanel').classList.remove('open');}});
+
+// ============================
+// EXPORT
+// ============================
 function exportFlightLog(){
-  const all=[...STATE.drones,...STATE.liveDrones];
+  const all=getAllDrones();
   const csv=['ID,Model,Status,Latitude,Longitude,Altitude(m),Speed(km/h),Battery(%),Source,Timestamp'];
   all.forEach(d=>{csv.push([d.id,d.model,d.status,d.lat.toFixed(6),d.lng.toFixed(6),d.altitude,Math.round(d.speed),d.battery||'N/A',d.source,new Date().toISOString()].join(','));});
   const blob=new Blob([csv.join('\n')],{type:'text/csv'});
@@ -653,32 +1395,51 @@ function exportSingleLog(){if(!STATE.selectedDrone){toast('No drone selected');r
 function copyCoords(){if(!STATE.selectedDrone){toast('No drone selected');return;}const d=STATE.selectedDrone;navigator.clipboard?.writeText(`${d.lat.toFixed(6)}, ${d.lng.toFixed(6)}`);toast('📋 Coordinates copied');}
 function trackDrone(){if(!STATE.selectedDrone)return;STATE.tracking=!STATE.tracking;STATE.trackedId=STATE.tracking?STATE.selectedDrone.id:null;toast(STATE.tracking?'📡 Tracking '+STATE.selectedDrone.id:'📡 Tracking stopped');}
 function addGeofenceFor(){STATE.showGeofence=true;toast('⬡ Geofence zone enabled');}
-function openApiModal(){document.getElementById('apiModal').classList.add('open');}
+
+// ============================
+// MODAL HELPERS
+// ============================
+function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
-document.getElementById('apiModal').addEventListener('click',e=>{if(e.target===document.getElementById('apiModal'))closeModal('apiModal');});
+function openApiModal(){document.getElementById('apiModal').classList.add('open');}
+['apiModal','manualModal','radarModal','adsbModal','fhModal'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',e=>{if(e.target===document.getElementById(id))closeModal(id);});
+});
 function updateSourceUI(){const v=document.getElementById('dataSource').value;document.getElementById('flighthubFields').style.display=v==='flighthub'?'block':'none';document.getElementById('openskyFields').style.display=v==='opensky'?'block':'none';}
 async function applyApiConfig(){
   const src=document.getElementById('dataSource').value;STATE.apiMode=src;
   if(src==='opensky'){
-    STATE.osConfig={user:document.getElementById('osUser').value,pass:document.getElementById('osPass').value};
-    const b=STATE.bounds;b.minLat=parseFloat(document.getElementById('osMinLat').value)||10.0;b.maxLat=parseFloat(document.getElementById('osMaxLat').value)||19.0;b.minLng=parseFloat(document.getElementById('osMinLng').value)||117.0;b.maxLng=parseFloat(document.getElementById('osMaxLng').value)||127.0;
-    closeModal('apiModal');await fetchOpenSky();
-  }else{STATE.liveDrones=[];document.getElementById('apiLabel').textContent='Demo Mode';document.getElementById('apiBadge').className='api-badge demo';closeModal('apiModal');toast('🎮 Demo mode active');}
+    const b=STATE.bounds;b.minLat=parseFloat(document.getElementById('osMinLat')?.value)||10.0;b.maxLat=parseFloat(document.getElementById('osMaxLat')?.value)||19.0;b.minLng=parseFloat(document.getElementById('osMinLng')?.value)||117.0;b.maxLng=parseFloat(document.getElementById('osMaxLng')?.value)||127.0;
+    closeModal('apiModal');await fetchVatsim();
+  }else if(src==='flighthub'){
+    closeModal('apiModal');openModal('fhModal');
+  }else{
+    STATE.liveDrones=[];document.getElementById('apiLabel').textContent='Demo Mode';document.getElementById('apiBadge').className='api-badge demo';closeModal('apiModal');toast('🎮 Demo mode active');
+  }
 }
+
+// ============================
+// CLOCK & INIT
+// ============================
 function updateClock(){document.getElementById('clock').textContent=new Date().toISOString().replace('T',' ').substring(0,19)+' UTC';}
 setInterval(updateClock,1000);updateClock();
 let toastT;
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2200);}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2500);}
+
+// ============================
+// STARTUP
+// ============================
 STATE.drones=genDrones(14);
 addAlert('info','SkyWatch Pro initialized — Demo mode active');
-addAlert('info','Weather data: Open-Meteo API');
-addAlert('info','Live ATC: VATSIM real flights — click ↺ to refresh');
+addAlert('info','🛸 New: Use "Detection Modes" button to switch data sources');
+addAlert('info','📌 Manual mode: click map to place drones');
+addAlert('info','🔭 Radar mode: simulated drone detection');
 fetchWeather();
-fetchOpenSky();
-setInterval(fetchOpenSky,600000);
+fetchVatsim();
+setInterval(fetchVatsim,600000);
 setInterval(fetchWeather,900000);
 frame();
-toast('🛰 SkyWatch Pro — Ready');
+toast('🛰 SkyWatch Pro — Ready | Click 🛸 Detection Modes to explore');
 </script>
 </body>
 </html>
