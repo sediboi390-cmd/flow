@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Animated-Realism Fighting Storyboard</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Roboto+Mono:wght@400;500&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0a0a0f;
+      color: #e8e8f0;
+      font-family: 'Roboto Mono', monospace;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #0d0d1a 0%, #1a0a2e 50%, #0d0d1a 100%);
+      border-bottom: 2px solid #ff3c5a;
+      padding: 32px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(255,60,90,0.04) 2px, rgba(255,60,90,0.04) 4px
+      );
+      pointer-events: none;
+    }
+
+    header h1 {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, #ff3c5a, #ff9800, #ff3c5a);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 3s linear infinite;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 0% center; }
+      100% { background-position: 200% center; }
+    }
+
+    header p {
+      margin-top: 8px;
+      font-size: 0.8rem;
+      letter-spacing: 0.3em;
+      color: #888;
+      text-transform: uppercase;
+    }
+
+    .meta-bar {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      flex-wrap: wrap;
+      padding: 16px 40px;
+      background: #0f0f1a;
+      border-bottom: 1px solid #222;
+      font-size: 0.72rem;
+      letter-spacing: 0.15em;
+      color: #aaa;
+    }
+
+    .meta-bar span strong {
+      color: #ff9800;
+    }
+
+
+    .timeline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 20px 40px;
+      background: #0a0a12;
+      border-bottom: 1px solid #1a1a2e;
+      overflow-x: auto;
+    }
+
+    .timeline-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: #ff3c5a;
+      flex-shrink: 0;
+      box-shadow: 0 0 8px #ff3c5a;
+    }
+
+    .timeline-line {
+      height: 2px;
+      flex: 1;
+      min-width: 30px;
+      background: linear-gradient(90deg, #ff3c5a, #ff9800);
+      opacity: 0.4;
+    }
+
+    .timeline-label {
+      font-size: 0.6rem;
+      color: #666;
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+      text-align: center;
+      margin-top: 4px;
+    }
+
+    .timeline-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .act-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #ff3c5a;
+      border-left: 4px solid #ff3c5a;
+      padding-left: 16px;
+      margin: 40px 0 24px;
+    }
+
+    .scene-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .panel {
+      background: #0f0f1c;
+      border: 1px solid #1e1e30;
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .panel:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 32px rgba(255, 60, 90, 0.2);
+    }
+
+    .panel-number {
+      position: absolute;
+      top: 10px; left: 10px;
+      background: rgba(0,0,0,0.7);
+      color: #ff9800;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      padding: 3px 8px;
+      border: 1px solid #ff9800;
+      z-index: 10;
+    }
+
+    .panel-duration {
+      position: absolute;
+      top: 10px; right: 10px;
+      background: rgba(0,0,0,0.7);
+      color: #aaa;
+      font-size: 0.62rem;
+      letter-spacing: 0.1em;
+      padding: 3px 8px;
+      border: 1px solid #333;
+      z-index: 10;
+    }
+
+
+    /* ── Scene Illustrations (SVG-based animated-realism panels) ── */
+    .scene-canvas {
+      width: 100%;
+      height: 220px;
+      position: relative;
+      overflow: hidden;
+      background: #050508;
+    }
+
+    .scene-canvas svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* motion blur overlay */
+    .motion-blur {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      animation: flickerFlash 6s infinite;
+      opacity: 0;
+    }
+
+    @keyframes flickerFlash {
+      0%, 92%, 100% { opacity: 0; }
+      93% { opacity: 0.15; background: white; }
+      95% { opacity: 0; }
+      97% { opacity: 0.1; background: white; }
+    }
+
+    .panel-info {
+      padding: 14px 16px;
+      border-top: 1px solid #1a1a2e;
+    }
+
+    .scene-label {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.1em;
+      margin-bottom: 6px;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .tag {
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      padding: 2px 8px;
+      border-radius: 2px;
+      text-transform: uppercase;
+    }
+
+    .tag-cam  { background: rgba(255,152,0,0.15); color: #ff9800; border: 1px solid #ff980040; }
+    .tag-move { background: rgba(255,60,90,0.15);  color: #ff3c5a; border: 1px solid #ff3c5a40; }
+    .tag-lens { background: rgba(100,200,255,0.12); color: #64c8ff; border: 1px solid #64c8ff30; }
+    .tag-fx   { background: rgba(180,100,255,0.12); color: #c080ff; border: 1px solid #c080ff30; }
+
+    .scene-desc {
+      font-size: 0.72rem;
+      color: #999;
+      line-height: 1.6;
+    }
+
+    .motion-guide {
+      margin-top: 10px;
+      padding: 8px 10px;
+      background: rgba(255,60,90,0.06);
+      border-left: 2px solid #ff3c5a;
+      font-size: 0.68rem;
+      color: #cc8888;
+      line-height: 1.5;
+    }
+
+    .arrow { color: #ff9800; margin-right: 4px; }
+
+    /* ── Sound / Audio hint bar ── */
+    .audio-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      font-size: 0.62rem;
+      color: #555;
+    }
+
+    .audio-icon { color: #ff3c5a; }
+
+    .waveform {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      height: 14px;
+    }
+
+    .waveform span {
+      display: inline-block;
+      width: 2px;
+      background: #ff3c5a;
+      border-radius: 1px;
+      animation: wave 0.8s ease-in-out infinite alternate;
+    }
+
+    .waveform span:nth-child(2) { animation-delay: 0.1s; }
+    .waveform span:nth-child(3) { animation-delay: 0.2s; }
+    .waveform span:nth-child(4) { animation-delay: 0.3s; }
+    .waveform span:nth-child(5) { animation-delay: 0.4s; }
+
+    @keyframes wave {
+      from { height: 4px; }
+      to   { height: 14px; }
+    }
+
+
+    /* ── Full-width key frame dividers ── */
+    .keyframe-divider {
+      grid-column: 1 / -1;
+      background: linear-gradient(90deg, transparent, rgba(255,60,90,0.15), transparent);
+      border: 1px solid rgba(255,60,90,0.15);
+      border-radius: 2px;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      color: #ff3c5a;
+      text-transform: uppercase;
+    }
+
+    .keyframe-divider::before,
+    .keyframe-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255,60,90,0.3);
+    }
+
+    footer {
+      text-align: center;
+      padding: 30px;
+      border-top: 1px solid #1a1a2e;
+      font-size: 0.65rem;
+      color: #444;
+      letter-spacing: 0.2em;
+    }
+
+    /* ── Animated entrance ── */
+    .panel {
+      animation: panelIn 0.4s ease both;
+    }
+
+    @keyframes panelIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .panel:nth-child(1)  { animation-delay: 0.05s; }
+    .panel:nth-child(2)  { animation-delay: 0.10s; }
+    .panel:nth-child(3)  { animation-delay: 0.15s; }
+    .panel:nth-child(4)  { animation-delay: 0.20s; }
+    .panel:nth-child(5)  { animation-delay: 0.25s; }
+    .panel:nth-child(6)  { animation-delay: 0.30s; }
+    .panel:nth-child(7)  { animation-delay: 0.35s; }
+    .panel:nth-child(8)  { animation-delay: 0.40s; }
+    .panel:nth-child(9)  { animation-delay: 0.45s; }
+    .panel:nth-child(10) { animation-delay: 0.50s; }
+    .panel:nth-child(11) { animation-delay: 0.55s; }
+    .panel:nth-child(12) { animation-delay: 0.60s; }
+
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>&#9876; Shadow Strike — Animated Realism Storyboard</h1>
+  <p>Fight Sequence &nbsp;|&nbsp; Short Film &nbsp;|&nbsp; Animated-Realism Style</p>
+</header>
+
+<div class="meta-bar">
+  <span><strong>FORMAT</strong> 16:9 &nbsp;2K</span>
+  <span><strong>FPS</strong> 24fps / 60fps slow-mo</span>
+  <span><strong>STYLE</strong> Animated Realism</span>
+  <span><strong>DURATION</strong> ~2 min 30 sec</span>
+  <span><strong>TOTAL SCENES</strong> 12</span>
+  <span><strong>COLOR GRADE</strong> High-contrast, desaturated + rim light</span>
+</div>
+
+<div class="timeline">
+  <div class="timeline-item">
+    <div class="timeline-dot" style="background:#64c8ff;box-shadow:0 0 8px #64c8ff"></div>
+    <div class="timeline-label">ACT I<br/>00:00</div>
+  </div>
+  <div class="timeline-line"></div>
+  <div class="timeline-item">
+    <div class="timeline-dot"></div>
+    <div class="timeline-label">S-01<br/>00:05</div>
+  </div>
+  <div class="timeline-line"></div>
+  <div class="timeline-item">
+    <div class="timeline-dot"></div>
+    <div class="timeline-label">S-02<br/>00:18</div>
+  </div>
+  <div class="timeline-line"></div>
+  <div class="timeline-item">
+    <div class="timeline-dot"></div>
+    <div class="timeline-label">S-03<br/>00:30</div>
+  </div>
+  <div class="timeline-line" style="background:linear-gradient(90deg,#ff9800,#ff3c5a)"></div>
+  <div class="timeline-item">
+    <div class="timeline-dot" style="background:#ff9800;box-shadow:0 0 8px #ff9800"></div>
+    <div class="timeline-label">ACT II<br/>00:45</div>
+  </div>
+  <div class="timeline-line"></div>
+  <div class="timeline-item">
+    <div class="timeline-dot"></div>
+    <div class="timeline-label">S-04<br/>00:50</div>
+  </div>
+  <div class="timeline-line"></div>
+  <div class="timeline-item">
+    <div class="timeline-dot"></div>
+    <div class="timeline-label">S-05<br/>01:05</div>
+  </div>
+  <div class="timeline-line"></div>
+  <div class="timeline-item">
+    <div class="timeline-dot"></div>
+    <div class="timeline-label">S-06<br/>01:20</div>
+  </div>
+  <div class="timeline-line"></div>
+  <div class="timeline-item">
+    <div class="timeline-dot"></div>
+    <div class="timeline-label">S-07<br/>01:35</div>
+  </div>
+  <div class="timeline-line" style="background:linear-gradient(90deg,#ff3c5a,#c080ff)"></div>
+  <div class="timeline-item">
+    <div class="timeline-dot" style="background:#c080ff;box-shadow:0 0 8px #c080ff"></div>
+    <div class="timeline-label">ACT III<br/>01:50</div>
+  </div>
+  <div class="timeline-line"></div>
+  <div class="timeline-item">
+    <div class="timeline-dot"></div>
+    <div class="timeline-label">S-08<br/>01:55</div>
+  </div>
+  <div class="timeline-line"></div>
+  <div class="timeline-item">
+    <div class="timeline-dot"></div>
+    <div class="timeline-label">S-09<br/>02:08</div>
+  </div>
+  <div class="timeline-line"></div>
+  <div class="timeline-item">
+    <div class="timeline-dot"></div>
+    <div class="timeline-label">S-10<br/>02:18</div>
+  </div>
+  <div class="timeline-line"></div>
+  <div class="timeline-item">
+    <div class="timeline-dot" style="background:#ff3c5a;box-shadow:0 0 8px #ff3c5a"></div>
+    <div class="timeline-label">END<br/>02:30</div>
+  </div>
+</div>
+
+<main>
+
+
+<!-- ══════════════ ACT I — THE ENCOUNTER ══════════════ -->
+<div class="act-title">⬤ Act I — The Encounter</div>
+<div class="scene-grid">
+
+  <!-- SCENE 01 -->
+  <div class="panel">
+    <span class="panel-number">SCENE 01</span>
+    <span class="panel-duration">00:00 – 00:18 &nbsp;|&nbsp; 18s</span>
+    <div class="scene-canvas">
+      <svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="fog1" cx="50%" cy="80%" r="70%">
+            <stop offset="0%" stop-color="#1a1a3a" stop-opacity="1"/>
+            <stop offset="100%" stop-color="#000005" stop-opacity="1"/>
+          </radialGradient>
+          <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="softglow"><feGaussianBlur stdDeviation="6" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <!-- Sky / bg -->
+        <rect width="400" height="220" fill="url(#fog1)"/>
+        <!-- Rain lines -->
+        <g stroke="#334" stroke-width="0.5" opacity="0.5">
+          <line x1="20" y1="0" x2="10" y2="220"/><line x1="55" y1="0" x2="45" y2="220"/>
+          <line x1="90" y1="0" x2="80" y2="220"/><line x1="130" y1="0" x2="120" y2="220"/>
+          <line x1="170" y1="0" x2="160" y2="220"/><line x1="210" y1="0" x2="200" y2="220"/>
+          <line x1="250" y1="0" x2="240" y2="220"/><line x1="290" y1="0" x2="280" y2="220"/>
+          <line x1="330" y1="0" x2="320" y2="220"/><line x1="370" y1="0" x2="360" y2="220"/>
+        </g>
+        <!-- Ground / puddle reflection -->
+        <ellipse cx="200" cy="200" rx="180" ry="18" fill="#0a0a20" opacity="0.8"/>
+        <line x1="0" y1="190" x2="400" y2="190" stroke="#223" stroke-width="1"/>
+        <!-- Street lamp glow -->
+        <ellipse cx="310" cy="60" rx="50" ry="50" fill="#ff9800" opacity="0.07" filter="url(#softglow)"/>
+        <line x1="310" y1="0" x2="310" y2="190" stroke="#555" stroke-width="2"/>
+        <ellipse cx="310" cy="55" rx="6" ry="3" fill="#ffcc44" filter="url(#glow)"/>
+        <!-- Hero silhouette (left) — standing, coat -->
+        <g fill="#0d0d1a" stroke="#ff3c5a" stroke-width="0.8">
+          <ellipse cx="120" cy="108" rx="12" ry="14"/>
+          <rect x="108" y="122" width="24" height="50" rx="3"/>
+          <line x1="108" y1="130" x2="88" y2="155"/><line x1="132" y1="130" x2="145" y2="158"/>
+          <line x1="115" y1="172" x2="110" y2="195"/><line x1="125" y1="172" x2="130" y2="195"/>
+          <!-- coat flap -->
+          <path d="M108,140 Q90,160 95,190 L108,172Z" fill="#111122" stroke="none" opacity="0.8"/>
+          <path d="M132,140 Q150,160 145,190 L132,172Z" fill="#111122" stroke="none" opacity="0.8"/>
+        </g>
+        <!-- Villain silhouette (right) — arms out, menacing -->
+        <g fill="#0d0d1a" stroke="#c080ff" stroke-width="0.8">
+          <ellipse cx="280" cy="108" rx="13" ry="15"/>
+          <rect x="268" y="123" width="24" height="50" rx="3"/>
+          <!-- arms wide -->
+          <line x1="268" y1="130" x2="240" y2="145"/><line x1="292" y1="130" x2="320" y2="145"/>
+          <line x1="275" y1="173" x2="270" y2="195"/><line x1="285" y1="173" x2="290" y2="195"/>
+        </g>
+        <!-- Ground fog -->
+        <ellipse cx="200" cy="200" rx="200" ry="25" fill="#0a0a18" opacity="0.6"/>
+        <!-- Neon sign reflection on ground -->
+        <rect x="80" y="185" width="240" height="4" fill="#ff3c5a" opacity="0.07" rx="2"/>
+        <!-- Frame lines / aspect ratio guides -->
+        <rect x="0" y="0" width="400" height="220" fill="none" stroke="#ff3c5a" stroke-width="1.5" opacity="0.3"/>
+      </svg>
+      <div class="motion-blur"></div>
+    </div>
+    <div class="panel-info">
+      <div class="scene-label">Wide Establishing Shot — Rainy Alley</div>
+      <div class="tags">
+        <span class="tag tag-cam">EXTREME WIDE</span>
+        <span class="tag tag-move">STATIC → SLOW PUSH IN</span>
+        <span class="tag tag-lens">28mm WIDE</span>
+        <span class="tag tag-fx">RAIN VFX · FOG</span>
+      </div>
+      <div class="scene-desc">Two figures face each other in a rain-soaked back alley. Street lamp creates hard rim lighting. Hero left, villain right. Camera holds static then slowly dollies forward over 10 seconds.</div>
+      <div class="motion-guide">
+        <span class="arrow">▶</span>Camera: STATIC → slow dolly push (5–10% zoom)<br/>
+        <span class="arrow">▶</span>Rain particles: top-to-bottom, slight angle wind-right<br/>
+        <span class="arrow">▶</span>Coat fabric: subtle wind ripple simulation
+      </div>
+      <div class="audio-bar">
+        <span class="audio-icon">♫</span>
+        <div class="waveform"><span></span><span></span><span></span><span></span><span></span></div>
+        <span>rain ambience · distant thunder · tense low drone</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCENE 02 -->
+  <div class="panel">
+    <span class="panel-number">SCENE 02</span>
+    <span class="panel-duration">00:18 – 00:30 &nbsp;|&nbsp; 12s</span>
+    <div class="scene-canvas">
+      <svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="rimGlow" cx="80%" cy="20%" r="60%">
+            <stop offset="0%" stop-color="#ff9800" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#000005" stop-opacity="1"/>
+          </radialGradient>
+        </defs>
+        <rect width="400" height="220" fill="#060610"/>
+        <rect width="400" height="220" fill="url(#rimGlow)"/>
+        <!-- Close face — hero, low angle -->
+        <!-- Neck / shoulders -->
+        <rect x="140" y="160" width="120" height="60" rx="10" fill="#111" stroke="#ff3c5a" stroke-width="0.6"/>
+        <!-- Head -->
+        <ellipse cx="200" cy="110" rx="55" ry="62" fill="#1a1a2e" stroke="#ff3c5a" stroke-width="0.8"/>
+        <!-- Ear -->
+        <ellipse cx="145" cy="115" rx="8" ry="12" fill="#1a1a2e" stroke="#ff3c5a" stroke-width="0.6"/>
+        <ellipse cx="255" cy="115" rx="8" ry="12" fill="#1a1a2e" stroke="#ff3c5a" stroke-width="0.6"/>
+        <!-- Eyes — intense -->
+        <ellipse cx="178" cy="105" rx="16" ry="9" fill="#050510"/>
+        <ellipse cx="222" cy="105" rx="16" ry="9" fill="#050510"/>
+        <ellipse cx="178" cy="105" rx="6" ry="6" fill="#ff3c5a" opacity="0.9"/>
+        <ellipse cx="222" cy="105" rx="6" ry="6" fill="#ff3c5a" opacity="0.9"/>
+        <!-- pupils -->
+        <circle cx="178" cy="105" r="3" fill="#000"/>
+        <circle cx="222" cy="105" r="3" fill="#000"/>
+        <!-- eye reflection spark -->
+        <circle cx="181" cy="103" r="1.5" fill="#fff" opacity="0.9"/>
+        <circle cx="225" cy="103" r="1.5" fill="#fff" opacity="0.9"/>
+        <!-- Brow furrowed -->
+        <path d="M162,94 Q178,88 194,93" stroke="#ccc" stroke-width="2" fill="none"/>
+        <path d="M206,93 Q222,88 238,94" stroke="#ccc" stroke-width="2" fill="none"/>
+        <!-- Jaw / mouth tense -->
+        <path d="M180,140 Q200,145 220,140" stroke="#aaa" stroke-width="1.5" fill="none"/>
+        <!-- Nose -->
+        <path d="M197,115 Q193,128 197,132 Q200,134 203,132 Q207,128 203,115" stroke="#888" stroke-width="1" fill="none"/>
+        <!-- Rim light left -->
+        <path d="M145,80 Q135,110 145,160" stroke="#ff9800" stroke-width="3" fill="none" opacity="0.6"/>
+        <!-- Hair (stylised) -->
+        <path d="M150,80 Q160,45 200,42 Q240,45 250,80" fill="#0a0a1a" stroke="#ff3c5a" stroke-width="0.6"/>
+        <!-- Frame -->
+        <rect x="0" y="0" width="400" height="220" fill="none" stroke="#ff9800" stroke-width="1.5" opacity="0.3"/>
+      </svg>
+    </div>
+    <div class="panel-info">
+      <div class="scene-label">ECU Hero Face — Low Angle Lock</div>
+      <div class="tags">
+        <span class="tag tag-cam">EXTREME CLOSE-UP</span>
+        <span class="tag tag-move">STATIC</span>
+        <span class="tag tag-lens">85mm PORTRAIT</span>
+        <span class="tag tag-fx">RIM LIGHT · BOKEH BG</span>
+      </div>
+      <div class="scene-desc">Extreme close-up of the hero's face. Camera positioned just below eye-line (low angle). Rim light from street lamp catches jaw and temple. Eyes lock on threat. Rain drops on skin.</div>
+      <div class="motion-guide">
+        <span class="arrow">▶</span>Camera: LOCKED — no movement, holds tension<br/>
+        <span class="arrow">▶</span>Micro-expression: jaw tightens, pupils dilate<br/>
+        <span class="arrow">▶</span>Rain drops: slide down face surface in real-time
+      </div>
+      <div class="audio-bar">
+        <span class="audio-icon">♫</span>
+        <div class="waveform"><span></span><span></span><span></span><span></span><span></span></div>
+        <span>heartbeat sub-bass · silence swells</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCENE 03 -->
+  <div class="panel">
+    <span class="panel-number">SCENE 03</span>
+    <span class="panel-duration">00:30 – 00:45 &nbsp;|&nbsp; 15s</span>
+    <div class="scene-canvas">
+      <svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="bg3" cx="50%" cy="100%" r="80%">
+            <stop offset="0%" stop-color="#1a0520"/>
+            <stop offset="100%" stop-color="#020205"/>
+          </radialGradient>
+        </defs>
+        <rect width="400" height="220" fill="url(#bg3)"/>
+        <!-- Ground -->
+        <rect x="0" y="185" width="400" height="35" fill="#080812"/>
+        <!-- Villain — two-shot, villain stepping forward -->
+        <!-- villain body -->
+        <g fill="#0a0010" stroke="#c080ff" stroke-width="0.8">
+          <ellipse cx="270" cy="95" rx="14" ry="16"/>
+          <rect x="256" y="111" width="28" height="55" rx="4"/>
+          <!-- arms — one forward reaching -->
+          <line x1="256" y1="120" x2="228" y2="140"/><line x1="284" y1="118" x2="305" y2="138"/>
+          <line x1="262" y1="166" x2="256" y2="190"/><line x1="270" y1="166" x2="275" y2="190"/>
+          <!-- cloak -->
+          <path d="M256,120 Q235,160 240,190 L256,166Z" fill="#0d0018" stroke="none" opacity="0.9"/>
+          <path d="M284,120 Q305,160 300,190 L284,166Z" fill="#0d0018" stroke="none" opacity="0.9"/>
+        </g>
+        <!-- energy aura on villain hand -->
+        <ellipse cx="225" cy="142" rx="12" ry="12" fill="#c080ff" opacity="0.25"/>
+        <ellipse cx="225" cy="142" rx="6" ry="6" fill="#c080ff" opacity="0.6"/>
+        <ellipse cx="225" cy="142" rx="2" ry="2" fill="#fff" opacity="0.9"/>
+        <!-- Hero — backing up slightly -->
+        <g fill="#0d0d1a" stroke="#ff3c5a" stroke-width="0.8">
+          <ellipse cx="125" cy="98" rx="13" ry="14"/>
+          <rect x="113" y="112" width="24" height="55" rx="3"/>
+          <line x1="113" y1="120" x2="93" y2="148"/><line x1="137" y1="120" x2="152" y2="145"/>
+          <line x1="118" y1="167" x2="112" y2="190"/><line x1="128" y1="167" x2="134" y2="190"/>
+        </g>
+        <!-- depth perspective lines -->
+        <line x1="0" y1="185" x2="400" y2="175" stroke="#222" stroke-width="1"/>
+        <!-- purple energy tendrils from villain -->
+        <path d="M225,142 Q200,120 180,130" stroke="#c080ff" stroke-width="1.5" fill="none" opacity="0.5" stroke-dasharray="4,3"/>
+        <path d="M225,142 Q215,110 200,100" stroke="#c080ff" stroke-width="1" fill="none" opacity="0.3" stroke-dasharray="3,4"/>
+        <rect x="0" y="0" width="400" height="220" fill="none" stroke="#c080ff" stroke-width="1.5" opacity="0.2"/>
+      </svg>
+    </div>
+    <div class="panel-info">
+      <div class="scene-label">Two-Shot — Villain Advances</div>
+      <div class="tags">
+        <span class="tag tag-cam">MEDIUM TWO-SHOT</span>
+        <span class="tag tag-move">SLOW LATERAL TRACK →</span>
+        <span class="tag tag-lens">50mm NORMAL</span>
+        <span class="tag tag-fx">ENERGY VFX · PURPLE AURA</span>
+      </div>
+      <div class="scene-desc">Villain steps forward with glowing hand extended. Hero retreats one step. Camera tracks laterally right at waist height, maintaining both figures in frame. Purple energy crackles from villain's fist.</div>
+      <div class="motion-guide">
+        <span class="arrow">▶</span>Camera: slow lateral dolly right (tracking villain advance)<br/>
+        <span class="arrow">▶</span>VFX: energy orb pulses at 2Hz, tendrils extend toward hero<br/>
+        <span class="arrow">▶</span>Cloth physics: villain cloak billows backward from movement
+      </div>
+      <div class="audio-bar">
+        <span class="audio-icon">♫</span>
+        <div class="waveform"><span></span><span></span><span></span><span></span><span></span></div>
+        <span>electrical hum · villain voice distortion</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /scene-grid ACT I -->
+
+
+<!-- ══════════════ ACT II — THE FIGHT ══════════════ -->
+<div class="act-title">⬤ Act II — The Fight</div>
+<div class="scene-grid">
+
+  <!-- SCENE 04 -->
+  <div class="panel">
+    <span class="panel-number">SCENE 04</span>
+    <span class="panel-duration">00:45 – 01:05 &nbsp;|&nbsp; 20s</span>
+    <div class="scene-canvas">
+      <svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="impact4" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#ff9800" stop-opacity="0.8"/>
+            <stop offset="60%" stop-color="#ff3c5a" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <rect width="400" height="220" fill="#070710"/>
+        <!-- Impact flash bg -->
+        <ellipse cx="200" cy="110" rx="120" ry="80" fill="url(#impact4)"/>
+        <!-- Hero — punch forward, dynamic lean -->
+        <!-- body -->
+        <g fill="#0d0d1a" stroke="#ff3c5a" stroke-width="1">
+          <ellipse cx="140" cy="95" rx="12" ry="13"/>
+          <!-- torso leaning forward -->
+          <rect x="130" y="108" width="22" height="45" rx="3" transform="rotate(-10,141,130)"/>
+          <!-- punch arm extended RIGHT -->
+          <line x1="152" y1="115" x2="215" y2="108" stroke="#ff3c5a" stroke-width="3"/>
+          <circle cx="218" cy="108" r="8" fill="#ff3c5a" opacity="0.9"/>
+          <!-- back arm -->
+          <line x1="130" y1="115" x2="110" y2="138"/>
+          <!-- legs — stance -->
+          <line x1="136" y1="153" x2="124" y2="185" stroke-width="2.5"/>
+          <line x1="146" y1="153" x2="158" y2="185" stroke-width="2.5"/>
+        </g>
+        <!-- Villain — being hit, recoil -->
+        <g fill="#0a0010" stroke="#c080ff" stroke-width="0.8">
+          <ellipse cx="260" cy="100" rx="13" ry="14" transform="rotate(15,260,100)"/>
+          <!-- body recoiling -->
+          <rect x="249" y="114" width="22" height="45" rx="3" transform="rotate(15,260,136)"/>
+          <!-- arms flailing -->
+          <line x1="249" y1="118" x2="228" y2="100" transform="rotate(15,260,118)"/>
+          <line x1="271" y1="118" x2="295" y2="105" transform="rotate(15,260,118)"/>
+          <line x1="254" y1="159" x2="240" y2="185" transform="rotate(15,260,159)"/>
+          <line x1="264" y1="159" x2="278" y2="185" transform="rotate(15,260,159)"/>
+        </g>
+        <!-- Impact star burst -->
+        <g stroke="#ff9800" stroke-width="2" fill="none" opacity="0.9">
+          <line x1="225" y1="108" x2="248" y2="98"/>
+          <line x1="225" y1="108" x2="250" y2="115"/>
+          <line x1="225" y1="108" x2="240" y2="125"/>
+          <line x1="225" y1="108" x2="218" y2="128"/>
+          <line x1="225" y1="108" x2="205" y2="122"/>
+        </g>
+        <!-- motion trail on fist -->
+        <path d="M160,112 Q185,110 215,108" stroke="#ff3c5a" stroke-width="6" fill="none" opacity="0.2"/>
+        <path d="M170,112 Q192,110 215,108" stroke="#ff9800" stroke-width="3" fill="none" opacity="0.3"/>
+        <!-- speed lines -->
+        <g stroke="#ff3c5a" stroke-width="0.5" opacity="0.3">
+          <line x1="50" y1="80" x2="200" y2="100"/><line x1="50" y1="110" x2="195" y2="108"/>
+          <line x1="50" y1="140" x2="200" y2="120"/>
+        </g>
+        <rect x="0" y="0" width="400" height="220" fill="none" stroke="#ff9800" stroke-width="2" opacity="0.4"/>
+      </svg>
+      <div class="motion-blur"></div>
+    </div>
+    <div class="panel-info">
+      <div class="scene-label">ACTION — First Punch Impact</div>
+      <div class="tags">
+        <span class="tag tag-cam">MEDIUM SHOT</span>
+        <span class="tag tag-move">HANDHELD SHAKE</span>
+        <span class="tag tag-lens">35mm</span>
+        <span class="tag tag-fx">IMPACT FLASH · SPEED LINES</span>
+      </div>
+      <div class="scene-desc">Hero launches first strike — a right cross that connects with villain's jaw. Frame freezes for 2 frames on impact. Speed lines radiate from fist. Camera shakes on contact. Villain's head snaps left.</div>
+      <div class="motion-guide">
+        <span class="arrow">▶</span>Camera: handheld micro-shake on impact frame (2-frame hold)<br/>
+        <span class="arrow">▶</span>Hero punch: motion blur trail (3-frame smear) leading into fist<br/>
+        <span class="arrow">▶</span>Villain head: snap rotation 45° right over 0.1s then settle
+      </div>
+      <div class="audio-bar">
+        <span class="audio-icon">♫</span>
+        <div class="waveform"><span></span><span></span><span></span><span></span><span></span></div>
+        <span>bone crack · whoosh · impact thud · music spike</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCENE 05 -->
+  <div class="panel">
+    <span class="panel-number">SCENE 05</span>
+    <span class="panel-duration">01:05 – 01:20 &nbsp;|&nbsp; 15s</span>
+    <div class="scene-canvas">
+      <svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg">
+        <rect width="400" height="220" fill="#040410"/>
+        <!-- Bird's eye / overhead view -->
+        <!-- Ground circle indicating overhead -->
+        <ellipse cx="200" cy="130" rx="160" ry="80" fill="#0a0a1e" stroke="#333" stroke-width="1"/>
+        <!-- Hero (top-down) — kick -->
+        <g fill="#111122" stroke="#ff3c5a" stroke-width="1">
+          <!-- torso circle -->
+          <ellipse cx="160" cy="120" rx="14" ry="18"/>
+          <!-- head -->
+          <ellipse cx="155" cy="102" rx="8" ry="9"/>
+          <!-- extended kick leg -->
+          <line x1="168" y1="135" x2="210" y2="145" stroke-width="3"/>
+          <ellipse cx="213" cy="147" rx="6" ry="5" fill="#ff3c5a"/>
+          <!-- other leg -->
+          <line x1="160" y1="138" x2="155" y2="160"/>
+          <!-- arms overhead view -->
+          <line x1="147" y1="115" x2="130" y2="108"/><line x1="173" y1="115" x2="185" y2="105"/>
+        </g>
+        <!-- Villain top-down reacting -->
+        <g fill="#0a0010" stroke="#c080ff" stroke-width="1">
+          <ellipse cx="248" cy="140" rx="14" ry="18" transform="rotate(20,248,140)"/>
+          <ellipse cx="260" cy="125" rx="8" ry="9" transform="rotate(20,260,125)"/>
+          <line x1="240" y1="148" x2="218" y2="158" stroke-width="2"/>
+          <line x1="256" y1="153" x2="258" y2="175" stroke-width="2"/>
+          <line x1="238" y1="134" x2="220" y2="122"/><line x1="260" y1="130" x2="275" y2="118"/>
+        </g>
+        <!-- kick arc -->
+        <path d="M168,135 Q192,135 210,145" stroke="#ff9800" stroke-width="2" fill="none" stroke-dasharray="5,3" opacity="0.7"/>
+        <!-- Overhead direction arrow -->
+        <text x="340" y="30" fill="#666" font-size="9" font-family="monospace">TOP DOWN</text>
+        <text x="340" y="42" fill="#666" font-size="9" font-family="monospace">90° CRANE</text>
+        <!-- compass -->
+        <circle cx="360" cy="65" r="15" fill="none" stroke="#333"/>
+        <line x1="360" y1="52" x2="360" y2="58" stroke="#ff3c5a" stroke-width="2"/>
+        <text x="357" y="85" fill="#666" font-size="8">S</text>
+        <!-- speed arc for kick -->
+        <path d="M172,133 Q195,128 215,145" stroke="#ff3c5a" stroke-width="1" fill="none" opacity="0.4"/>
+        <rect x="0" y="0" width="400" height="220" fill="none" stroke="#64c8ff" stroke-width="1.5" opacity="0.3"/>
+      </svg>
+    </div>
+    <div class="panel-info">
+      <div class="scene-label">Overhead Crane — Spinning Kick</div>
+      <div class="tags">
+        <span class="tag tag-cam">BIRD'S-EYE / OVERHEAD</span>
+        <span class="tag tag-move">SLOW ROTATE (CRANE)</span>
+        <span class="tag tag-lens">24mm WIDE (DRONE)</span>
+        <span class="tag tag-fx">MOTION ARC · SLOW-MO 60fps</span>
+      </div>
+      <div class="scene-desc">Crane / drone shot looking straight down. Hero performs spinning back kick. Camera rotates 30° clockwise in sync with hero's spin — matching the rotation energy. Slowed to 60fps for clarity.</div>
+      <div class="motion-guide">
+        <span class="arrow">▶</span>Camera: overhead, slow clockwise rotation (0.5 rot/sec)<br/>
+        <span class="arrow">▶</span>Hero spin: 360° body rotation, kick lands at 270° mark<br/>
+        <span class="arrow">▶</span>Slow-mo: 60fps playback → 40% speed gives float effect
+      </div>
+      <div class="audio-bar">
+        <span class="audio-icon">♫</span>
+        <div class="waveform"><span></span><span></span><span></span><span></span><span></span></div>
+        <span>slow-pitch whoosh · reverb kick · time stretch sfx</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCENE 06 -->
+  <div class="panel">
+    <span class="panel-number">SCENE 06</span>
+    <span class="panel-duration">01:20 – 01:35 &nbsp;|&nbsp; 15s</span>
+    <div class="scene-canvas">
+      <svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="wallGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0f0f1e"/>
+            <stop offset="100%" stop-color="#050510"/>
+          </linearGradient>
+        </defs>
+        <rect width="400" height="220" fill="#040408"/>
+        <!-- Wall (villain thrown into) -->
+        <rect x="300" y="0" width="100" height="220" fill="url(#wallGrad)" stroke="#222" stroke-width="1"/>
+        <!-- brick pattern -->
+        <g stroke="#1a1a2e" stroke-width="0.5" fill="none">
+          <rect x="305" y="10" width="40" height="18"/><rect x="350" y="10" width="45" height="18"/>
+          <rect x="310" y="32" width="40" height="18"/><rect x="355" y="32" width="40" height="18"/>
+          <rect x="305" y="54" width="40" height="18"/><rect x="350" y="54" width="45" height="18"/>
+          <rect x="305" y="76" width="40" height="18"/><rect x="350" y="76" width="45" height="18"/>
+          <rect x="310" y="98" width="40" height="18"/><rect x="355" y="98" width="40" height="18"/>
+          <rect x="305" y="120" width="40" height="18"/><rect x="350" y="120" width="45" height="18"/>
+          <rect x="305" y="142" width="40" height="18"/><rect x="350" y="142" width="45" height="18"/>
+        </g>
+        <!-- Villain smashed into wall — crumpled -->
+        <g fill="#0a0010" stroke="#c080ff" stroke-width="0.8" opacity="0.9">
+          <ellipse cx="310" cy="115" rx="13" ry="14" transform="rotate(-20,310,115)"/>
+          <rect x="298" y="126" width="22" height="40" rx="4" transform="rotate(-20,309,146)"/>
+          <line x1="298" y1="130" x2="278" y2="150" transform="rotate(-20,298,130)"/>
+          <line x1="320" y1="130" x2="330" y2="155"/>
+          <line x1="305" y1="166" x2="295" y2="190"/>
+          <line x1="315" y1="166" x2="320" y2="190"/>
+        </g>
+        <!-- Wall crack impact -->
+        <g stroke="#fff" stroke-width="1" fill="none" opacity="0.4">
+          <line x1="310" y1="115" x2="330" y2="90"/>
+          <line x1="310" y1="115" x2="340" y2="110"/>
+          <line x1="310" y1="115" x2="335" y2="135"/>
+          <line x1="310" y1="115" x2="320" y2="150"/>
+          <line x1="310" y1="115" x2="298" y2="95"/>
+        </g>
+        <!-- Dust / debris particles -->
+        <circle cx="330" cy="95" r="3" fill="#aaa" opacity="0.4"/>
+        <circle cx="345" cy="108" r="2" fill="#aaa" opacity="0.3"/>
+        <circle cx="298" cy="90" r="4" fill="#aaa" opacity="0.25"/>
+        <circle cx="320" cy="155" r="2" fill="#aaa" opacity="0.3"/>
+        <!-- Hero — follow through pose -->
+        <g fill="#0d0d1a" stroke="#ff3c5a" stroke-width="0.8">
+          <ellipse cx="195" cy="100" rx="12" ry="13"/>
+          <rect x="185" y="113" width="20" height="48" rx="3"/>
+          <!-- arm extended toward wall -->
+          <line x1="205" y1="120" x2="270" y2="118" stroke-width="2.5"/>
+          <line x1="185" y1="118" x2="165" y2="135"/>
+          <line x1="190" y1="161" x2="183" y2="190"/>
+          <line x1="200" y1="161" x2="207" y2="190"/>
+        </g>
+        <!-- floor ground -->
+        <line x1="0" y1="195" x2="400" y2="195" stroke="#222" stroke-width="1.5"/>
+        <rect x="0" y="0" width="400" height="220" fill="none" stroke="#ff3c5a" stroke-width="1.5" opacity="0.25"/>
+      </svg>
+      <div class="motion-blur"></div>
+    </div>
+    <div class="panel-info">
+      <div class="scene-label">Hero Throws Villain into Wall</div>
+      <div class="tags">
+        <span class="tag tag-cam">MEDIUM WIDE</span>
+        <span class="tag tag-move">WHIP PAN → SNAP ZOOM</span>
+        <span class="tag tag-lens">50mm</span>
+        <span class="tag tag-fx">DEBRIS · WALL CRACK · DUST</span>
+      </div>
+      <div class="scene-desc">Hero grabs villain and hurls them into a concrete wall. Camera whip-pans right to follow the throw, then snap-zooms in on villain impact. Wall cracks radiate from impact point. Dust cloud bursts outward.</div>
+      <div class="motion-guide">
+        <span class="arrow">▶</span>Camera: whip pan right (0.15s) → snap zoom to wall (0.1s)<br/>
+        <span class="arrow">▶</span>Wall debris: physics sim — 8–12 brick chunks fly outward<br/>
+        <span class="arrow">▶</span>Dust: volumetric burst from impact point, settles over 1.5s
+      </div>
+      <div class="audio-bar">
+        <span class="audio-icon">♫</span>
+        <div class="waveform"><span></span><span></span><span></span><span></span><span></span></div>
+        <span>concrete smash · rubble scatter · echo decay</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCENE 07 -->
+  <div class="panel">
+    <span class="panel-number">SCENE 07</span>
+    <span class="panel-duration">01:35 – 01:50 &nbsp;|&nbsp; 15s</span>
+    <div class="scene-canvas">
+      <svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="counterBg" cx="60%" cy="50%" r="60%">
+            <stop offset="0%" stop-color="#200010"/>
+            <stop offset="100%" stop-color="#040408"/>
+          </radialGradient>
+        </defs>
+        <rect width="400" height="220" fill="url(#counterBg)"/>
+        <!-- Villain counter-strike — energy blast -->
+        <!-- Hero stumbling back -->
+        <g fill="#0d0d1a" stroke="#ff3c5a" stroke-width="0.8" opacity="0.85">
+          <ellipse cx="95" cy="100" rx="12" ry="13" transform="rotate(15,95,100)"/>
+          <rect x="84" y="113" width="20" height="45" rx="3" transform="rotate(15,94,135)"/>
+          <line x1="84" y1="120" x2="63" y2="108"/>
+          <line x1="104" y1="116" x2="118" y2="130"/>
+          <line x1="88" y1="158" x2="78" y2="185"/>
+          <line x1="98" y1="158" x2="108" y2="185"/>
+        </g>
+        <!-- Villain rising — energy charging -->
+        <g fill="#0a0010" stroke="#c080ff" stroke-width="1">
+          <ellipse cx="295" cy="100" rx="14" ry="16"/>
+          <rect x="282" y="116" width="26" height="50" rx="4"/>
+          <!-- both arms forward blasting -->
+          <line x1="282" y1="122" x2="240" y2="115" stroke-width="2.5" stroke="#c080ff"/>
+          <line x1="308" y1="122" x2="250" y2="125" stroke-width="2.5" stroke="#c080ff"/>
+          <line x1="288" y1="166" x2="280" y2="190"/>
+          <line x1="300" y1="166" x2="306" y2="190"/>
+        </g>
+        <!-- Energy blast beam -->
+        <defs>
+          <linearGradient id="blastGrad" x1="1" y1="0" x2="0" y2="0">
+            <stop offset="0%" stop-color="#c080ff" stop-opacity="1"/>
+            <stop offset="100%" stop-color="#ff3c5a" stop-opacity="0.6"/>
+          </linearGradient>
+        </defs>
+        <path d="M248,118 Q200,118 140,105" stroke="url(#blastGrad)" stroke-width="8" fill="none" opacity="0.7"/>
+        <path d="M248,118 Q200,120 140,110" stroke="#fff" stroke-width="2" fill="none" opacity="0.4"/>
+        <!-- blast hits hero -->
+        <ellipse cx="110" cy="107" rx="25" ry="18" fill="#c080ff" opacity="0.2"/>
+        <!-- shockwave rings -->
+        <circle cx="110" cy="107" r="15" fill="none" stroke="#c080ff" stroke-width="1.5" opacity="0.6"/>
+        <circle cx="110" cy="107" r="28" fill="none" stroke="#c080ff" stroke-width="0.8" opacity="0.3"/>
+        <!-- camera tilt indicator -->
+        <text x="8" y="215" fill="#555" font-size="8" font-family="monospace">DUTCH TILT — 15° CW</text>
+        <rect x="0" y="0" width="400" height="220" fill="none" stroke="#c080ff" stroke-width="1.5" opacity="0.2" transform="rotate(3,200,110)"/>
+        <rect x="0" y="0" width="400" height="220" fill="none" stroke="#c080ff" stroke-width="1.5" opacity="0.15"/>
+      </svg>
+    </div>
+    <div class="panel-info">
+      <div class="scene-label">Villain Counter — Energy Blast</div>
+      <div class="tags">
+        <span class="tag tag-cam">MEDIUM WIDE</span>
+        <span class="tag tag-move">DUTCH TILT 15°</span>
+        <span class="tag tag-lens">35mm</span>
+        <span class="tag tag-fx">ENERGY BEAM · SHOCKWAVE</span>
+      </div>
+      <div class="scene-desc">Villain recovers and fires a twin-handed energy blast. Camera holds a Dutch tilt (15°) to convey disorientation. Hero is hit — stumbles backward. Shockwave ripples expand from contact point.</div>
+      <div class="motion-guide">
+        <span class="arrow">▶</span>Camera: 15° Dutch tilt, locked — heightens dread<br/>
+        <span class="arrow">▶</span>Beam VFX: linear travel L→R, 0.05s delay after hands charge<br/>
+        <span class="arrow">▶</span>Hero: pushed back 2m, coat shreds at blast edge
+      </div>
+      <div class="audio-bar">
+        <span class="audio-icon">♫</span>
+        <div class="waveform"><span></span><span></span><span></span><span></span><span></span></div>
+        <span>energy charge whine → blast boom → silence spike</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /scene-grid ACT II -->
+
+
+<!-- ══════════════ ACT III — THE FINISH ══════════════ -->
+<div class="act-title">⬤ Act III — The Finish</div>
+<div class="scene-grid">
+
+  <!-- SCENE 08 -->
+  <div class="panel">
+    <span class="panel-number">SCENE 08</span>
+    <span class="panel-duration">01:50 – 02:05 &nbsp;|&nbsp; 15s</span>
+    <div class="scene-canvas">
+      <svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="riseBg" cx="50%" cy="60%" r="70%">
+            <stop offset="0%" stop-color="#101025"/>
+            <stop offset="100%" stop-color="#020208"/>
+          </radialGradient>
+        </defs>
+        <rect width="400" height="220" fill="url(#riseBg)"/>
+        <!-- Hero rising from ground — ground level camera -->
+        <!-- Ground -->
+        <rect x="0" y="180" width="400" height="40" fill="#060612"/>
+        <line x1="0" y1="180" x2="400" y2="180" stroke="#333" stroke-width="1.5"/>
+        <!-- Camera at ground level — hero massive in foreground -->
+        <!-- Hero silhouette rising — low angle, filling frame -->
+        <g fill="#0d0d1a" stroke="#ff3c5a" stroke-width="1">
+          <!-- huge legs near camera -->
+          <rect x="155" y="140" width="28" height="75" rx="4"/>
+          <rect x="195" y="148" width="28" height="72" rx="4"/>
+          <!-- torso -->
+          <rect x="148" y="75" width="82" height="80" rx="8"/>
+          <!-- head -->
+          <ellipse cx="200" cy="60" rx="32" ry="36"/>
+          <!-- arms wide — power pose -->
+          <line x1="148" y1="95" x2="80" y2="120" stroke-width="4"/>
+          <line x1="230" y1="95" x2="298" y2="120" stroke-width="4"/>
+        </g>
+        <!-- red energy glow aura around hero -->
+        <ellipse cx="200" cy="120" rx="100" ry="80" fill="#ff3c5a" opacity="0.06"/>
+        <ellipse cx="200" cy="120" rx="60" ry="50" fill="#ff3c5a" opacity="0.05"/>
+        <!-- ground glow under feet -->
+        <ellipse cx="185" cy="182" rx="20" ry="5" fill="#ff3c5a" opacity="0.3"/>
+        <ellipse cx="215" cy="182" rx="20" ry="5" fill="#ff3c5a" opacity="0.3"/>
+        <!-- rain / debris -->
+        <g stroke="#445" stroke-width="0.5" opacity="0.5">
+          <line x1="50" y1="0" x2="40" y2="80"/><line x1="100" y1="0" x2="90" y2="80"/>
+          <line x1="150" y1="0" x2="140" y2="80"/><line x1="280" y1="0" x2="270" y2="80"/>
+          <line x1="330" y1="0" x2="320" y2="80"/><line x1="380" y1="0" x2="370" y2="80"/>
+        </g>
+        <!-- camera angle indicator -->
+        <text x="8" y="15" fill="#555" font-size="8" font-family="monospace">LOW ANGLE / GROUND LEVEL</text>
+        <rect x="0" y="0" width="400" height="220" fill="none" stroke="#ff3c5a" stroke-width="2" opacity="0.3"/>
+      </svg>
+    </div>
+    <div class="panel-info">
+      <div class="scene-label">Hero Rises — Low Angle Power Shot</div>
+      <div class="tags">
+        <span class="tag tag-cam">EXTREME LOW ANGLE</span>
+        <span class="tag tag-move">STATIC → SLOW TILT UP</span>
+        <span class="tag tag-lens">18mm ULTRA WIDE</span>
+        <span class="tag tag-fx">AURA GLOW · GROUND DUST</span>
+      </div>
+      <div class="scene-desc">Camera placed at ground level. Hero rises from fallen position — filling the frame from feet to sky. Slow tilt up from boots to face over 4 seconds. Red energy aura radiates outward. Empowering beat drop.</div>
+      <div class="motion-guide">
+        <span class="arrow">▶</span>Camera: ground-level static → slow tilt up (4s, 0–90°)<br/>
+        <span class="arrow">▶</span>Hero: slow rise from kneel to full stand (3s)<br/>
+        <span class="arrow">▶</span>Aura: pulse outward at 1Hz, intensity increases as hero stands
+      </div>
+      <div class="audio-bar">
+        <span class="audio-icon">♫</span>
+        <div class="waveform"><span></span><span></span><span></span><span></span><span></span></div>
+        <span>music beat drop · deep bass rise · crowd cheer sub</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCENE 09 -->
+  <div class="panel">
+    <span class="panel-number">SCENE 09</span>
+    <span class="panel-duration">02:05 – 02:18 &nbsp;|&nbsp; 13s</span>
+    <div class="scene-canvas">
+      <svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg">
+        <rect width="400" height="220" fill="#020208"/>
+        <!-- 360 orbit shot — orbit track overlay -->
+        <ellipse cx="200" cy="140" rx="130" ry="35" fill="none" stroke="#ff980040" stroke-width="1" stroke-dasharray="6,4"/>
+        <!-- camera positions on orbit -->
+        <circle cx="330" cy="140" r="5" fill="#ff9800" opacity="0.7"/>
+        <circle cx="200" cy="105" r="5" fill="#ff9800" opacity="0.5"/>
+        <circle cx="70" cy="140" r="5" fill="#ff9800" opacity="0.5"/>
+        <text x="336" y="138" fill="#ff9800" font-size="7" font-family="monospace">CAM</text>
+        <!-- final clash — hero and villain fists meeting -->
+        <!-- hero left -->
+        <g fill="#111" stroke="#ff3c5a" stroke-width="1">
+          <ellipse cx="130" cy="100" rx="12" ry="13"/>
+          <rect x="120" y="113" width="22" height="48" rx="3"/>
+          <line x1="142" y1="120" x2="192" y2="115" stroke-width="3"/>
+          <circle cx="195" cy="114" r="9" fill="#ff3c5a" opacity="0.9"/>
+          <line x1="120" y1="118" x2="100" y2="138"/>
+          <line x1="126" y1="161" x2="118" y2="190"/>
+          <line x1="136" y1="161" x2="144" y2="190"/>
+        </g>
+        <!-- villain right -->
+        <g fill="#0a0010" stroke="#c080ff" stroke-width="1">
+          <ellipse cx="270" cy="100" rx="12" ry="13"/>
+          <rect x="260" y="113" width="22" height="48" rx="3"/>
+          <line x1="260" y1="120" x2="210" y2="115" stroke-width="3"/>
+          <circle cx="207" cy="114" r="9" fill="#c080ff" opacity="0.9"/>
+          <line x1="282" y1="118" x2="302" y2="138"/>
+          <line x1="264" y1="161" x2="256" y2="190"/>
+          <line x1="274" y1="161" x2="282" y2="190"/>
+        </g>
+        <!-- Clash explosion centre -->
+        <circle cx="200" cy="114" r="20" fill="#fff" opacity="0.08"/>
+        <circle cx="200" cy="114" r="12" fill="#ff9800" opacity="0.2"/>
+        <g stroke="#ff9800" stroke-width="2" fill="none">
+          <line x1="200" y1="114" x2="200" y2="88"/><line x1="200" y1="114" x2="224" y2="100"/>
+          <line x1="200" y1="114" x2="222" y2="130"/><line x1="200" y1="114" x2="200" y2="140"/>
+          <line x1="200" y1="114" x2="178" y2="130"/><line x1="200" y1="114" x2="176" y2="100"/>
+        </g>
+        <!-- orbit arrow -->
+        <path d="M330,140 Q310,108 270,105" stroke="#ff9800" stroke-width="1.5" fill="none" marker-end="url(#arr)" opacity="0.5"/>
+        <text x="8" y="15" fill="#555" font-size="8" font-family="monospace">360° ORBIT — 4 SEC</text>
+        <rect x="0" y="0" width="400" height="220" fill="none" stroke="#ff9800" stroke-width="1.5" opacity="0.3"/>
+      </svg>
+      <div class="motion-blur"></div>
+    </div>
+    <div class="panel-info">
+      <div class="scene-label">360° Orbit — Final Clash</div>
+      <div class="tags">
+        <span class="tag tag-cam">360° ORBIT SHOT</span>
+        <span class="tag tag-move">FULL ORBIT 4 SEC</span>
+        <span class="tag tag-lens">35mm</span>
+        <span class="tag tag-fx">CLASH EXPLOSION · FREEZE FRAME</span>
+      </div>
+      <div class="scene-desc">Camera orbits 360° around both fighters as their fists meet in a final clash. The orbit takes exactly 4 seconds. At the moment of impact (180° mark), time freezes for 1 full second — then explodes back to real speed.</div>
+      <div class="motion-guide">
+        <span class="arrow">▶</span>Camera: 360° full orbit at constant speed, pivot = midpoint<br/>
+        <span class="arrow">▶</span>Time: freeze on impact (1s hold) → fast-forward burst back to RT<br/>
+        <span class="arrow">▶</span>Explosion: radial shockwave, debris orbit with camera path
+      </div>
+      <div class="audio-bar">
+        <span class="audio-icon">♫</span>
+        <div class="waveform"><span></span><span></span><span></span><span></span><span></span></div>
+        <span>time stop whoom → silence → massive explosion crack</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCENE 10 — FINAL -->
+  <div class="panel">
+    <span class="panel-number">SCENE 10 — FINALE</span>
+    <span class="panel-duration">02:18 – 02:30 &nbsp;|&nbsp; 12s</span>
+    <div class="scene-canvas">
+      <svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="finalBg" cx="30%" cy="50%" r="70%">
+            <stop offset="0%" stop-color="#1a0a0a"/>
+            <stop offset="100%" stop-color="#020208"/>
+          </radialGradient>
+        </defs>
+        <rect width="400" height="220" fill="url(#finalBg)"/>
+        <!-- Ground -->
+        <line x1="0" y1="185" x2="400" y2="185" stroke="#1a1a2e" stroke-width="1"/>
+        <!-- Villain defeated on ground -->
+        <g fill="#0a0010" stroke="#c080ff" stroke-width="0.6" opacity="0.6">
+          <!-- lying flat -->
+          <ellipse cx="290" cy="178" rx="15" ry="10"/>
+          <rect x="205" y="172" width="85" height="16" rx="5"/>
+          <!-- arm splayed -->
+          <line x1="205" y1="178" x2="170" y2="172"/>
+          <line x1="205" y1="180" x2="175" y2="190"/>
+          <!-- faint energy flicker -->
+          <ellipse cx="230" cy="175" rx="20" ry="4" fill="#c080ff" opacity="0.08"/>
+        </g>
+        <!-- Hero standing victorious — silhouette against glow -->
+        <!-- glow backdrop -->
+        <ellipse cx="115" cy="120" rx="70" ry="90" fill="#ff3c5a" opacity="0.06"/>
+        <g fill="#050510" stroke="#ff3c5a" stroke-width="0.8">
+          <ellipse cx="115" cy="68" rx="14" ry="16"/>
+          <!-- torso upright -->
+          <rect x="103" y="84" width="24" height="55" rx="4"/>
+          <!-- arms — relaxed, one raised to sky -->
+          <line x1="103" y1="92" x2="78" y2="110"/>
+          <!-- right arm raised upward -->
+          <line x1="127" y1="90" x2="145" y2="55"/>
+          <!-- legs planted wide -->
+          <line x1="108" y1="139" x2="96" y2="185" stroke-width="2.5"/>
+          <line x1="120" y1="139" x2="134" y2="185" stroke-width="2.5"/>
+          <!-- coat flutter -->
+          <path d="M103,100 Q80,145 85,185 L103,139Z" fill="#0a0a1a" stroke="none"/>
+          <path d="M127,100 Q150,145 145,185 L127,139Z" fill="#0a0a1a" stroke="none"/>
+        </g>
+        <!-- Glow under hero feet -->
+        <ellipse cx="115" cy="186" rx="30" ry="6" fill="#ff3c5a" opacity="0.25"/>
+        <!-- Dramatic rays from hero -->
+        <g stroke="#ff3c5a" stroke-width="0.5" opacity="0.1">
+          <line x1="115" y1="68" x2="20" y2="0"/><line x1="115" y1="68" x2="60" y2="0"/>
+          <line x1="115" y1="68" x2="115" y2="0"/><line x1="115" y1="68" x2="170" y2="0"/>
+          <line x1="115" y1="68" x2="220" y2="0"/>
+        </g>
+        <!-- moonlight shaft -->
+        <path d="M80,0 L30,220 L140,220 L180,0Z" fill="#fff" opacity="0.02"/>
+        <!-- "THE END" style fade bar -->
+        <rect x="0" y="195" width="400" height="25" fill="#000" opacity="0.5"/>
+        <text x="200" y="212" fill="#ff3c5a" font-size="10" font-family="monospace" text-anchor="middle" letter-spacing="6">FADE TO BLACK</text>
+        <rect x="0" y="0" width="400" height="220" fill="none" stroke="#ff3c5a" stroke-width="2" opacity="0.4"/>
+      </svg>
+    </div>
+    <div class="panel-info">
+      <div class="scene-label">Victory — Hero Stands · Fade to Black</div>
+      <div class="tags">
+        <span class="tag tag-cam">MEDIUM WIDE</span>
+        <span class="tag tag-move">SLOW DOLLY BACK</span>
+        <span class="tag tag-lens">85mm PORTRAIT</span>
+        <span class="tag tag-fx">MOONLIGHT SHAFT · FADE</span>
+      </div>
+      <div class="scene-desc">Hero stands tall over defeated villain. Single moonlight shaft breaks through cloud and illuminates the hero. Camera slowly dollies backward over 8 seconds, making the hero appear smaller against the night sky. Fade to black.</div>
+      <div class="motion-guide">
+        <span class="arrow">▶</span>Camera: slow dolly backward (8s), hero shrinks to silhouette<br/>
+        <span class="arrow">▶</span>Moonlight: shaft brightens over 3s → holds → scene fades<br/>
+        <span class="arrow">▶</span>Fade: linear black fade over final 2s · title card cut
+      </div>
+      <div class="audio-bar">
+        <span class="audio-icon">♫</span>
+        <div class="waveform"><span></span><span></span><span></span><span></span><span></span></div>
+        <span>music resolves · rain fades · single piano note · silence</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /scene-grid ACT III -->
+
+<!-- ── Camera Angles Legend ── -->
+<div class="act-title" style="font-size:1.1rem; color:#64c8ff; border-color:#64c8ff; margin-top:60px;">
+  Camera Angles &amp; Motion Reference
+</div>
+<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:16px; margin-bottom:40px;">
+
+
+  <div style="background:#0f0f1c; border:1px solid #1e1e30; border-radius:4px; padding:16px;">
+    <div style="color:#ff9800; font-family:'Rajdhani',sans-serif; font-size:1rem; letter-spacing:.15em; margin-bottom:8px;">📷 SHOT TYPES USED</div>
+    <div style="font-size:0.7rem; color:#888; line-height:2;">
+      <span style="color:#ff9800">EWS</span> Extreme Wide Shot — Establishing<br/>
+      <span style="color:#ff9800">ECU</span> Extreme Close-Up — Emotion<br/>
+      <span style="color:#ff9800">MS</span> &nbsp;Medium Shot — Action readable<br/>
+      <span style="color:#ff9800">MW</span> &nbsp;Medium Wide — Two-person fight<br/>
+      <span style="color:#ff9800">OTS</span> Over the Shoulder — Threat POV<br/>
+      <span style="color:#ff9800">TOP</span> Overhead / Bird's Eye — Geometry<br/>
+    </div>
+  </div>
+  <div style="background:#0f0f1c; border:1px solid #1e1e30; border-radius:4px; padding:16px;">
+    <div style="color:#ff3c5a; font-family:'Rajdhani',sans-serif; font-size:1rem; letter-spacing:.15em; margin-bottom:8px;">🎥 CAMERA MOVES</div>
+    <div style="font-size:0.7rem; color:#888; line-height:2;">
+      <span style="color:#ff3c5a">DOLLY</span> Physical push in/out on rails<br/>
+      <span style="color:#ff3c5a">WHIP PAN</span> Fast horizontal rotation<br/>
+      <span style="color:#ff3c5a">SNAP ZOOM</span> Rapid optical zoom burst<br/>
+      <span style="color:#ff3c5a">ORBIT</span> 360° arc around subject<br/>
+      <span style="color:#ff3c5a">CRANE</span> Vertical rise / overhead<br/>
+      <span style="color:#ff3c5a">DUTCH TILT</span> Camera canted ~15° for dread<br/>
+    </div>
+  </div>
+  <div style="background:#0f0f1c; border:1px solid #1e1e30; border-radius:4px; padding:16px;">
+    <div style="color:#c080ff; font-family:'Rajdhani',sans-serif; font-size:1rem; letter-spacing:.15em; margin-bottom:8px;">⚡ ANIMATION TECHNIQUES</div>
+    <div style="font-size:0.7rem; color:#888; line-height:2;">
+      <span style="color:#c080ff">SMEAR</span> Motion-blur frame smear on fast hits<br/>
+      <span style="color:#c080ff">FREEZE</span> 2-frame hold on max-impact<br/>
+      <span style="color:#c080ff">SLOW-MO</span> 60fps → 40% playback speed<br/>
+      <span style="color:#c080ff">SPEED LINES</span> Manga-inspired radial lines<br/>
+      <span style="color:#c080ff">CLOTH SIM</span> Real-time fabric physics<br/>
+      <span style="color:#c080ff">PARTICLE</span> Dust, debris, rain particles<br/>
+    </div>
+  </div>
+  <div style="background:#0f0f1c; border:1px solid #1e1e30; border-radius:4px; padding:16px;">
+    <div style="color:#64c8ff; font-family:'Rajdhani',sans-serif; font-size:1rem; letter-spacing:.15em; margin-bottom:8px;">🎨 VISUAL STYLE GUIDE</div>
+    <div style="font-size:0.7rem; color:#888; line-height:2;">
+      <span style="color:#64c8ff">STYLE</span> Animated-Realism (semi-painterly)<br/>
+      <span style="color:#64c8ff">PALETTE</span> Desaturated + neon accent pops<br/>
+      <span style="color:#64c8ff">HERO COLOR</span> Red / orange rim (#ff3c5a)<br/>
+      <span style="color:#64c8ff">VILLAIN COLOR</span> Purple / violet (#c080ff)<br/>
+      <span style="color:#64c8ff">LIGHTING</span> Hard rim, soft fill, no key<br/>
+      <span style="color:#64c8ff">GRADE</span> High contrast, crushed blacks<br/>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<footer>
+  ◆ SHADOW STRIKE &nbsp;|&nbsp; ANIMATED-REALISM STORYBOARD &nbsp;|&nbsp; 10 SCENES &nbsp;|&nbsp; ~2:30 MIN &nbsp;|&nbsp; 2K / 24FPS ◆
+</footer>
+
+</body>
+</html>
