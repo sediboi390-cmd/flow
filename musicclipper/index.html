@@ -156,6 +156,25 @@ main { max-width:800px; margin:0 auto; padding:1.5rem 1rem 3rem; display:flex; f
 <div id="toast" class="hidden"></div>
 
 <script>
+// ─── Kill any old service worker from previous deploys ───
+// (we used to register coop-sw.js for FFmpeg.wasm; not needed anymore)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    let killed = false;
+    for (const reg of regs) {
+      if (reg.scope.includes('musicclipper')) {
+        reg.unregister();
+        killed = true;
+      }
+    }
+    // If we killed an SW and the page was being controlled by it, reload to bypass its cache
+    if (killed && navigator.serviceWorker.controller) {
+      console.log('Old SW unregistered — reloading…');
+      window.location.reload();
+    }
+  });
+}
+
 // ─── Toast & helpers ─────────────────────────────────────
 function showToast(msg, duration = 3500) {
   const t = document.getElementById('toast');
