@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Story Sheet Maker v1.0 — calm storyboard sheet composer — 2026-05-27 -->
+<!-- Story Sheet Maker v2.0 — templates, drag-drop, undo/redo, dark mode, PDF export — 2026-05-27 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -7,516 +7,580 @@
 <title>Story Sheet Maker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    --bg:        #F6F1E8;   /* warm cream */
-    --bg-soft:   #EFE8DA;   /* slightly darker cream */
-    --surface:   #FFFFFF;
-    --border:    #E5DCC9;   /* warm tan border */
-    --border-2:  #D8CDB8;
-    --text:      #3A3A3A;
-    --muted:     #8B857A;
-    --dim:       #B5AE9E;
-    --sage:      #7FA59A;   /* calming sage-teal */
-    --sage-dark: #6B9286;
-    --sage-soft: #E5EFEC;
-    --rose:      #D9A89A;   /* warm dusty rose accent */
-    --rose-dark: #C49384;
-    --rose-soft: #F4E8E3;
-    --warn:      #C77E5E;
-    --shadow-sm: 0 1px 3px rgba(58,58,58,0.04);
-    --shadow:    0 4px 14px rgba(58,58,58,0.06);
-    --shadow-lg: 0 10px 30px rgba(58,58,58,0.08);
-    --r:         10px;
-    --r-lg:      14px;
-  }
+:root {
+  --bg: #F6F1E8;
+  --bg-soft: #EFE8DA;
+  --surface: #FFFFFF;
+  --border: #E5DCC9;
+  --border-2: #D8CDB8;
+  --text: #3A3A3A;
+  --muted: #8B857A;
+  --dim: #B5AE9E;
+  --sage: #7FA59A;
+  --sage-dark: #6B9286;
+  --sage-soft: #E5EFEC;
+  --rose: #D9A89A;
+  --rose-dark: #C49384;
+  --rose-soft: #F4E8E3;
+  --warn: #C77E5E;
+  --shadow-sm: 0 1px 3px rgba(58,58,58,0.04);
+  --shadow: 0 4px 14px rgba(58,58,58,0.06);
+  --shadow-lg: 0 10px 30px rgba(58,58,58,0.08);
+  --r: 10px;
+  --r-lg: 14px;
+}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Inter', -apple-system, system-ui, sans-serif;
-    font-size: 14px;
-    line-height: 1.55;
-    min-height: 100vh;
-    -webkit-font-smoothing: antialiased;
-  }
+html.dark {
+  --bg: #1a1a2e;
+  --bg-soft: #16213e;
+  --surface: #0f3460;
+  --border: #1a1a4e;
+  --border-2: #2a2a5e;
+  --text: #e0e0e0;
+  --muted: #8888aa;
+  --dim: #555577;
+  --sage: #7FA59A;
+  --sage-dark: #9ac5ba;
+  --sage-soft: rgba(127,165,154,0.15);
+  --rose: #D9A89A;
+  --rose-dark: #e8b8aa;
+  --rose-soft: rgba(217,168,154,0.15);
+  --warn: #e8845e;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.2);
+  --shadow: 0 4px 14px rgba(0,0,0,0.3);
+  --shadow-lg: 0 10px 30px rgba(0,0,0,0.4);
+}
 
-  /* ━━━━━━━━ Header ━━━━━━━━ */
-  .top {
-    padding: 28px 28px 0;
-    max-width: 1240px;
-    margin: 0 auto;
-  }
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 6px;
-  }
-  .brand-mark {
-    width: 28px; height: 28px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, var(--sage) 0%, var(--rose) 100%);
-    box-shadow: var(--shadow-sm);
-  }
-  .brand-name {
-    font-size: 0.95rem;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    color: var(--text);
-  }
-  .brand-sub {
-    font-size: 0.7rem;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-left: 2px;
-  }
 
-  .title-row {
-    display: flex;
-    align-items: baseline;
-    gap: 14px;
-    flex-wrap: wrap;
-    margin-top: 14px;
-  }
-  .project-title {
-    font-family: 'Inter', sans-serif;
-    font-size: clamp(1.5rem, 3.6vw, 2.2rem);
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    color: var(--text);
-    background: transparent;
-    border: none;
-    outline: none;
-    padding: 4px 0;
-    border-bottom: 1px dashed transparent;
-    transition: border-color 0.2s;
-    min-width: 200px;
-    flex: 1;
-    max-width: 600px;
-  }
-  .project-title:hover, .project-title:focus { border-bottom-color: var(--border-2); }
-  .panel-count {
-    font-size: 0.78rem;
-    color: var(--muted);
-    letter-spacing: 0.02em;
-  }
-  .panel-count b { color: var(--text); font-weight: 600; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.3s, color 0.3s;
+}
 
-  .tagline {
-    margin-top: 6px;
-    font-size: 0.85rem;
-    color: var(--muted);
-    max-width: 620px;
-    line-height: 1.6;
-  }
+/* ━━━━━━━━ Header ━━━━━━━━ */
+.top {
+  padding: 28px 28px 0;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.brand-mark {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--sage) 0%, var(--rose) 100%);
+  box-shadow: var(--shadow-sm);
+}
+.brand-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+.brand-sub {
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-left: 2px;
+}
+.title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.project-title {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(1.5rem, 3.6vw, 2.2rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 4px 0;
+  border-bottom: 1px dashed transparent;
+  transition: border-color 0.2s;
+  min-width: 200px;
+  flex: 1;
+  max-width: 600px;
+}
+.project-title:hover, .project-title:focus { border-bottom-color: var(--border-2); }
+.panel-count {
+  font-size: 0.78rem;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+.panel-count b { color: var(--text); font-weight: 600; }
+.tagline {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  max-width: 620px;
+  line-height: 1.6;
+}
 
-  /* ━━━━━━━━ Toolbar ━━━━━━━━ */
-  .toolbar {
-    margin: 24px auto 0;
-    max-width: 1240px;
-    padding: 14px 18px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--r-lg);
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 18px 22px;
-    box-shadow: var(--shadow-sm);
-  }
-  .tool {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .tool-label {
-    font-size: 0.6rem;
-    font-weight: 600;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-  .tool select, .tool .seg {
-    font-family: inherit;
-    font-size: 0.78rem;
-    color: var(--text);
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    padding: 5px 10px;
-    outline: none;
-    cursor: pointer;
-    transition: border-color 0.15s;
-  }
-  .tool select:hover, .tool select:focus { border-color: var(--sage); }
-  .seg { display: inline-flex; padding: 2px; gap: 2px; }
-  .seg button {
-    font-family: inherit;
-    font-size: 0.7rem;
-    background: transparent;
-    border: none;
-    padding: 4px 10px;
-    border-radius: 5px;
-    color: var(--muted);
-    cursor: pointer;
-    transition: all 0.13s;
-  }
-  .seg button.on { background: var(--sage-soft); color: var(--sage-dark); font-weight: 500; }
-  .seg button:hover:not(.on) { color: var(--text); }
 
-  .toggle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.78rem;
-    color: var(--text);
-    cursor: pointer;
-    user-select: none;
-  }
-  .toggle input { display: none; }
-  .toggle-track {
-    width: 32px; height: 18px;
-    background: var(--border-2);
-    border-radius: 999px;
-    position: relative;
-    transition: background 0.2s;
-    flex-shrink: 0;
-  }
-  .toggle-track::after {
-    content: '';
-    position: absolute;
-    top: 2px; left: 2px;
-    width: 14px; height: 14px;
-    background: var(--surface);
-    border-radius: 50%;
-    transition: transform 0.2s;
-    box-shadow: var(--shadow-sm);
-  }
-  .toggle input:checked + .toggle-track { background: var(--sage); }
-  .toggle input:checked + .toggle-track::after { transform: translateX(14px); }
+/* ━━━━━━━━ Toolbar ━━━━━━━━ */
+.toolbar {
+  margin: 24px auto 0;
+  max-width: 1240px;
+  padding: 14px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px 22px;
+  box-shadow: var(--shadow-sm);
+}
+.tool {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tool-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.tool select, .tool .seg {
+  font-family: inherit;
+  font-size: 0.78rem;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 5px 10px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.tool select:hover, .tool select:focus { border-color: var(--sage); }
+.seg { display: inline-flex; padding: 2px; gap: 2px; }
+.seg button {
+  font-family: inherit;
+  font-size: 0.7rem;
+  background: transparent;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 5px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.13s;
+}
+.seg button.on { background: var(--sage-soft); color: var(--sage-dark); font-weight: 500; }
+.seg button:hover:not(.on) { color: var(--text); }
 
-  .spacer { flex: 1; min-width: 12px; }
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+}
+.toggle input { display: none; }
+.toggle-track {
+  width: 32px; height: 18px;
+  background: var(--border-2);
+  border-radius: 999px;
+  position: relative;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.toggle-track::after {
+  content: '';
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 14px; height: 14px;
+  background: var(--surface);
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: var(--shadow-sm);
+}
+.toggle input:checked + .toggle-track { background: var(--sage); }
+.toggle input:checked + .toggle-track::after { transform: translateX(14px); }
 
-  .btn {
-    font-family: inherit;
-    font-size: 0.78rem;
-    font-weight: 500;
-    padding: 8px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--text);
-    transition: all 0.15s;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .btn:hover { border-color: var(--sage); color: var(--sage-dark); }
-  .btn.ghost { background: transparent; border-color: transparent; color: var(--muted); }
-  .btn.ghost:hover { color: var(--warn); background: transparent; border-color: transparent; }
-  .btn.primary {
-    background: var(--sage);
-    border-color: var(--sage);
-    color: #fff;
-    padding: 10px 22px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    box-shadow: 0 2px 6px rgba(127,165,154,0.25);
-  }
-  .btn.primary:hover { background: var(--sage-dark); border-color: var(--sage-dark); color: #fff; }
+.spacer { flex: 1; min-width: 12px; }
 
-  /* ━━━━━━━━ Grid of panels ━━━━━━━━ */
-  main {
-    max-width: 1240px;
-    margin: 24px auto 120px;
-    padding: 0 28px;
-  }
 
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 18px;
-  }
+.btn {
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn:hover { border-color: var(--sage); color: var(--sage-dark); }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--muted); }
+.btn.ghost:hover { color: var(--warn); background: transparent; border-color: transparent; }
+.btn.primary {
+  background: var(--sage);
+  border-color: var(--sage);
+  color: #fff;
+  padding: 10px 22px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 6px rgba(127,165,154,0.25);
+}
+.btn.primary:hover { background: var(--sage-dark); border-color: var(--sage-dark); color: #fff; }
+.btn.sm { padding: 6px 12px; font-size: 0.72rem; }
 
-  .panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--r-lg);
-    overflow: hidden;
-    box-shadow: var(--shadow-sm);
-    transition: all 0.18s ease;
-    animation: rise 0.32s ease both;
-    display: flex;
-    flex-direction: column;
-  }
-  .panel:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
-  @keyframes rise {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
+/* ━━━━━━━━ Grid of panels ━━━━━━━━ */
+main {
+  max-width: 1240px;
+  margin: 24px auto 120px;
+  padding: 0 28px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 18px;
+}
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.18s ease;
+  animation: rise 0.32s ease both;
+  display: flex;
+  flex-direction: column;
+  cursor: grab;
+}
+.panel:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+.panel.dragging { opacity: 0.5; transform: scale(0.95); }
+.panel.drag-over { border-color: var(--sage); box-shadow: 0 0 0 2px var(--sage); }
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
-  .panel-img {
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    background: var(--bg-soft);
-    position: relative;
-    overflow: hidden;
-    cursor: pointer;
-  }
-  .panel-img img {
-    width: 100%; height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-  .panel-img.empty {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 6px;
-    color: var(--dim);
-    border: 2px dashed var(--border-2);
-    border-radius: var(--r-lg) var(--r-lg) 0 0;
-    margin: -1px -1px 0;
-  }
-  .panel-img.empty:hover { border-color: var(--sage); color: var(--sage); background: var(--sage-soft); }
-  .panel-img.empty .icon { font-size: 1.4rem; opacity: 0.7; }
-  .panel-img.empty .lbl { font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; }
+.panel-img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: var(--bg-soft);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+.panel-img img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.panel-img.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--dim);
+  border: 2px dashed var(--border-2);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  margin: -1px -1px 0;
+}
+.panel-img.empty:hover { border-color: var(--sage); color: var(--sage); background: var(--sage-soft); }
+.panel-img.empty .icon { font-size: 1.4rem; opacity: 0.7; }
+.panel-img.empty .lbl { font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; }
 
-  .panel-num {
-    position: absolute;
-    top: 10px; left: 10px;
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    background: rgba(255,255,255,0.94);
-    color: var(--sage-dark);
-    padding: 4px 10px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    backdrop-filter: blur(4px);
-  }
 
-  .panel-tools {
-    position: absolute;
-    top: 10px; right: 10px;
-    display: flex;
-    gap: 4px;
-    opacity: 0;
-    transition: opacity 0.15s;
-  }
-  .panel:hover .panel-tools { opacity: 1; }
-  .ptool {
-    width: 28px; height: 28px;
-    border-radius: 7px;
-    background: rgba(255,255,255,0.94);
-    border: 1px solid var(--border);
-    color: var(--muted);
-    cursor: pointer;
-    font-size: 0.85rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(4px);
-    transition: all 0.13s;
-  }
-  .ptool:hover { color: var(--sage-dark); border-color: var(--sage); }
-  .ptool.del:hover { color: var(--warn); border-color: var(--warn); }
+.panel-num {
+  position: absolute;
+  top: 10px; left: 10px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  background: rgba(255,255,255,0.94);
+  color: var(--sage-dark);
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  backdrop-filter: blur(4px);
+}
+.panel-tools {
+  position: absolute;
+  top: 10px; right: 10px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.panel:hover .panel-tools { opacity: 1; }
+.ptool {
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  background: rgba(255,255,255,0.94);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  transition: all 0.13s;
+}
+.ptool:hover { color: var(--sage-dark); border-color: var(--sage); }
+.ptool.del:hover { color: var(--warn); border-color: var(--warn); }
+.panel-body { padding: 12px 14px 14px; }
+.caption-input {
+  width: 100%;
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed transparent;
+  padding: 4px 0;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.caption-input::placeholder { color: var(--dim); font-style: italic; }
+.caption-input:hover, .caption-input:focus { border-bottom-color: var(--border-2); }
 
-  .panel-body {
-    padding: 12px 14px 14px;
-  }
-  .caption-input {
-    width: 100%;
-    font-family: inherit;
-    font-size: 0.82rem;
-    color: var(--text);
-    background: transparent;
-    border: none;
-    border-bottom: 1px dashed transparent;
-    padding: 4px 0;
-    outline: none;
-    transition: border-color 0.15s;
-  }
-  .caption-input::placeholder { color: var(--dim); font-style: italic; }
-  .caption-input:hover, .caption-input:focus { border-bottom-color: var(--border-2); }
+/* Add card */
+.add-card {
+  background: transparent;
+  border: 2px dashed var(--border-2);
+  border-radius: var(--r-lg);
+  aspect-ratio: 16 / 9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--muted);
+  transition: all 0.15s;
+  font-family: inherit;
+  width: 100%;
+  min-height: 180px;
+}
+.add-card:hover {
+  border-color: var(--sage);
+  color: var(--sage-dark);
+  background: var(--sage-soft);
+}
+.add-card .plus { font-size: 1.8rem; line-height: 1; opacity: 0.8; }
+.add-card .lbl { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 500; }
 
-  /* Add card */
-  .add-card {
-    background: transparent;
-    border: 2px dashed var(--border-2);
-    border-radius: var(--r-lg);
-    aspect-ratio: 16 / 9;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    cursor: pointer;
-    color: var(--muted);
-    transition: all 0.15s;
-    font-family: inherit;
-    width: 100%;
-    min-height: 180px;
-  }
-  .add-card:hover {
-    border-color: var(--sage);
-    color: var(--sage-dark);
-    background: var(--sage-soft);
-  }
-  .add-card .plus { font-size: 1.8rem; line-height: 1; opacity: 0.8; }
-  .add-card .lbl { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 500; }
 
-  /* ━━━━━━━━ Empty state ━━━━━━━━ */
-  .empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--muted);
-  }
-  .empty-state h2 {
-    font-size: 1.3rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    color: var(--text);
-    margin-bottom: 10px;
-  }
-  .empty-state p {
-    font-size: 0.88rem;
-    max-width: 480px;
-    margin: 0 auto 24px;
-    line-height: 1.65;
-  }
-  .empty-state .btn { padding: 12px 26px; font-size: 0.85rem; }
+/* ━━━━━━━━ Empty state ━━━━━━━━ */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--muted);
+}
+.empty-state h2 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.empty-state p {
+  font-size: 0.88rem;
+  max-width: 480px;
+  margin: 0 auto 24px;
+  line-height: 1.65;
+}
+.empty-state .btn { padding: 12px 26px; font-size: 0.85rem; }
 
-  /* ━━━━━━━━ Floating Done bar ━━━━━━━━ */
-  .done-bar {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 8px 8px 8px 22px;
-    box-shadow: var(--shadow-lg);
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    z-index: 50;
-    animation: rise 0.4s ease both;
-  }
-  .done-bar .meta {
-    font-size: 0.74rem;
-    color: var(--muted);
-    letter-spacing: 0.02em;
-  }
-  .done-bar .meta b { color: var(--text); font-weight: 600; }
-  .done-bar .btn.primary { padding: 10px 22px; }
+/* ━━━━━━━━ Floating Done bar ━━━━━━━━ */
+.done-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 8px 8px 22px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 50;
+  animation: rise 0.4s ease both;
+}
+.done-bar .meta {
+  font-size: 0.74rem;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+.done-bar .meta b { color: var(--text); font-weight: 600; }
 
-  /* ━━━━━━━━ Result modal ━━━━━━━━ */
-  .modal-veil {
-    position: fixed; inset: 0;
-    background: rgba(58,58,58,0.5);
-    backdrop-filter: blur(4px);
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    animation: fade 0.2s ease;
-  }
-  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
-  .modal {
-    background: var(--surface);
-    border-radius: var(--r-lg);
-    box-shadow: var(--shadow-lg);
-    max-width: 1100px;
-    width: 100%;
-    max-height: 90vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    animation: rise 0.25s ease both;
-  }
-  .modal-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 18px 22px;
-    border-bottom: 1px solid var(--border);
-  }
-  .modal-head h3 {
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: var(--text);
-  }
-  .modal-head .sub {
-    font-size: 0.74rem;
-    color: var(--muted);
-    margin-top: 2px;
-  }
-  .modal-body {
-    flex: 1;
-    overflow: auto;
-    padding: 24px;
-    background: var(--bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .modal-body img {
-    max-width: 100%;
-    max-height: 70vh;
-    border-radius: var(--r);
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border);
-  }
-  .modal-foot {
-    display: flex;
-    gap: 10px;
-    padding: 14px 22px;
-    border-top: 1px solid var(--border);
-    align-items: center;
-    background: var(--surface);
-  }
-  .modal-foot .spacer { flex: 1; }
+/* ━━━━━━━━ Template Picker Modal ━━━━━━━━ */
+.modal-veil {
+  position: fixed; inset: 0;
+  background: rgba(58,58,58,0.5);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fade 0.2s ease;
+}
+html.dark .modal-veil { background: rgba(0,0,0,0.7); }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.modal {
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  max-width: 1100px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: rise 0.25s ease both;
+}
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-head h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.modal-head .sub {
+  font-size: 0.74rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.modal-body {
+  flex: 1;
+  overflow: auto;
+  padding: 24px;
+  background: var(--bg);
+}
+.modal-body img {
+  max-width: 100%;
+  max-height: 70vh;
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+.modal-foot {
+  display: flex;
+  gap: 10px;
+  padding: 14px 22px;
+  border-top: 1px solid var(--border);
+  align-items: center;
+  background: var(--surface);
+  flex-wrap: wrap;
+}
+.modal-foot .spacer { flex: 1; }
 
-  /* ━━━━━━━━ Toast ━━━━━━━━ */
-  .toast {
-    position: fixed;
-    bottom: 96px;
-    left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: var(--text);
-    color: #fff;
-    padding: 10px 20px;
-    border-radius: 999px;
-    font-size: 0.78rem;
-    letter-spacing: 0.02em;
-    opacity: 0;
-    transition: all 0.25s ease;
-    z-index: 60;
-    pointer-events: none;
-    box-shadow: var(--shadow-lg);
-  }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-  /* ━━━━━━━━ Responsive tweaks ━━━━━━━━ */
-  @media (max-width: 640px) {
-    .top, main { padding-left: 18px; padding-right: 18px; }
-    .toolbar { gap: 14px; padding: 12px 14px; }
-    .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
-    .done-bar { padding: 6px 6px 6px 18px; gap: 10px; }
-    .done-bar .meta { display: none; }
-  }
+/* ━━━━━━━━ Template Grid ━━━━━━━━ */
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+.template-card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+.template-card:hover { border-color: var(--sage); transform: translateY(-2px); box-shadow: var(--shadow); }
+.template-card.selected { border-color: var(--sage); background: var(--sage-soft); }
+.template-card .tpl-icon { font-size: 2rem; margin-bottom: 8px; }
+.template-card .tpl-name { font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.template-card .tpl-desc { font-size: 0.72rem; color: var(--muted); line-height: 1.4; }
+
+/* ━━━━━━━━ Toast ━━━━━━━━ */
+.toast {
+  position: fixed;
+  bottom: 96px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--text);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  opacity: 0;
+  transition: all 0.25s ease;
+  z-index: 60;
+  pointer-events: none;
+  box-shadow: var(--shadow-lg);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ━━━━━━━━ Undo/Redo bar ━━━━━━━━ */
+.undo-bar {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  gap: 6px;
+  z-index: 50;
+}
+.undo-bar .btn { padding: 6px 12px; font-size: 0.75rem; }
+.undo-bar .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ━━━━━━━━ Responsive ━━━━━━━━ */
+@media (max-width: 640px) {
+  .top, main { padding-left: 18px; padding-right: 18px; }
+  .toolbar { gap: 14px; padding: 12px 14px; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+  .done-bar { padding: 6px 6px 6px 18px; gap: 10px; }
+  .done-bar .meta { display: none; }
+  .template-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+}
 </style>
 </head>
 <body>
+
+
+<!-- Undo/Redo floating buttons -->
+<div class="undo-bar">
+  <button class="btn sm" id="btnUndo" disabled title="Undo (Ctrl+Z)">↩ Undo</button>
+  <button class="btn sm" id="btnRedo" disabled title="Redo (Ctrl+Y)">↪ Redo</button>
+</div>
 
 <header class="top">
   <div class="brand">
@@ -528,7 +592,7 @@
     <input class="project-title" id="projectTitle" placeholder="Untitled story sheet" maxlength="80"/>
     <span class="panel-count"><b id="panelCount">0</b> panels</span>
   </div>
-  <p class="tagline">Add images one by one in the order you want. When you're done, hit Compose Sheet — every image becomes one clean sheet you can save or share.</p>
+  <p class="tagline">Add images, drag to reorder, then hit Compose Sheet to pick a template and generate your final sheet.</p>
 </header>
 
 <section class="toolbar">
@@ -573,6 +637,12 @@
     <span>Captions</span>
   </label>
 
+  <label class="toggle">
+    <input type="checkbox" id="darkMode"/>
+    <span class="toggle-track"></span>
+    <span>🌙 Dark</span>
+  </label>
+
   <div class="spacer"></div>
 
   <button class="btn ghost" id="btnReset" title="Clear all panels">Reset</button>
@@ -588,18 +658,19 @@
 </div>
 
 <div class="toast" id="toast">Saved</div>
-
-<!-- Modal mounts here -->
 <div id="modalMount"></div>
+
 
 <script>
 'use strict';
 
 /* ════════════════════════════════════════════════
-   Story Sheet Maker — single file app
+   Story Sheet Maker v2.0
+   Templates, Drag-Drop, Undo/Redo, Dark Mode, PDF
    ════════════════════════════════════════════════ */
 
-const STORAGE_KEY = 'storySheet.project.v1';
+const STORAGE_KEY = 'storySheet.project.v2';
+const MAX_UNDO = 40;
 
 const App = {
   project: {
@@ -609,11 +680,48 @@ const App = {
     gap: 'normal',
     showNumbers: true,
     showCaptions: true,
-    panels: [],   // { id, image (dataUrl), caption }
+    darkMode: false,
+    panels: [],
   },
 };
 
-/* ─── helpers ─── */
+/* ─── Undo/Redo ─── */
+const History = {
+  stack: [],
+  pointer: -1,
+  push(state) {
+    this.stack = this.stack.slice(0, this.pointer + 1);
+    this.stack.push(JSON.stringify(state));
+    if (this.stack.length > MAX_UNDO) this.stack.shift();
+    this.pointer = this.stack.length - 1;
+    this.updateButtons();
+  },
+  undo() {
+    if (this.pointer <= 0) return;
+    this.pointer--;
+    this.restore();
+  },
+  redo() {
+    if (this.pointer >= this.stack.length - 1) return;
+    this.pointer++;
+    this.restore();
+  },
+  restore() {
+    const state = JSON.parse(this.stack[this.pointer]);
+    Object.assign(App.project, state);
+    save(true);
+    render();
+    this.updateButtons();
+  },
+  updateButtons() {
+    const u = document.getElementById('btnUndo');
+    const r = document.getElementById('btnRedo');
+    if (u) u.disabled = this.pointer <= 0;
+    if (r) r.disabled = this.pointer >= this.stack.length - 1;
+  }
+};
+
+/* ─── Helpers ─── */
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -626,20 +734,43 @@ const ASPECTS = {
   '1:1':  { w: 1, h: 1 },
   '9:16': { w: 9, h: 16 },
 };
-
 const GAPS = { tight: 8, normal: 18, airy: 32 };
 
-/* ─── persistence ─── */
-function save() {
+
+/* ─── Templates ─── */
+const TEMPLATES = [
+  { id: 'classic', name: 'Classic', icon: '🎨', desc: 'Warm cream, sage accents',
+    bg: '#F6F1E8', cellBg: '#FFFFFF', border: '#E5DCC9', text: '#3A3A3A', accent: '#6B9286', numBg: 'rgba(255,255,255,0.94)', numColor: '#6B9286', font: 'Inter', captionColor: '#3A3A3A' },
+  { id: 'minimal', name: 'Minimal', icon: '◻️', desc: 'Pure white, no chrome',
+    bg: '#FFFFFF', cellBg: '#FAFAFA', border: '#E8E8E8', text: '#222222', accent: '#666666', numBg: 'rgba(0,0,0,0.06)', numColor: '#333333', font: 'Inter', captionColor: '#444444' },
+  { id: 'filmstrip', name: 'Filmstrip', icon: '🎞️', desc: 'Horizontal film row, black bg',
+    bg: '#111111', cellBg: '#1a1a1a', border: '#333333', text: '#FFFFFF', accent: '#FFD700', numBg: 'rgba(255,215,0,0.9)', numColor: '#111111', font: 'Inter', captionColor: '#CCCCCC', singleRow: true },
+  { id: 'polaroid', name: 'Polaroid Wall', icon: '📸', desc: 'Rotated polaroids on warm paper',
+    bg: '#F5E6D3', cellBg: '#FFFFFF', border: '#E0D5C3', text: '#4A3728', accent: '#8B6914', numBg: 'rgba(255,255,255,0.9)', numColor: '#8B6914', font: 'Inter', captionColor: '#5C4A35', polaroid: true },
+  { id: 'contact', name: 'Contact Sheet', icon: '🔲', desc: 'Dense dark grid, mono numbers',
+    bg: '#1E1E1E', cellBg: '#2A2A2A', border: '#444444', text: '#E0E0E0', accent: '#AAAAAA', numBg: 'rgba(0,0,0,0.7)', numColor: '#00FF00', font: 'Courier New', captionColor: '#999999' },
+  { id: 'comic', name: 'Comic Book', icon: '💥', desc: 'Bright yellow, thick black borders',
+    bg: '#FFED4A', cellBg: '#FFFFFF', border: '#000000', text: '#000000', accent: '#FF0000', numBg: '#FF0000', numColor: '#FFFFFF', font: 'Impact', captionColor: '#000000', thickBorder: true },
+  { id: 'magazine', name: 'Magazine', icon: '📰', desc: 'Big hero + smaller grid, editorial',
+    bg: '#F8F8F8', cellBg: '#FFFFFF', border: '#DDDDDD', text: '#1A1A1A', accent: '#E63946', numBg: '#E63946', numColor: '#FFFFFF', font: 'Georgia', captionColor: '#333333', magazine: true },
+  { id: 'sepia', name: 'Sepia Journal', icon: '📜', desc: 'Paper texture, sepia tone, serif',
+    bg: '#F4E8D1', cellBg: '#FDF5E6', border: '#D4B896', text: '#5C4A35', accent: '#8B6914', numBg: 'rgba(139,105,20,0.15)', numColor: '#8B6914', font: 'Georgia', captionColor: '#6B5B3E', sepia: true },
+  { id: 'storyboard', name: 'Storyboard Pro', icon: '🎬', desc: 'Technical labels (Scene/Shot)',
+    bg: '#F0F0F0', cellBg: '#FFFFFF', border: '#CCCCCC', text: '#333333', accent: '#0066CC', numBg: '#0066CC', numColor: '#FFFFFF', font: 'Courier New', captionColor: '#555555', technical: true },
+  { id: 'darkcinema', name: 'Dark Cinema', icon: '🎥', desc: 'Black + red accents, cinematic',
+    bg: '#0A0A0A', cellBg: '#141414', border: '#2A2A2A', text: '#FFFFFF', accent: '#E50914', numBg: '#E50914', numColor: '#FFFFFF', font: 'Inter', captionColor: '#AAAAAA' },
+];
+
+
+/* ─── Persistence ─── */
+function save(skipHistory) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(App.project)); }
   catch (e) {
-    if (e && e.name === 'QuotaExceededError') {
-      flashToast('Storage full — try fewer or smaller images', true);
-    } else {
-      console.warn('Save failed:', e);
-    }
+    if (e && e.name === 'QuotaExceededError') flashToast('Storage full — try fewer or smaller images', true);
   }
+  if (!skipHistory) History.push({ ...App.project, panels: App.project.panels.map(p => ({...p})) });
 }
+
 function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -653,11 +784,8 @@ function load() {
         gap: p.gap || 'normal',
         showNumbers: p.showNumbers !== false,
         showCaptions: p.showCaptions !== false,
-        panels: p.panels.map(x => ({
-          id: x.id || uid(),
-          image: x.image || null,
-          caption: x.caption || '',
-        })),
+        darkMode: p.darkMode || false,
+        panels: p.panels.map(x => ({ id: x.id || uid(), image: x.image || null, caption: x.caption || '' })),
       });
       return true;
     }
@@ -665,7 +793,7 @@ function load() {
   return false;
 }
 
-/* ─── state mutations ─── */
+/* ─── State mutations ─── */
 function addPanel(image) {
   App.project.panels.push({ id: uid(), image: image || null, caption: '' });
   save(); render();
@@ -688,7 +816,7 @@ function setCaption(id, value) {
   const p = App.project.panels.find(x => x.id === id);
   if (!p) return;
   p.caption = value;
-  save();
+  save(true); // don't push to history on every keystroke
 }
 function reset() {
   if (App.project.panels.length === 0) return;
@@ -698,47 +826,78 @@ function reset() {
   save(); render();
 }
 
-/* ─── image upload (single panel) ─── */
+
+/* ─── Drag and Drop ─── */
+let dragSrcId = null;
+
+function handleDragStart(e) {
+  dragSrcId = e.currentTarget.dataset.panelId;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', dragSrcId);
+}
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const card = e.currentTarget.closest('.panel');
+  if (card) card.classList.add('drag-over');
+}
+function handleDragLeave(e) {
+  const card = e.currentTarget.closest('.panel');
+  if (card) card.classList.remove('drag-over');
+}
+function handleDrop(e) {
+  e.preventDefault();
+  const targetId = e.currentTarget.dataset.panelId;
+  const card = e.currentTarget.closest('.panel');
+  if (card) card.classList.remove('drag-over');
+  if (!dragSrcId || dragSrcId === targetId) return;
+  const arr = App.project.panels;
+  const from = arr.findIndex(p => p.id === dragSrcId);
+  const to = arr.findIndex(p => p.id === targetId);
+  if (from < 0 || to < 0) return;
+  const [item] = arr.splice(from, 1);
+  arr.splice(to, 0, item);
+  save(); render();
+  flashToast('Panel reordered');
+}
+function handleDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+  dragSrcId = null;
+}
+
+/* ─── Image upload ─── */
 function chooseImageFor(targetId) {
   const inp = document.createElement('input');
-  inp.type = 'file';
-  inp.accept = 'image/*';
+  inp.type = 'file'; inp.accept = 'image/*';
   inp.onchange = (e) => {
     const f = e.target.files && e.target.files[0];
     if (!f) return;
     if (!f.type.startsWith('image/')) { alert('Please choose an image file.'); return; }
     if (f.size > 1.5 * 1024 * 1024) {
-      if (!confirm('That image is over 1.5MB. Storing several large images may exceed browser storage. Continue?')) return;
+      if (!confirm('Image over 1.5MB — large images may exceed storage. Continue?')) return;
     }
     const reader = new FileReader();
     reader.onload = (ev) => {
-      if (targetId === '__new__') {
-        addPanel(ev.target.result);
-      } else {
+      if (targetId === '__new__') { addPanel(ev.target.result); }
+      else {
         const p = App.project.panels.find(x => x.id === targetId);
         if (p) { p.image = ev.target.result; save(); render(); }
       }
       flashToast('Image added');
     };
-    reader.onerror = () => alert('Could not read this image.');
     reader.readAsDataURL(f);
   };
   inp.click();
 }
 
-/* allow multi-file pick from the "+ Add panel" tile */
 function chooseMultiImages() {
   const inp = document.createElement('input');
-  inp.type = 'file';
-  inp.accept = 'image/*';
-  inp.multiple = true;
+  inp.type = 'file'; inp.accept = 'image/*'; inp.multiple = true;
   inp.onchange = (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-    let totalBig = files.filter(f => f.size > 1.5 * 1024 * 1024).length;
-    if (totalBig > 0) {
-      if (!confirm(`${totalBig} of these images are over 1.5MB. Storing several large images may exceed browser storage. Continue?`)) return;
-    }
     let pending = files.length;
     files.forEach((f) => {
       if (!f.type.startsWith('image/')) { pending--; return; }
@@ -746,7 +905,7 @@ function chooseMultiImages() {
       reader.onload = (ev) => {
         App.project.panels.push({ id: uid(), image: ev.target.result, caption: '' });
         pending--;
-        if (pending === 0) { save(); render(); flashToast(`${files.length} image${files.length===1?'':'s'} added`); }
+        if (pending === 0) { save(); render(); flashToast(`${files.length} image(s) added`); }
       };
       reader.onerror = () => { pending--; if (pending === 0) { save(); render(); } };
       reader.readAsDataURL(f);
@@ -755,31 +914,28 @@ function chooseMultiImages() {
   inp.click();
 }
 
-/* ─── render ─── */
+
+/* ─── Render ─── */
 function render() {
-  // Header bits
   const t = $('#projectTitle');
   if (document.activeElement !== t) t.value = App.project.title;
   $('#panelCount').textContent = App.project.panels.length;
   $('#doneCount').textContent = App.project.panels.length;
-
-  // Toolbar state sync
   $('#aspect').value = App.project.aspect;
   $$('#cols button').forEach(b => b.classList.toggle('on', b.dataset.cols === App.project.cols));
   $$('#gap button').forEach(b => b.classList.toggle('on', b.dataset.gap === App.project.gap));
   $('#showNumbers').checked = App.project.showNumbers;
   $('#showCaptions').checked = App.project.showCaptions;
-
-  // Done bar visibility (need at least 2 panels with images to make a sheet useful — but show it any time we have content)
+  $('#darkMode').checked = App.project.darkMode;
+  document.documentElement.classList.toggle('dark', App.project.darkMode);
   $('#doneBar').style.display = App.project.panels.length > 0 ? 'flex' : 'none';
 
-  // Board
   const board = $('#board');
   if (App.project.panels.length === 0) {
     board.innerHTML = `
       <div class="empty-state">
         <h2>Start your sheet</h2>
-        <p>Add images one by one. They'll become panels in the order you add them. When you're done, compose them into one clean sheet.</p>
+        <p>Add images one by one or multiple at once. Drag to reorder. Then compose them into a beautiful sheet using one of 10 templates.</p>
         <button class="btn primary" id="btnFirstAdd">+ Add your first image</button>
       </div>`;
     $('#btnFirstAdd').onclick = chooseMultiImages;
@@ -787,34 +943,32 @@ function render() {
   }
 
   const cardsHtml = App.project.panels.map((p, i) => panelCardHtml(p, i)).join('');
-  const addCardHtml = `
-    <button class="add-card" id="addCard" title="Add another panel">
-      <div class="plus">＋</div>
-      <div class="lbl">Add panel</div>
-    </button>`;
-
+  const addCardHtml = `<button class="add-card" id="addCard" title="Add another panel"><div class="plus">＋</div><div class="lbl">Add panel</div></button>`;
   board.innerHTML = `<div class="grid">${cardsHtml}${addCardHtml}</div>`;
 
-  // Wire up
+  // Wire up panel actions
   board.querySelectorAll('[data-pid]').forEach(el => {
     const pid = el.dataset.pid;
     const action = el.dataset.action;
-    if (action === 'open') {
-      el.onclick = () => chooseImageFor(pid);
-    } else if (action === 'up') {
-      el.onclick = (e) => { e.stopPropagation(); movePanel(pid, -1); };
-    } else if (action === 'down') {
-      el.onclick = (e) => { e.stopPropagation(); movePanel(pid, 1); };
-    } else if (action === 'replace') {
-      el.onclick = (e) => { e.stopPropagation(); chooseImageFor(pid); };
-    } else if (action === 'delete') {
-      el.onclick = (e) => { e.stopPropagation(); removePanel(pid); };
-    }
+    if (action === 'open') el.onclick = () => chooseImageFor(pid);
+    else if (action === 'up') el.onclick = (e) => { e.stopPropagation(); movePanel(pid, -1); };
+    else if (action === 'down') el.onclick = (e) => { e.stopPropagation(); movePanel(pid, 1); };
+    else if (action === 'replace') el.onclick = (e) => { e.stopPropagation(); chooseImageFor(pid); };
+    else if (action === 'delete') el.onclick = (e) => { e.stopPropagation(); removePanel(pid); };
   });
   board.querySelectorAll('input[data-caption]').forEach(el => {
     el.oninput = () => setCaption(el.dataset.caption, el.value);
   });
   $('#addCard').onclick = chooseMultiImages;
+
+  // Wire drag-and-drop
+  board.querySelectorAll('.panel[draggable]').forEach(el => {
+    el.addEventListener('dragstart', handleDragStart);
+    el.addEventListener('dragover', handleDragOver);
+    el.addEventListener('dragleave', handleDragLeave);
+    el.addEventListener('drop', handleDrop);
+    el.addEventListener('dragend', handleDragEnd);
+  });
 }
 
 function panelCardHtml(p, i) {
@@ -838,7 +992,7 @@ function panelCardHtml(p, i) {
          </div>
        </div>`;
   return `
-    <div class="panel">
+    <div class="panel" draggable="true" data-panel-id="${p.id}">
       ${imgSection}
       <div class="panel-body">
         <input class="caption-input" data-caption="${p.id}"
@@ -847,13 +1001,55 @@ function panelCardHtml(p, i) {
     </div>`;
 }
 
-/* ─── compose final sheet ─── */
-async function composeSheet() {
+
+/* ─── Template Picker (shown after clicking Done) ─── */
+function showTemplatePicker() {
   const panels = App.project.panels.filter(p => p.image);
-  if (panels.length === 0) {
-    alert('Add at least one image first.');
-    return;
-  }
+  if (panels.length === 0) { alert('Add at least one image first.'); return; }
+
+  const mount = $('#modalMount');
+  const cardsHtml = TEMPLATES.map(t => `
+    <div class="template-card" data-tpl="${t.id}">
+      <div class="tpl-icon">${t.icon}</div>
+      <div class="tpl-name">${t.name}</div>
+      <div class="tpl-desc">${t.desc}</div>
+    </div>`).join('');
+
+  mount.innerHTML = `
+    <div class="modal-veil" id="tplVeil">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-head">
+          <div>
+            <h3>Choose a Template</h3>
+            <div class="sub">${panels.length} panel${panels.length === 1 ? '' : 's'} will be composed</div>
+          </div>
+          <button class="btn ghost" id="closeTpl">Cancel</button>
+        </div>
+        <div class="modal-body">
+          <div class="template-grid">${cardsHtml}</div>
+        </div>
+        <div class="modal-foot">
+          <span style="font-size:0.74rem;color:var(--muted)">Click a template to generate your sheet</span>
+        </div>
+      </div>
+    </div>`;
+
+  const close = () => mount.innerHTML = '';
+  $('#tplVeil').onclick = close;
+  $('#closeTpl').onclick = close;
+  mount.querySelectorAll('.template-card').forEach(card => {
+    card.onclick = () => {
+      close();
+      composeSheet(card.dataset.tpl);
+    };
+  });
+}
+
+/* ─── Compose Sheet with Template ─── */
+async function composeSheet(templateId) {
+  const tpl = TEMPLATES.find(t => t.id === templateId) || TEMPLATES[0];
+  const panels = App.project.panels.filter(p => p.image);
+  if (panels.length === 0) return;
 
   const aspect = ASPECTS[App.project.aspect] || ASPECTS['16:9'];
   const aspectRatio = aspect.w / aspect.h;
@@ -861,9 +1057,12 @@ async function composeSheet() {
 
   // Determine columns
   let cols;
-  if (App.project.cols === 'auto') {
+  if (tpl.singleRow) {
+    cols = n;
+  } else if (tpl.magazine && n > 1) {
+    cols = n <= 3 ? 2 : 3;
+  } else if (App.project.cols === 'auto') {
     cols = n <= 4 ? 2 : (n <= 9 ? 3 : 4);
-    // for vertical aspect, prefer fewer columns
     if (aspectRatio < 1) cols = Math.min(cols, 3);
   } else {
     cols = Number(App.project.cols);
@@ -871,14 +1070,14 @@ async function composeSheet() {
   cols = Math.min(cols, n);
   const rows = Math.ceil(n / cols);
 
-  // Cell sizing
-  const targetSheetWidth = 1920;
+  // Canvas sizing
+  const targetW = tpl.singleRow ? Math.min(3200, n * 480) : 1920;
   const padding = 56;
   const gap = GAPS[App.project.gap] || 18;
   const headerH = 100;
   const captionH = App.project.showCaptions ? 44 : 0;
 
-  const availableW = targetSheetWidth - padding * 2 - gap * (cols - 1);
+  const availableW = targetW - padding * 2 - gap * (cols - 1);
   const cellW = Math.floor(availableW / cols);
   const cellH = Math.round(cellW / aspectRatio);
 
@@ -890,32 +1089,32 @@ async function composeSheet() {
   canvas.height = canvasH;
   const ctx = canvas.getContext('2d');
 
-  // Background — calm warm cream
-  ctx.fillStyle = '#F6F1E8';
+  // Background
+  ctx.fillStyle = tpl.bg;
   ctx.fillRect(0, 0, canvasW, canvasH);
 
-  // Subtle inner panel
-  // Header text
+  // Header
   const title = (App.project.title || 'Story Sheet').trim();
-  ctx.fillStyle = '#3A3A3A';
-  ctx.font = '600 32px "Inter", system-ui, sans-serif';
+  ctx.fillStyle = tpl.text;
+  ctx.font = `600 32px "${tpl.font}", system-ui, sans-serif`;
   ctx.textBaseline = 'top';
   ctx.fillText(title, padding, padding);
 
-  ctx.fillStyle = '#8B857A';
-  ctx.font = '400 14px "Inter", system-ui, sans-serif';
-  const subtitle = `${n} panel${n === 1 ? '' : 's'}  ·  ${App.project.aspect}  ·  ${new Date().toLocaleDateString()}`;
+  ctx.fillStyle = tpl.accent;
+  ctx.font = `400 14px "${tpl.font}", system-ui, sans-serif`;
+  const subtitle = `${n} panel${n === 1 ? '' : 's'}  ·  ${App.project.aspect}  ·  ${tpl.name}  ·  ${new Date().toLocaleDateString()}`;
   ctx.fillText(subtitle, padding, padding + 44);
 
-  // Subtle divider
-  ctx.strokeStyle = '#E5DCC9';
+  // Divider
+  ctx.strokeStyle = tpl.border;
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(padding, padding + headerH - 16);
   ctx.lineTo(canvasW - padding, padding + headerH - 16);
   ctx.stroke();
 
-  // Pre-load all images
+
+  // Load images
   const loadImage = (src) => new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -925,17 +1124,34 @@ async function composeSheet() {
   });
   const images = await Promise.all(panels.map(p => loadImage(p.image)));
 
-  // Draw each cell
+  // Draw cells
   for (let i = 0; i < n; i++) {
     const r = Math.floor(i / cols);
     const c = i % cols;
     const x = padding + c * (cellW + gap);
     const y = padding + headerH + r * (cellH + captionH + gap);
 
-    // Cell shadow / background
-    ctx.fillStyle = '#FFFFFF';
+    // Polaroid effect - slight rotation
+    if (tpl.polaroid) {
+      ctx.save();
+      const rot = (Math.random() - 0.5) * 0.06;
+      ctx.translate(x + cellW / 2, y + cellH / 2);
+      ctx.rotate(rot);
+      ctx.translate(-(x + cellW / 2), -(y + cellH / 2));
+      // White polaroid border
+      ctx.fillStyle = '#FFFFFF';
+      ctx.shadowColor = 'rgba(0,0,0,0.15)';
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetY = 3;
+      ctx.fillRect(x - 12, y - 12, cellW + 24, cellH + 50);
+      ctx.shadowColor = 'transparent';
+    }
+
+    // Cell background
+    ctx.fillStyle = tpl.cellBg;
     ctx.fillRect(x, y, cellW, cellH);
 
+    // Sepia filter overlay
     const img = images[i];
     if (img) {
       ctx.save();
@@ -945,72 +1161,84 @@ async function composeSheet() {
       const ir = img.width / img.height;
       const cr = cellW / cellH;
       let dw, dh, dx, dy;
-      if (ir > cr) {
-        dh = cellH;
-        dw = dh * ir;
-        dx = x + (cellW - dw) / 2;
-        dy = y;
-      } else {
-        dw = cellW;
-        dh = dw / ir;
-        dx = x;
-        dy = y + (cellH - dh) / 2;
-      }
+      if (ir > cr) { dh = cellH; dw = dh * ir; dx = x + (cellW - dw) / 2; dy = y; }
+      else { dw = cellW; dh = dw / ir; dx = x; dy = y + (cellH - dh) / 2; }
       ctx.drawImage(img, dx, dy, dw, dh);
+
+      // Sepia overlay
+      if (tpl.sepia) {
+        ctx.fillStyle = 'rgba(139, 105, 20, 0.15)';
+        ctx.fillRect(x, y, cellW, cellH);
+      }
       ctx.restore();
     }
 
     // Border
-    ctx.strokeStyle = '#E5DCC9';
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = tpl.border;
+    ctx.lineWidth = tpl.thickBorder ? 4 : 1;
     ctx.strokeRect(x + 0.5, y + 0.5, cellW - 1, cellH - 1);
+
+    // Film sprocket marks for filmstrip
+    if (tpl.singleRow) {
+      ctx.fillStyle = '#333333';
+      for (let sy = y; sy < y + cellH; sy += 30) {
+        ctx.fillRect(x + 4, sy + 4, 10, 14);
+        ctx.fillRect(x + cellW - 14, sy + 4, 10, 14);
+      }
+    }
 
     // Number badge
     if (App.project.showNumbers) {
-      const numText = String(i + 1).padStart(2, '0');
-      ctx.font = '700 13px "Inter", system-ui, sans-serif';
+      const numText = tpl.technical ? `S${String(i + 1).padStart(2, '0')}` : String(i + 1).padStart(2, '0');
+      ctx.font = `700 13px "${tpl.font}", system-ui, sans-serif`;
       const numW = Math.ceil(ctx.measureText(numText).width) + 18;
       const numH = 26;
-      const nx = x + 12;
-      const ny = y + 12;
-      // pill background
-      ctx.fillStyle = 'rgba(255,255,255,0.94)';
+      const nx = x + 12, ny = y + 12;
+      ctx.fillStyle = tpl.numBg;
       roundRect(ctx, nx, ny, numW, numH, 999);
       ctx.fill();
-      ctx.strokeStyle = '#E5DCC9';
-      ctx.stroke();
-      ctx.fillStyle = '#6B9286';
+      ctx.fillStyle = tpl.numColor;
       ctx.textBaseline = 'middle';
       ctx.fillText(numText, nx + 9, ny + numH / 2 + 1);
       ctx.textBaseline = 'top';
     }
 
-    // Caption below
-    if (App.project.showCaptions) {
+    // Technical labels for storyboard pro
+    if (tpl.technical) {
+      ctx.fillStyle = tpl.accent;
+      ctx.font = `600 10px "Courier New", monospace`;
+      ctx.fillText(`SCENE ${i + 1}  |  SHOT 1  |  TAKE 1`, x + 4, y + cellH + 6);
+    }
+
+    // Caption
+    if (App.project.showCaptions && !tpl.technical) {
       const cap = (panels[i].caption || '').trim();
       if (cap) {
-        ctx.fillStyle = '#3A3A3A';
-        ctx.font = '500 14px "Inter", system-ui, sans-serif';
-        const text = cap.length > 90 ? cap.slice(0, 87) + '…' : cap;
+        ctx.fillStyle = tpl.captionColor;
+        ctx.font = `500 14px "${tpl.font}", system-ui, sans-serif`;
+        const text = cap.length > 90 ? cap.slice(0, 87) + '...' : cap;
         ctx.fillText(text, x + 4, y + cellH + 10);
       }
     }
+
+    if (tpl.polaroid) ctx.restore();
   }
 
   // Footer watermark
-  ctx.fillStyle = '#B5AE9E';
-  ctx.font = '400 11px "Inter", system-ui, sans-serif';
+  ctx.fillStyle = tpl.accent;
+  ctx.font = `400 11px "${tpl.font}", system-ui, sans-serif`;
   ctx.textAlign = 'right';
-  ctx.fillText('story sheet', canvasW - padding, canvasH - padding + 16);
+  ctx.fillText(`story sheet · ${tpl.name.toLowerCase()}`, canvasW - padding, canvasH - padding + 16);
   ctx.textAlign = 'left';
 
-  // Display the result in a modal
+  // Show result
   canvas.toBlob((blob) => {
     if (!blob) { alert('Could not compose sheet.'); return; }
     const url = URL.createObjectURL(blob);
-    showResultModal(url, n);
+    showResultModal(url, n, canvas, tpl);
   }, 'image/png');
 }
+
 
 function roundRect(ctx, x, y, w, h, r) {
   const rr = Math.min(r, w / 2, h / 2);
@@ -1031,7 +1259,8 @@ function safeName() {
   return (App.project.title || 'story-sheet').trim().replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'story-sheet';
 }
 
-function showResultModal(url, panelCount) {
+/* ─── Result Modal ─── */
+function showResultModal(url, panelCount, canvas, tpl) {
   const mount = $('#modalMount');
   mount.innerHTML = `
     <div class="modal-veil" id="veil">
@@ -1039,17 +1268,18 @@ function showResultModal(url, panelCount) {
         <div class="modal-head">
           <div>
             <h3>Your story sheet is ready</h3>
-            <div class="sub">${panelCount} panel${panelCount === 1 ? '' : 's'} composed in order. Right-click the image to copy, or download below.</div>
+            <div class="sub">${panelCount} panel${panelCount === 1 ? '' : 's'} · ${tpl.name} template</div>
           </div>
           <button class="btn ghost" id="closeModal">Close</button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body" style="display:flex;align-items:center;justify-content:center;">
           <img src="${url}" alt="Composed story sheet"/>
         </div>
         <div class="modal-foot">
-          <span class="meta" style="font-size:0.74rem;color:var(--muted)">${panelCount} panels</span>
+          <button class="btn" id="tryAnother">← Try another template</button>
           <span class="spacer"></span>
           <button class="btn" id="copyImg">Copy to clipboard</button>
+          <button class="btn" id="downloadPdf">Download PDF</button>
           <button class="btn primary" id="downloadImg">Download PNG</button>
         </div>
       </div>
@@ -1058,25 +1288,48 @@ function showResultModal(url, panelCount) {
   const close = () => { URL.revokeObjectURL(url); mount.innerHTML = ''; };
   $('#veil').onclick = close;
   $('#closeModal').onclick = close;
+
+  $('#tryAnother').onclick = () => { close(); showTemplatePicker(); };
+
   $('#downloadImg').onclick = () => {
     const a = document.createElement('a');
     a.href = url;
     a.download = safeName() + '.png';
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    flashToast('Downloaded');
+    flashToast('Downloaded PNG');
   };
+
   $('#copyImg').onclick = async () => {
     try {
       const blob = await fetch(url).then(r => r.blob());
       await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
       flashToast('Copied to clipboard');
+    } catch (e) { flashToast('Clipboard not available — use Download', true); }
+  };
+
+  $('#downloadPdf').onclick = () => {
+    try {
+      const { jsPDF } = window.jspdf;
+      const imgData = canvas.toDataURL('image/png');
+      const pdfW = canvas.width * 0.75;
+      const pdfH = canvas.height * 0.75;
+      const pdf = new jsPDF({
+        orientation: pdfW > pdfH ? 'landscape' : 'portrait',
+        unit: 'pt',
+        format: [pdfW, pdfH]
+      });
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH);
+      pdf.save(safeName() + '.pdf');
+      flashToast('Downloaded PDF');
     } catch (e) {
-      flashToast('Clipboard not available — use Download', true);
+      console.error('PDF export error:', e);
+      flashToast('PDF export failed — try PNG instead', true);
     }
   };
 }
 
-/* ─── toast ─── */
+
+/* ─── Toast ─── */
 function flashToast(msg, warn) {
   const el = $('#toast');
   el.textContent = msg;
@@ -1086,44 +1339,37 @@ function flashToast(msg, warn) {
   flashToast._t = setTimeout(() => el.classList.remove('show'), 1800);
 }
 
-/* ─── wire up controls ─── */
-$('#projectTitle').addEventListener('input', e => {
-  App.project.title = e.target.value;
-  save();
-});
-$('#aspect').addEventListener('change', e => {
-  App.project.aspect = e.target.value;
-  save();
-});
-$$('#cols button').forEach(b => b.addEventListener('click', () => {
-  App.project.cols = b.dataset.cols;
-  save(); render();
-}));
-$$('#gap button').forEach(b => b.addEventListener('click', () => {
-  App.project.gap = b.dataset.gap;
-  save(); render();
-}));
-$('#showNumbers').addEventListener('change', e => {
-  App.project.showNumbers = e.target.checked;
-  save();
-});
-$('#showCaptions').addEventListener('change', e => {
-  App.project.showCaptions = e.target.checked;
-  save();
-});
+/* ─── Dark Mode ─── */
+function applyDarkMode(on) {
+  App.project.darkMode = on;
+  document.documentElement.classList.toggle('dark', on);
+  save(true);
+}
+
+/* ─── Wire up controls ─── */
+$('#projectTitle').addEventListener('input', e => { App.project.title = e.target.value; save(true); });
+$('#aspect').addEventListener('change', e => { App.project.aspect = e.target.value; save(); });
+$$('#cols button').forEach(b => b.addEventListener('click', () => { App.project.cols = b.dataset.cols; save(); render(); }));
+$$('#gap button').forEach(b => b.addEventListener('click', () => { App.project.gap = b.dataset.gap; save(); render(); }));
+$('#showNumbers').addEventListener('change', e => { App.project.showNumbers = e.target.checked; save(); });
+$('#showCaptions').addEventListener('change', e => { App.project.showCaptions = e.target.checked; save(); });
+$('#darkMode').addEventListener('change', e => { applyDarkMode(e.target.checked); });
 $('#btnReset').addEventListener('click', reset);
-$('#btnDone').addEventListener('click', composeSheet);
+$('#btnDone').addEventListener('click', showTemplatePicker);
+$('#btnUndo').addEventListener('click', () => History.undo());
+$('#btnRedo').addEventListener('click', () => History.redo());
 
-/* keyboard shortcut: Cmd/Ctrl + Enter to compose */
+/* Keyboard shortcuts */
 document.addEventListener('keydown', (e) => {
-  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-    e.preventDefault();
-    composeSheet();
-  }
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); showTemplatePicker(); }
+  if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); History.undo(); }
+  if ((e.metaKey || e.ctrlKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); History.redo(); }
 });
 
-/* ─── boot ─── */
+/* ─── Boot ─── */
 load();
+if (App.project.darkMode) document.documentElement.classList.add('dark');
+History.push({ ...App.project, panels: App.project.panels.map(p => ({...p})) });
 render();
 </script>
 </body>
