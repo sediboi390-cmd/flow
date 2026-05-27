@@ -298,3 +298,90 @@ Calm, minimal, eye-friendly. Designed for long creative sessions — no harsh co
 - No AI/LLM API calls (keyword parser is local JS only)
 - No video export
 - No audio playback
+
+
+
+---
+
+## 13. Phase 1 Additions (2026-05-27)
+
+Three additional features added to Phase 1 to better serve faceless content creators.
+
+### 13.1 Voiceover Field + Read-Time Calculator
+
+**Location:** Inside the Panel Editor drawer, between Description and Motion Notes.
+
+**Behaviour:**
+- New textarea field labeled "Voiceover Script"
+- Live indicator below the field shows: `42 words · ~17s read` (calculated at 150 words/min)
+- If estimated read time exceeds the panel's set duration, indicator turns warm-red with a small warning icon
+- A summary at the top of the panel grid shows total voiceover word count and total read time across all panels
+
+**Why:** Faceless content is voiceover-driven. Creators write the script first, then visuals. Read-time mismatches are the #1 cause of awkward pacing.
+
+**Data model addition:**
+```json
+{
+  "voiceover": "Two figures face each other in the rain..."
+}
+```
+
+### 13.2 Aspect Ratio Switcher
+
+**Location:** Sidebar `Project Info` section. The previously-static "Format" line becomes a dropdown.
+
+**Options:**
+| Ratio | Label | Use |
+|-------|-------|-----|
+| 16:9  | YouTube | Default — horizontal video |
+| 9:16  | TikTok / Shorts / Reels | Vertical mobile video |
+| 1:1   | Instagram | Square posts |
+
+**Behaviour:**
+- Changing the ratio reshapes all panel scene previews to match
+- Templates filter to show only ones appropriate for the chosen ratio (e.g. vertical templates for 9:16)
+- Export commands respect the chosen ratio (PNG dimensions, PDF page size, HTML export viewport)
+
+**Why:** Faceless creators publish across multiple formats. Forcing 16:9 wastes time when planning a TikTok.
+
+**Data model addition (project-level):**
+```json
+{
+  "aspectRatio": "16:9 | 9:16 | 1:1"
+}
+```
+
+### 13.3 Outline View Toggle
+
+**Location:** A small two-tab switcher (`▦ Grid | ☰ Outline`) just above the panel grid, inside the main canvas (not the sidebar).
+
+**Behaviour:**
+- **Grid view (default):** existing card-based layout with SVG previews
+- **Outline view:** condensed text-only list. Each panel shows: number, label, duration, voiceover excerpt. No SVG. Optimised for scanning the script flow at a glance.
+- Toggle state persists per project in LocalStorage
+- Sidebar and editor drawer remain unchanged regardless of view
+
+**Why:** Reviewing pacing and script flow is much easier as a list. Visuals are great for ideation; text is great for review.
+
+**Outline view layout:**
+```
+01  Wide Establishing — Alley                    18s
+    "The night was cold. Two figures stood..."   42 words
+
+02  ECU Face — Host Close-Up                      7s
+    "Today, we're talking about something..."    24 words
+
+[+ Add Panel]
+```
+
+---
+
+## 14. Status Bar (Updated)
+
+The bottom status bar now displays:
+- Total panels
+- Total duration (sum of panel durations)
+- Total acts
+- Aspect ratio
+- **Total voiceover words** *(new)*
+- Auto-save indicator

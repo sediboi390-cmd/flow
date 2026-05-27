@@ -162,8 +162,51 @@
     .export-item:hover { background: var(--surface); color: var(--teal); }
     .export-icon { font-size: 0.85rem; }
 
-    .project-stat { font-size: 0.68rem; color: var(--muted); line-height: 2; }
+    .project-stat { font-size: 0.68rem; color: var(--muted); line-height: 2; display: flex; justify-content: space-between; align-items: center; }
     .project-stat span { color: var(--text); font-weight: 500; }
+
+    .ratio-select {
+      font-family: 'Inter', sans-serif; font-size: 0.65rem;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); padding: 2px 6px; border-radius: 4px;
+      cursor: pointer; outline: none;
+      transition: border-color 0.13s;
+    }
+    .ratio-select:hover, .ratio-select:focus { border-color: var(--teal); }
+
+    /* view toggle */
+    .view-toggle-row {
+      padding: 12px 24px 0;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px;
+    }
+    .view-toggle {
+      display: inline-flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 2px;
+    }
+    .view-tab {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 5px;
+      font-size: 0.72rem; font-weight: 500;
+      color: var(--muted); cursor: pointer;
+      transition: all 0.13s;
+      background: transparent; border: none;
+      font-family: 'Inter', sans-serif;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      background: var(--bg);
+      color: var(--teal);
+    }
+    .view-tab-icon { font-size: 0.85rem; }
+
+    .view-meta {
+      font-size: 0.65rem; color: var(--muted);
+    }
+    .view-meta strong { color: var(--text); font-weight: 500; }
 
 
 
@@ -305,7 +348,14 @@
       <div class="project-stat">Panels <span>0</span></div>
       <div class="project-stat">Duration <span>0s</span></div>
       <div class="project-stat">Acts <span>0</span></div>
-      <div class="project-stat">Format <span>16:9</span></div>
+      <div class="project-stat">
+        Format
+        <select class="ratio-select">
+          <option selected>16:9 — YouTube</option>
+          <option>9:16 — TikTok / Shorts</option>
+          <option>1:1 — Instagram</option>
+        </select>
+      </div>
     </div>
 
   </aside>
@@ -320,6 +370,21 @@
       <span class="timeline-bar-empty">Timeline · empty</span>
     </div>
 
+    <!-- View toggle -->
+    <div class="view-toggle-row">
+      <div class="view-toggle">
+        <button class="view-tab active">
+          <span class="view-tab-icon">▦</span> Grid
+        </button>
+        <button class="view-tab">
+          <span class="view-tab-icon">☰</span> Outline
+        </button>
+      </div>
+      <div class="view-meta">
+        Voiceover total: <strong>0 words</strong> · ~<strong>0s</strong> read time
+      </div>
+    </div>
+
     <!-- Empty state -->
     <div class="panel-grid">
       <div class="empty-state">
@@ -327,7 +392,8 @@
         <div class="empty-title">Your storyboard is empty</div>
         <div class="empty-desc">
           Add your first panel to begin, or load the sample storyboard
-          to see a working example with all four creation modes.
+          to see a working example with voiceover scripts, all four
+          creation modes, and pacing analysis.
         </div>
         <div class="empty-actions">
           <button class="btn btn-primary">+ Add First Panel</button>
@@ -342,6 +408,7 @@
       <span><b>0s</b> total</span>
       <span><b>0</b> acts</span>
       <span><b>16:9</b></span>
+      <span><b>0 words</b> voiceover</span>
       <span class="status-bar-right">Shot Builder Studio · Preview · Empty State</span>
     </div>
 
