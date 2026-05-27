@@ -136,6 +136,24 @@ Per-panel, characters are selected via checkboxes. The SVG generator uses the se
 - **Add Panel** button always visible at end of each act
 - Running total duration displayed in timeline header
 
+### Empty State (Clean Homepage)
+When a project has no panels:
+- Panel grid is empty (no Act headers, no sample panels)
+- Centred "empty state" message: "No panels yet. Click + Add Panel to start, or load the sample storyboard."
+- Two large primary actions: **+ Add Panel** and **Load Sample**
+
+### Sample Storyboard (Built-in Guide)
+A **Sample** button lives under the Mode section in the sidebar.
+
+**Behaviour:**
+- Click **Sample** → loads a 4-panel demo project (Act I + Act II) showing one example of each creation mode (Card, Template, Text-to-Panel, Sketch)
+- A small **"Sample Loaded"** banner appears at the top of the panel grid with a **Clear Sample** action
+- The sample serves as a tutorial — users can edit, duplicate, or delete sample panels just like real ones
+- If the user starts editing, the sample becomes their working project (auto-saved to LocalStorage)
+- If a real project already exists when **Sample** is clicked, prompt: "Loading the sample will replace your current project. Continue?"
+
+This keeps the homepage clean and uncluttered for fresh users while still providing a learning resource one click away.
+
 ---
 
 ## 6. Save / Load

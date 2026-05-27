@@ -5,22 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Shot Builder Studio — UI Preview</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    /* ── CALM PALETTE ──
-       Background:  #F7F6F3  warm off-white
-       Surface:     #FFFFFF  white cards
-       Border:      #E8E5DF  soft warm grey
-       Sidebar bg:  #F2F0EC  slightly darker warm
-       Text:        #2D2D2D  near-black, easy to read
-       Muted:       #9A9590  warm medium grey
-       Accent teal: #4A8C8C  muted teal (calm, professional)
-       Accent sage: #6B8F71  muted sage green
-       Accent clay: #B87333  warm clay/copper (very muted)
-       Tags bg:     soft tints of each accent
-    */
 
     :root {
       --bg:       #F7F6F3;
@@ -45,7 +32,8 @@
     }
 
 
-    /* ── HEADER ── */
+
+    /* HEADER */
     .app-header {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
@@ -59,7 +47,6 @@
       font-family: 'DM Sans', sans-serif;
       font-size: 1rem;
       font-weight: 500;
-      letter-spacing: 0.02em;
       color: var(--text);
       display: flex;
       align-items: center;
@@ -81,7 +68,7 @@
     }
     .project-label span { color: var(--teal); font-weight: 500; }
 
-    /* ── BUTTONS ── */
+    /* BUTTONS */
     .btn {
       font-family: 'Inter', sans-serif;
       font-size: 0.72rem;
@@ -91,7 +78,6 @@
       cursor: pointer;
       border: 1px solid var(--border);
       transition: all 0.15s;
-      letter-spacing: 0.01em;
     }
     .btn-ghost { background: var(--surface); color: var(--muted); }
     .btn-ghost:hover { border-color: var(--teal); color: var(--teal); }
@@ -100,13 +86,13 @@
     .btn-export { background: var(--surface); border-color: var(--border); color: var(--clay); }
     .btn-export:hover { border-color: var(--clay); background: #fdf7f3; }
 
-    /* ── LAYOUT ── */
     .app-body { display: flex; height: calc(100vh - 52px); }
 
 
-    /* ── SIDEBAR ── */
+
+    /* SIDEBAR */
     .sidebar {
-      width: 210px; min-width: 210px;
+      width: 220px; min-width: 220px;
       background: var(--sidebar);
       border-right: 1px solid var(--border);
       display: flex; flex-direction: column;
@@ -118,13 +104,14 @@
       letter-spacing: 0.08em; text-transform: uppercase;
       color: var(--muted); margin-bottom: 8px;
     }
+
+    /* mode tabs */
     .mode-tab {
       display: flex; align-items: center; gap: 9px;
       padding: 8px 10px; border-radius: 7px;
       cursor: pointer; font-size: 0.78rem;
       color: var(--muted); margin-bottom: 2px;
       transition: all 0.13s; border: 1px solid transparent;
-      font-weight: 400;
     }
     .mode-tab:hover { background: var(--surface); color: var(--text); }
     .mode-tab.active {
@@ -132,7 +119,28 @@
       border-color: var(--border);
       color: var(--teal); font-weight: 500;
     }
-    .mode-icon { font-size: 0.9rem; width: 18px; text-align: center; }
+    .mode-icon { font-size: 0.95rem; width: 18px; text-align: center; }
+
+    /* sample button */
+    .sample-btn {
+      display: flex; align-items: center; gap: 9px;
+      padding: 10px 12px; border-radius: 7px;
+      cursor: pointer; font-size: 0.78rem; font-weight: 500;
+      color: var(--clay);
+      background: rgba(160,113,79,0.08);
+      border: 1px solid rgba(160,113,79,0.25);
+      transition: all 0.13s;
+      margin-top: 10px; width: 100%;
+    }
+    .sample-btn:hover {
+      background: rgba(160,113,79,0.14);
+      border-color: rgba(160,113,79,0.4);
+    }
+    .sample-btn-icon { font-size: 1rem; }
+    .sample-hint {
+      font-size: 0.62rem; color: var(--muted);
+      margin-top: 6px; line-height: 1.5;
+    }
 
     .char-chip {
       display: inline-flex; align-items: center; gap: 5px;
@@ -140,7 +148,6 @@
       font-size: 0.68rem; margin: 2px 2px 2px 0;
       border: 1px solid var(--border);
       background: var(--surface); color: var(--text);
-      font-weight: 400;
     }
     .char-dot { width: 7px; height: 7px; border-radius: 50%; }
 
@@ -158,207 +165,96 @@
     .project-stat span { color: var(--text); font-weight: 500; }
 
 
-    /* ── MAIN CANVAS ── */
+
+    /* MAIN CANVAS */
     .main-canvas { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-    /* timeline */
     .timeline-bar {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       padding: 10px 20px;
-      display: flex; align-items: center; gap: 6px;
-      overflow-x: auto; min-height: 50px;
-    }
-    .tl-act-pill {
-      font-size: 0.62rem; font-weight: 600;
-      letter-spacing: 0.06em; text-transform: uppercase;
-      padding: 3px 9px; border-radius: 20px;
-      border: 1px solid; white-space: nowrap;
-    }
-    .tl-act-1 { color: var(--teal); border-color: rgba(74,140,140,0.3); background: rgba(74,140,140,0.07); }
-    .tl-act-2 { color: var(--sage); border-color: rgba(107,143,113,0.3); background: rgba(107,143,113,0.07); }
-    .tl-line { height: 1px; width: 28px; flex-shrink: 0; background: var(--border); }
-    .tl-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--border); }
-    .tl-thumb {
-      width: 48px; height: 32px; border-radius: 5px;
-      border: 1px solid var(--border); background: var(--bg);
-      flex-shrink: 0; cursor: pointer; overflow: hidden;
-      transition: border-color 0.13s;
-    }
-    .tl-thumb.active { border-color: var(--teal); box-shadow: 0 0 0 2px rgba(74,140,140,0.15); }
-    .tl-thumb:hover { border-color: var(--teal); }
-    .tl-thumb svg { width: 100%; height: 100%; }
-    .tl-add {
-      width: 32px; height: 32px; border-radius: 5px;
-      border: 1px dashed var(--border); flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      color: var(--muted); font-size: 1rem; cursor: pointer;
-      transition: all 0.13s;
-    }
-    .tl-add:hover { border-color: var(--teal); color: var(--teal); background: rgba(74,140,140,0.05); }
-
-    /* panel grid */
-    .panel-grid { flex: 1; overflow-y: auto; padding: 20px 24px; }
-    .act-heading {
-      font-size: 0.7rem; font-weight: 600;
-      letter-spacing: 0.06em; text-transform: uppercase;
-      color: var(--muted); margin-bottom: 12px;
       display: flex; align-items: center; gap: 10px;
+      min-height: 50px;
+      color: var(--muted);
+      font-size: 0.7rem;
     }
-    .act-heading::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px,1fr)); gap: 14px; margin-bottom: 28px; }
+    .timeline-bar-empty {
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.02em;
+    }
 
+    .panel-grid {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+      position: relative;
+    }
 
-    /* ── PANEL CARD ── */
-    .panel-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px; overflow: hidden;
-      cursor: pointer; transition: all 0.15s;
-      animation: fadeUp 0.35s ease both;
+    /* EMPTY STATE */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      min-height: 400px;
+      text-align: center;
+      padding: 40px 20px;
     }
-    .panel-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.07); transform: translateY(-2px); }
-    .panel-card.selected { border-color: var(--teal); box-shadow: 0 0 0 2px rgba(74,140,140,0.18); }
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(12px); }
-      to   { opacity: 1; transform: translateY(0); }
+    .empty-icon {
+      font-size: 3rem;
+      color: var(--border);
+      margin-bottom: 16px;
     }
-    .panel-card:nth-child(1) { animation-delay: 0.04s; }
-    .panel-card:nth-child(2) { animation-delay: 0.08s; }
-    .panel-card:nth-child(3) { animation-delay: 0.12s; }
-    .panel-card:nth-child(4) { animation-delay: 0.16s; }
-
-    .panel-scene {
-      width: 100%; height: 160px;
-      background: #EDECEA; position: relative; overflow: hidden;
+    .empty-title {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 8px;
     }
-    .panel-scene svg { width: 100%; height: 100%; }
-
-    .panel-badge {
-      position: absolute; top: 8px; left: 8px;
-      background: rgba(255,255,255,0.88);
-      color: var(--muted); font-size: 0.58rem;
-      font-weight: 600; letter-spacing: 0.08em;
-      padding: 2px 7px; border-radius: 4px;
-      border: 1px solid var(--border); z-index: 5;
+    .empty-desc {
+      font-size: 0.85rem;
+      color: var(--muted);
+      max-width: 420px;
+      line-height: 1.6;
+      margin-bottom: 24px;
     }
-    .panel-dur {
-      position: absolute; top: 8px; right: 8px;
-      background: rgba(255,255,255,0.88);
-      color: var(--muted); font-size: 0.58rem;
-      padding: 2px 7px; border-radius: 4px;
-      border: 1px solid var(--border); z-index: 5;
+    .empty-actions {
+      display: flex;
+      gap: 10px;
     }
-    .panel-mode {
-      position: absolute; bottom: 8px; right: 8px;
-      font-size: 0.58rem; font-weight: 500;
-      padding: 2px 7px; border-radius: 4px; z-index: 5;
+    .empty-actions .btn {
+      padding: 10px 20px;
+      font-size: 0.78rem;
     }
-    .m-card  { background: rgba(74,140,140,0.12);  color: var(--teal); }
-    .m-tpl   { background: rgba(107,143,113,0.12); color: var(--sage); }
-    .m-text  { background: rgba(123,123,168,0.12); color: var(--lavender); }
-    .m-sketch{ background: rgba(160,113,79,0.12);  color: var(--clay); }
-
-    .panel-body { padding: 12px 14px; }
-    .panel-title { font-size: 0.82rem; font-weight: 600; color: var(--text); margin-bottom: 7px; }
-    .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
-    .tag {
-      font-size: 0.6rem; font-weight: 500;
-      padding: 2px 8px; border-radius: 20px;
-    }
-    .t-shot   { background: rgba(74,140,140,0.1);  color: var(--teal); }
-    .t-move   { background: rgba(107,143,113,0.1); color: var(--sage); }
-    .t-emotion{ background: rgba(123,123,168,0.1); color: var(--lavender); }
-    .t-light  { background: rgba(160,113,79,0.1);  color: var(--clay); }
-
-    .panel-desc { font-size: 0.68rem; color: var(--muted); line-height: 1.6; margin-bottom: 10px; }
-    .panel-actions { display: flex; gap: 6px; justify-content: flex-end; padding-top: 8px; border-top: 1px solid var(--border); }
-    .panel-btn {
-      font-family: 'Inter', sans-serif; font-size: 0.65rem; font-weight: 500;
-      padding: 4px 10px; border-radius: 6px; cursor: pointer;
-      border: 1px solid var(--border); background: var(--bg); color: var(--muted);
-      transition: all 0.13s;
-    }
-    .panel-btn:hover { border-color: var(--teal); color: var(--teal); background: var(--surface); }
-    .panel-btn.del:hover { border-color: var(--red-soft); color: var(--red-soft); }
-
-    /* add card */
-    .add-card {
-      background: transparent; border: 1.5px dashed var(--border);
-      border-radius: 10px; min-height: 240px;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 8px;
-      cursor: pointer; transition: all 0.15s; color: var(--muted);
-    }
-    .add-card:hover { border-color: var(--teal); color: var(--teal); background: rgba(74,140,140,0.04); }
-    .add-card-icon { font-size: 1.6rem; }
-    .add-card-label { font-size: 0.68rem; font-weight: 500; letter-spacing: 0.04em; }
-
-
-    /* ── EDITOR DRAWER ── */
-    .editor-drawer {
-      height: 210px; background: var(--surface);
-      border-top: 1px solid var(--border);
-      display: flex; flex-direction: column;
-    }
-    .drawer-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 20px; border-bottom: 1px solid var(--border);
-    }
-    .drawer-title { font-size: 0.78rem; font-weight: 600; color: var(--text); }
-    .drawer-subtitle { font-size: 0.65rem; color: var(--muted); margin-top: 1px; }
-    .drawer-body {
-      flex: 1; padding: 12px 20px;
-      display: grid; grid-template-columns: repeat(6,1fr); gap: 12px;
-      overflow-x: auto; align-items: start;
-    }
-    .field { display: flex; flex-direction: column; gap: 4px; }
-    .field-label { font-size: 0.6rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-    .field-select, .field-input {
-      font-family: 'Inter', sans-serif; font-size: 0.72rem;
-      background: var(--bg); border: 1px solid var(--border);
-      color: var(--text); padding: 5px 8px; border-radius: 6px;
-      outline: none; transition: border-color 0.13s; width: 100%;
-    }
-    .field-select:focus, .field-input:focus { border-color: var(--teal); }
-    .field-textarea {
-      font-family: 'Inter', sans-serif; font-size: 0.7rem;
-      background: var(--bg); border: 1px solid var(--border);
-      color: var(--text); padding: 6px 8px; border-radius: 6px;
-      outline: none; resize: none; width: 100%; height: 72px; line-height: 1.5;
-    }
-    .field-textarea:focus { border-color: var(--teal); }
-    .char-checks { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 2px; }
-    .char-ck {
-      display: flex; align-items: center; gap: 4px;
-      font-size: 0.65rem; padding: 3px 8px; border-radius: 20px;
-      border: 1px solid var(--border); cursor: pointer;
-      transition: all 0.13s; color: var(--muted); background: var(--bg);
-    }
-    .char-ck.on { background: rgba(74,140,140,0.08); border-color: rgba(74,140,140,0.4); color: var(--teal); }
 
     /* status bar */
     .status-bar {
-      background: var(--bg); border-top: 1px solid var(--border);
-      padding: 5px 20px; display: flex; gap: 20px;
-      font-size: 0.62rem; color: var(--muted); align-items: center;
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      padding: 6px 20px;
+      display: flex; gap: 20px;
+      font-size: 0.62rem; color: var(--muted);
+      align-items: center;
     }
     .status-bar b { color: var(--text); font-weight: 500; }
-    .status-saved { color: var(--sage) !important; font-weight: 500; }
     .status-bar-right { margin-left: auto; color: #ccc; }
   </style>
 </head>
 <body>
 
 
-<!-- ══ HEADER ══ -->
+
+<!-- HEADER -->
 <header class="app-header">
   <div class="app-logo">
     <div class="app-logo-dot"></div>
     Shot Builder Studio
   </div>
   <div class="header-right">
-    <div class="project-label">Project: <span>My Faceless Channel</span></div>
+    <div class="project-label">Project: <span>Untitled</span></div>
     <button class="btn btn-ghost">Projects</button>
     <button class="btn btn-ghost">Undo</button>
     <button class="btn btn-primary">Save</button>
@@ -366,29 +262,31 @@
   </div>
 </header>
 
-<!-- ══ BODY ══ -->
+<!-- APP BODY -->
 <div class="app-body">
 
   <!-- SIDEBAR -->
   <aside class="sidebar">
 
+    <!-- Modes + Sample -->
     <div class="sidebar-section">
       <div class="sidebar-label">Mode</div>
       <div class="mode-tab active"><span class="mode-icon">📋</span> Card</div>
       <div class="mode-tab"><span class="mode-icon">🎬</span> Templates</div>
       <div class="mode-tab"><span class="mode-icon">✨</span> Text to Panel</div>
       <div class="mode-tab"><span class="mode-icon">✏️</span> Sketch</div>
+
+      <button class="sample-btn">
+        <span class="sample-btn-icon">📖</span>
+        <span>Load Sample</span>
+      </button>
+      <div class="sample-hint">See a pre-filled example storyboard with all 4 modes in action.</div>
     </div>
 
     <div class="sidebar-section">
       <div class="sidebar-label">Characters</div>
-      <div>
-        <span class="char-chip"><span class="char-dot" style="background:var(--teal)"></span>Hero</span>
-        <span class="char-chip"><span class="char-dot" style="background:var(--lavender)"></span>Villain</span>
-        <span class="char-chip"><span class="char-dot" style="background:var(--sage)"></span>Host</span>
-        <span class="char-chip"><span class="char-dot" style="background:var(--clay)"></span>Narrator</span>
-      </div>
-      <button class="btn btn-ghost" style="margin-top:10px;width:100%;font-size:0.65rem">+ Add Character</button>
+      <div style="color:var(--muted);font-size:0.7rem;margin-bottom:8px">No characters yet</div>
+      <button class="btn btn-ghost" style="width:100%;font-size:0.65rem">+ Add Character</button>
     </div>
 
     <div class="sidebar-section">
@@ -402,379 +300,51 @@
 
     <div class="sidebar-section">
       <div class="sidebar-label">Project Info</div>
-      <div class="project-stat">Panels <span>4</span></div>
-      <div class="project-stat">Duration <span>47s</span></div>
-      <div class="project-stat">Acts <span>2</span></div>
+      <div class="project-stat">Panels <span>0</span></div>
+      <div class="project-stat">Duration <span>0s</span></div>
+      <div class="project-stat">Acts <span>0</span></div>
       <div class="project-stat">Format <span>16:9</span></div>
     </div>
 
   </aside>
 
+
+
   <!-- MAIN -->
   <div class="main-canvas">
 
-
-    <!-- TIMELINE -->
+    <!-- Empty timeline -->
     <div class="timeline-bar">
-      <span class="tl-act-pill tl-act-1">Act I</span>
-      <div class="tl-dot" style="background:var(--teal)"></div>
-      <div class="tl-line"></div>
-      <div class="tl-thumb active">
-        <svg viewBox="0 0 48 32"><rect width="48" height="32" fill="#DFF0EF"/>
-        <ellipse cx="16" cy="20" rx="7" ry="8" fill="#FFFFFF" stroke="#4A8C8C" stroke-width="0.8"/>
-        <ellipse cx="34" cy="20" rx="7" ry="8" fill="#FFFFFF" stroke="#7B7BA8" stroke-width="0.8"/>
-        <line x1="0" y1="28" x2="48" y2="28" stroke="#C5DDE0" stroke-width="1"/>
-        </svg>
-      </div>
-      <div class="tl-line"></div>
-      <div class="tl-thumb">
-        <svg viewBox="0 0 48 32"><rect width="48" height="32" fill="#EAE9F0"/>
-        <ellipse cx="24" cy="14" rx="13" ry="14" fill="#FFFFFF" stroke="#7B7BA8" stroke-width="0.8"/>
-        <ellipse cx="19" cy="12" rx="3" ry="2" fill="#7B7BA8" opacity="0.6"/>
-        <ellipse cx="29" cy="12" rx="3" ry="2" fill="#7B7BA8" opacity="0.6"/>
-        </svg>
-      </div>
-      <div class="tl-line"></div>
-      <div class="tl-add">+</div>
-      <div style="width:16px"></div>
-      <span class="tl-act-pill tl-act-2">Act II</span>
-      <div class="tl-dot" style="background:var(--sage)"></div>
-      <div class="tl-line"></div>
-      <div class="tl-thumb">
-        <svg viewBox="0 0 48 32"><rect width="48" height="32" fill="#E8F0E9"/>
-        <ellipse cx="18" cy="15" rx="7" ry="8" fill="#FFFFFF" stroke="#4A8C8C" stroke-width="0.8"/>
-        <line x1="25" y1="15" x2="36" y2="15" stroke="#4A8C8C" stroke-width="2"/>
-        <circle cx="37" cy="15" r="3" fill="#4A8C8C" opacity="0.7"/>
-        </svg>
-      </div>
-      <div class="tl-line"></div>
-      <div class="tl-thumb">
-        <svg viewBox="0 0 48 32"><rect width="48" height="32" fill="#F5EFE9"/>
-        <rect x="8" y="8" width="32" height="18" rx="3" fill="#FFFFFF" stroke="#A0714F" stroke-width="0.8"/>
-        <line x1="13" y1="13" x2="35" y2="13" stroke="#D4B8A0" stroke-width="1"/>
-        <line x1="13" y1="17" x2="28" y2="17" stroke="#D4B8A0" stroke-width="1"/>
-        </svg>
-      </div>
-      <div class="tl-line"></div>
-      <div class="tl-add">+</div>
+      <span class="timeline-bar-empty">Timeline · empty</span>
     </div>
 
-
-    <!-- PANEL GRID -->
+    <!-- Empty state -->
     <div class="panel-grid">
-
-      <div class="act-heading">Act I — The Hook</div>
-      <div class="grid">
-
-        <!-- Panel 01 — Card -->
-        <div class="panel-card selected">
-          <span class="panel-badge">01</span>
-          <span class="panel-dur">18s</span>
-          <span class="panel-mode m-card">Card</span>
-          <div class="panel-scene">
-            <svg viewBox="0 0 400 160" xmlns="http://www.w3.org/2000/svg">
-              <rect width="400" height="160" fill="#DFF0EF"/>
-              <!-- ground -->
-              <rect x="0" y="130" width="400" height="30" fill="#C9E4E4"/>
-              <!-- lamp post -->
-              <line x1="300" y1="0" x2="300" y2="130" stroke="#A8C4C4" stroke-width="2"/>
-              <ellipse cx="300" cy="35" rx="35" ry="35" fill="#FFFDE7" opacity="0.5"/>
-              <!-- figure left (hero) -->
-              <ellipse cx="120" cy="72" rx="11" ry="12" fill="#FFFFFF" stroke="#4A8C8C" stroke-width="1.2"/>
-              <rect x="110" y="84" width="20" height="38" rx="4" fill="#FFFFFF" stroke="#4A8C8C" stroke-width="1"/>
-              <line x1="110" y1="92" x2="94" y2="110" stroke="#4A8C8C" stroke-width="1.5"/>
-              <line x1="130" y1="92" x2="142" y2="110" stroke="#4A8C8C" stroke-width="1.5"/>
-              <line x1="115" y1="122" x2="111" y2="140" stroke="#4A8C8C" stroke-width="1.5"/>
-              <line x1="125" y1="122" x2="129" y2="140" stroke="#4A8C8C" stroke-width="1.5"/>
-              <!-- figure right (villain) -->
-              <ellipse cx="275" cy="70" rx="12" ry="13" fill="#FFFFFF" stroke="#7B7BA8" stroke-width="1.2"/>
-              <rect x="264" y="83" width="22" height="40" rx="4" fill="#FFFFFF" stroke="#7B7BA8" stroke-width="1"/>
-              <line x1="264" y1="92" x2="244" y2="108" stroke="#7B7BA8" stroke-width="1.5"/>
-              <line x1="286" y1="92" x2="306" y2="108" stroke="#7B7BA8" stroke-width="1.5"/>
-              <line x1="269" y1="123" x2="264" y2="140" stroke="#7B7BA8" stroke-width="1.5"/>
-              <line x1="280" y1="123" x2="285" y2="140" stroke="#7B7BA8" stroke-width="1.5"/>
-              <!-- subtle rain -->
-              <g stroke="#A8D4D4" stroke-width="0.6" opacity="0.5">
-                <line x1="50" y1="0" x2="44" y2="40"/><line x1="100" y1="0" x2="94" y2="40"/>
-                <line x1="160" y1="0" x2="154" y2="40"/><line x1="230" y1="0" x2="224" y2="40"/>
-                <line x1="340" y1="0" x2="334" y2="40"/><line x1="380" y1="0" x2="374" y2="40"/>
-              </g>
-            </svg>
-          </div>
-          <div class="panel-body">
-            <div class="panel-title">Wide Establishing — Alley</div>
-            <div class="tags">
-              <span class="tag t-shot">Wide Shot</span>
-              <span class="tag t-move">Static</span>
-              <span class="tag t-emotion">Tense</span>
-              <span class="tag t-light">Neon</span>
-            </div>
-            <div class="panel-desc">Two figures face each other in a rain-soaked alley. Street lamp rim light. Camera holds then slow push in.</div>
-            <div class="panel-actions">
-              <button class="panel-btn">Edit</button>
-              <button class="panel-btn">Duplicate</button>
-              <button class="panel-btn del">Delete</button>
-            </div>
-          </div>
+      <div class="empty-state">
+        <div class="empty-icon">◇</div>
+        <div class="empty-title">Your storyboard is empty</div>
+        <div class="empty-desc">
+          Add your first panel to begin, or load the sample storyboard
+          to see a working example with all four creation modes.
         </div>
-
-
-        <!-- Panel 02 — Template -->
-        <div class="panel-card">
-          <span class="panel-badge">02</span>
-          <span class="panel-dur">7s</span>
-          <span class="panel-mode m-tpl">Template</span>
-          <div class="panel-scene" style="background:#EAE9F0">
-            <svg viewBox="0 0 400 160" xmlns="http://www.w3.org/2000/svg">
-              <rect width="400" height="160" fill="#EAE9F0"/>
-              <rect x="130" y="110" width="140" height="50" rx="10" fill="#FFFFFF" stroke="#C0BEDD" stroke-width="1"/>
-              <ellipse cx="200" cy="72" rx="52" ry="58" fill="#FFFFFF" stroke="#7B7BA8" stroke-width="1.2"/>
-              <ellipse cx="149" cy="76" rx="7" ry="10" fill="#FFFFFF" stroke="#7B7BA8" stroke-width="0.8"/>
-              <ellipse cx="251" cy="76" rx="7" ry="10" fill="#FFFFFF" stroke="#7B7BA8" stroke-width="0.8"/>
-              <ellipse cx="182" cy="67" rx="10" ry="7" fill="#EAE9F0"/>
-              <ellipse cx="218" cy="67" rx="10" ry="7" fill="#EAE9F0"/>
-              <circle cx="182" cy="67" r="4" fill="#7B7BA8" opacity="0.7"/>
-              <circle cx="218" cy="67" r="4" fill="#7B7BA8" opacity="0.7"/>
-              <circle cx="184" cy="65" r="1.5" fill="#fff" opacity="0.9"/>
-              <circle cx="220" cy="65" r="1.5" fill="#fff" opacity="0.9"/>
-              <path d="M167,56 Q182,50 197,55" stroke="#B0AACC" stroke-width="1.5" fill="none"/>
-              <path d="M203,55 Q218,50 233,56" stroke="#B0AACC" stroke-width="1.5" fill="none"/>
-              <path d="M152,44 Q162,14 200,12 Q238,14 248,44" fill="#E0DEF0" stroke="#C0BEDD" stroke-width="0.8"/>
-            </svg>
-          </div>
-          <div class="panel-body">
-            <div class="panel-title">ECU Face — Host Close-Up</div>
-            <div class="tags">
-              <span class="tag t-shot">Close-Up</span>
-              <span class="tag t-move">Static</span>
-              <span class="tag t-emotion">Excited</span>
-              <span class="tag t-light">Spotlight</span>
-            </div>
-            <div class="panel-desc">Host extreme close-up, low angle. Rim light from left. Eyes lock to camera. Reaction shot.</div>
-            <div class="panel-actions">
-              <button class="panel-btn">Edit</button>
-              <button class="panel-btn">Duplicate</button>
-              <button class="panel-btn del">Delete</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Add card -->
-        <div class="add-card">
-          <div class="add-card-icon">＋</div>
-          <div class="add-card-label">Add Panel</div>
-        </div>
-
-      </div><!-- /act I grid -->
-
-      <div class="act-heading">Act II — The Action</div>
-      <div class="grid">
-
-        <!-- Panel 03 — Text -->
-        <div class="panel-card">
-          <span class="panel-badge">03</span>
-          <span class="panel-dur">13s</span>
-          <span class="panel-mode m-text">Text</span>
-          <div class="panel-scene" style="background:#E8F0E9">
-            <svg viewBox="0 0 400 160" xmlns="http://www.w3.org/2000/svg">
-              <rect width="400" height="160" fill="#E8F0E9"/>
-              <ellipse cx="200" cy="80" rx="110" ry="65" fill="#D0E8D2" opacity="0.6"/>
-              <!-- hero punching -->
-              <ellipse cx="140" cy="60" rx="11" ry="12" fill="#FFFFFF" stroke="#4A8C8C" stroke-width="1.2"/>
-              <rect x="130" y="72" width="20" height="36" rx="3" fill="#FFFFFF" stroke="#4A8C8C" stroke-width="1" transform="rotate(-8,140,90)"/>
-              <line x1="150" y1="78" x2="210" y2="74" stroke="#4A8C8C" stroke-width="2.5"/>
-              <circle cx="213" cy="74" r="7" fill="#4A8C8C" opacity="0.8"/>
-              <line x1="130" y1="78" x2="112" y2="96" stroke="#4A8C8C" stroke-width="1.5"/>
-              <!-- impact star -->
-              <g stroke="#6B8F71" stroke-width="1.8" fill="none" opacity="0.9">
-                <line x1="220" y1="74" x2="240" y2="64"/>
-                <line x1="220" y1="74" x2="242" y2="80"/>
-                <line x1="220" y1="74" x2="234" y2="92"/>
-                <line x1="220" y1="74" x2="210" y2="94"/>
-              </g>
-              <!-- villain recoiling -->
-              <ellipse cx="268" cy="62" rx="12" ry="13" fill="#FFFFFF" stroke="#7B7BA8" stroke-width="1" transform="rotate(12,268,62)"/>
-              <rect x="257" y="75" width="21" height="37" rx="3" fill="#FFFFFF" stroke="#7B7BA8" stroke-width="1" transform="rotate(12,268,94)"/>
-              <!-- speed lines -->
-              <g stroke="#B0D4B4" stroke-width="0.6" opacity="0.5">
-                <line x1="30" y1="55" x2="145" y2="68"/>
-                <line x1="30" y1="75" x2="140" y2="74"/>
-                <line x1="30" y1="95" x2="145" y2="82"/>
-              </g>
-            </svg>
-          </div>
-          <div class="panel-body">
-            <div class="panel-title">ACTION — Punch Impact</div>
-            <div class="tags">
-              <span class="tag t-shot">Medium</span>
-              <span class="tag t-move">Handheld</span>
-              <span class="tag t-emotion">Angry</span>
-              <span class="tag t-light">Dark</span>
-            </div>
-            <div class="panel-desc">Hero right cross connects. Speed lines radiate. Camera shake on impact. Villain recoils.</div>
-            <div class="panel-actions">
-              <button class="panel-btn">Edit</button>
-              <button class="panel-btn">Duplicate</button>
-              <button class="panel-btn del">Delete</button>
-            </div>
-          </div>
-        </div>
-
-
-        <!-- Panel 04 — Sketch -->
-        <div class="panel-card">
-          <span class="panel-badge">04</span>
-          <span class="panel-dur">9s</span>
-          <span class="panel-mode m-sketch">Sketch</span>
-          <div class="panel-scene" style="background:#F5EFE9">
-            <svg viewBox="0 0 400 160" xmlns="http://www.w3.org/2000/svg">
-              <rect width="400" height="160" fill="#F5EFE9"/>
-              <!-- sketch lines -->
-              <rect x="60" y="20" width="280" height="120" rx="6" fill="#FFFFFF" stroke="#D4B89A" stroke-width="1" stroke-dasharray="5,3"/>
-              <ellipse cx="200" cy="68" rx="55" ry="42" fill="none" stroke="#C4A07A" stroke-width="1.5" stroke-dasharray="4,3"/>
-              <circle cx="200" cy="48" r="16" fill="none" stroke="#C4A07A" stroke-width="1.5"/>
-              <line x1="155" y1="100" x2="140" y2="134" stroke="#C4A07A" stroke-width="1.5"/>
-              <line x1="245" y1="100" x2="260" y2="134" stroke="#C4A07A" stroke-width="1.5"/>
-              <path d="M172,62 Q200,58 228,62" stroke="#A0714F" stroke-width="1.5" fill="none"/>
-              <!-- CTA box sketch -->
-              <rect x="140" y="108" width="120" height="28" rx="14" fill="none" stroke="#A0714F" stroke-width="1.5" stroke-dasharray="3,2"/>
-              <line x1="162" y1="122" x2="238" y2="122" stroke="#C4A07A" stroke-width="1"/>
-              <text x="200" y="150" text-anchor="middle" fill="#C4A07A" font-size="9" font-family="monospace" letter-spacing="2">SKETCH CANVAS</text>
-            </svg>
-          </div>
-          <div class="panel-body">
-            <div class="panel-title">Outro — CTA Sketch</div>
-            <div class="tags">
-              <span class="tag t-shot">Medium</span>
-              <span class="tag t-move">Zoom In</span>
-              <span class="tag t-emotion">Excited</span>
-              <span class="tag t-light">Bright</span>
-            </div>
-            <div class="panel-desc">Hand-sketched CTA frame. Subscribe button highlight. Freehand drawn layout.</div>
-            <div class="panel-actions">
-              <button class="panel-btn">Edit</button>
-              <button class="panel-btn">Duplicate</button>
-              <button class="panel-btn del">Delete</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="add-card">
-          <div class="add-card-icon">＋</div>
-          <div class="add-card-label">Add Panel</div>
-        </div>
-
-      </div><!-- /act II grid -->
-    </div><!-- /panel-grid -->
-
-
-    <!-- EDITOR DRAWER -->
-    <div class="editor-drawer">
-      <div class="drawer-header">
-        <div>
-          <div class="drawer-title">Editing Panel 01</div>
-          <div class="drawer-subtitle">Wide Establishing — Alley · Card Mode</div>
-        </div>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-ghost" style="font-size:0.65rem">Close</button>
-          <button class="btn btn-primary" style="font-size:0.65rem">Apply</button>
+        <div class="empty-actions">
+          <button class="btn btn-primary">+ Add First Panel</button>
+          <button class="btn btn-export">📖 Load Sample</button>
         </div>
       </div>
-      <div class="drawer-body">
-
-        <div class="field">
-          <div class="field-label">Shot Type</div>
-          <select class="field-select">
-            <option selected>Wide</option><option>Medium</option>
-            <option>Close-Up</option><option>Aerial</option><option>POV</option>
-          </select>
-          <div class="field-label" style="margin-top:8px">Camera Angle</div>
-          <select class="field-select">
-            <option selected>Low</option><option>Eye-Level</option>
-            <option>High</option><option>Dutch</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <div class="field-label">Camera Move</div>
-          <select class="field-select">
-            <option selected>Static</option><option>Pan</option>
-            <option>Dolly</option><option>Handheld</option><option>Zoom</option>
-          </select>
-          <div class="field-label" style="margin-top:8px">Duration (s)</div>
-          <input class="field-input" type="number" value="18"/>
-        </div>
-
-        <div class="field">
-          <div class="field-label">Background</div>
-          <select class="field-select">
-            <option selected>Alley</option><option>Office</option>
-            <option>Street</option><option>Rooftop</option><option>Studio</option>
-          </select>
-          <div class="field-label" style="margin-top:8px">Lighting</div>
-          <select class="field-select">
-            <option>Dark</option><option selected>Neon</option>
-            <option>Sunset</option><option>Spotlight</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <div class="field-label">Emotion</div>
-          <select class="field-select">
-            <option selected>Tense</option><option>Excited</option>
-            <option>Mysterious</option><option>Angry</option>
-          </select>
-          <div class="field-label" style="margin-top:8px">Visual Style</div>
-          <select class="field-select">
-            <option selected>Animated Realism</option><option>Minimal</option>
-            <option>Comic</option><option>Flat</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <div class="field-label">Video Style</div>
-          <select class="field-select">
-            <option selected>Cinematic</option><option>YouTube</option>
-            <option>TikTok</option><option>Tutorial</option>
-          </select>
-          <div class="field-label" style="margin-top:8px">Characters</div>
-          <div class="char-checks">
-            <div class="char-ck on"><span style="width:6px;height:6px;border-radius:50%;background:var(--teal);display:inline-block"></span>Hero</div>
-            <div class="char-ck on"><span style="width:6px;height:6px;border-radius:50%;background:var(--lavender);display:inline-block"></span>Villain</div>
-            <div class="char-ck"><span style="width:6px;height:6px;border-radius:50%;background:var(--border);display:inline-block"></span>Host</div>
-          </div>
-        </div>
-
-        <div class="field">
-          <div class="field-label">Description</div>
-          <textarea class="field-textarea">Two figures face each other in a rain-soaked alley. Street lamp creates rim lighting. Camera holds then slow push in.</textarea>
-          <div style="display:flex;gap:6px;margin-top:6px">
-            <div style="flex:1">
-              <div class="field-label">Motion Notes</div>
-              <input class="field-input" value="Static → slow dolly push" style="margin-top:3px"/>
-            </div>
-            <div style="flex:1">
-              <div class="field-label">Audio Notes</div>
-              <input class="field-input" value="Rain ambience · low drone" style="margin-top:3px"/>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div><!-- /editor-drawer -->
-
-    <!-- STATUS BAR -->
-    <div class="status-bar">
-      <span><b>4</b> panels</span>
-      <span><b>47s</b> total</span>
-      <span><b>2</b> acts</span>
-      <span><b>16:9</b></span>
-      <span class="status-saved">● Saved just now</span>
-      <span class="status-bar-right">Shot Builder Studio · Preview</span>
     </div>
 
-  </div><!-- /main-canvas -->
-</div><!-- /app-body -->
+    <!-- STATUS -->
+    <div class="status-bar">
+      <span><b>0</b> panels</span>
+      <span><b>0s</b> total</span>
+      <span><b>0</b> acts</span>
+      <span><b>16:9</b></span>
+      <span class="status-bar-right">Shot Builder Studio · Preview · Empty State</span>
+    </div>
+
+  </div>
+</div>
 
 </body>
 </html>
