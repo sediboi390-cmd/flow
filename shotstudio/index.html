@@ -1,890 +1,1143 @@
 <!DOCTYPE html>
+<!-- Shot Builder Studio v1.0 (Phase 1) — 2026-05-27 -->
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Shot Studio — Storyboard Builder</title>
+  <title>Shot Builder Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Roboto+Mono:wght@400;500&display=swap');
-
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0a0a0f;
-      --bg-2: #0f0f1a;
-      --bg-3: #14141f;
-      --line: #1f1f2e;
-      --line-2: #2a2a40;
-      --text: #e8e8f0;
-      --muted: #8a8aa0;
-      --dim: #5a5a70;
-      --hero: #ff3c5a;
-      --accent: #ff9800;
-      --villain: #c080ff;
-      --good: #4ade80;
-      --info: #64c8ff;
+      --bg:       #F7F6F3;
+      --surface:  #FFFFFF;
+      --border:   #E8E5DF;
+      --sidebar:  #F2F0EC;
+      --text:     #2D2D2D;
+      --muted:    #9A9590;
+      --teal:     #4A8C8C;
+      --sage:     #6B8F71;
+      --clay:     #A0714F;
+      --lavender: #7B7BA8;
+      --red-soft: #C0524A;
     }
 
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: 'Roboto Mono', monospace;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
       min-height: 100vh;
-      font-size: 14px;
     }
 
-    /* ─────────── Top bar ─────────── */
-    .topbar {
-      position: sticky; top: 0; z-index: 50;
-      display: flex; align-items: center; gap: 16px;
-      padding: 12px 20px;
-      background: linear-gradient(135deg, #0d0d1a 0%, #1a0a2e 50%, #0d0d1a 100%);
-      border-bottom: 2px solid var(--hero);
+    /* HEADER */
+    .app-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
-    .topbar h1 {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1.4rem; font-weight: 700;
-      letter-spacing: 0.18em; text-transform: uppercase;
-      background: linear-gradient(90deg, var(--hero), var(--accent), var(--hero));
-      background-size: 200% auto;
-      -webkit-background-clip: text; background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: shimmer 4s linear infinite;
-    }
-    @keyframes shimmer { 0% { background-position: 0%; } 100% { background-position: 200%; } }
-    .topbar .spacer { flex: 1; }
-    .topbar .tag {
-      font-size: 0.65rem; letter-spacing: 0.2em; color: var(--muted);
-      text-transform: uppercase; padding: 4px 10px;
-      border: 1px solid var(--line-2); border-radius: 3px;
+    .app-logo {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    /* ─────────── Buttons ─────────── */
-    .btn {
-      font-family: inherit; font-size: 0.72rem;
-      letter-spacing: 0.12em; text-transform: uppercase;
-      padding: 7px 14px; border-radius: 3px; cursor: pointer;
-      background: transparent; color: var(--text);
-      border: 1px solid var(--line-2);
-      transition: all 0.15s ease;
+    .app-logo-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--teal);
     }
-    .btn:hover { background: var(--bg-3); border-color: var(--hero); color: var(--hero); }
-    .btn.primary { background: var(--hero); color: #fff; border-color: var(--hero); }
-    .btn.primary:hover { background: #ff5572; color: #fff; }
-    .btn.ghost { border-color: transparent; color: var(--muted); padding: 4px 8px; }
-    .btn.ghost:hover { color: var(--hero); background: transparent; border-color: transparent; }
-    .btn.tiny { font-size: 0.6rem; padding: 4px 8px; letter-spacing: 0.08em; }
-    .btn.danger:hover { background: #3a0a18; color: var(--hero); border-color: var(--hero); }
-
-    /* ─────────── Meta bar ─────────── */
-    .meta-bar {
-      display: flex; flex-wrap: wrap; gap: 8px 24px;
-      padding: 14px 20px;
-      background: var(--bg-2);
-      border-bottom: 1px solid var(--line);
-      font-size: 0.7rem;
-      letter-spacing: 0.12em;
+    .header-right { display: flex; gap: 8px; align-items: center; }
+    .project-label {
+      font-size: 0.72rem;
       color: var(--muted);
-      text-transform: uppercase;
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg);
     }
-    .meta-bar .field { display: flex; align-items: center; gap: 6px; }
-    .meta-bar .field label { color: var(--accent); font-weight: 700; }
-    .meta-bar .field input,
-    .meta-bar .field select {
-      background: transparent; border: none;
-      border-bottom: 1px dashed var(--line-2);
-      color: var(--text); font-family: inherit;
-      font-size: 0.7rem; letter-spacing: 0.08em;
-      padding: 2px 4px; width: 90px;
-    }
-    .meta-bar .field input:focus,
-    .meta-bar .field select:focus {
-      outline: none; border-bottom-color: var(--hero);
-    }
-    .meta-bar .field input.wide { width: 200px; }
+    .project-label span { color: var(--teal); font-weight: 500; }
 
-    /* ─────────── Timeline ─────────── */
-    .timeline {
+    /* BUTTONS */
+    .btn {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 7px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      transition: all 0.15s;
+    }
+    .btn-ghost { background: var(--surface); color: var(--muted); }
+    .btn-ghost:hover { border-color: var(--teal); color: var(--teal); }
+    .btn-primary { background: var(--teal); border-color: var(--teal); color: #fff; }
+    .btn-primary:hover { background: #3d7878; }
+    .btn-export { background: var(--surface); border-color: var(--border); color: var(--clay); }
+    .btn-export:hover { border-color: var(--clay); background: #fdf7f3; }
+
+    .app-body { display: flex; height: calc(100vh - 52px); }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 220px; min-width: 220px;
+      background: var(--sidebar);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      overflow-y: auto;
+    }
+    .sidebar-section { padding: 16px; border-bottom: 1px solid var(--border); }
+    .sidebar-label {
+      font-size: 0.62rem; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 8px;
+    }
+
+    .mode-tab {
+      display: flex; align-items: center; gap: 9px;
+      padding: 8px 10px; border-radius: 7px;
+      cursor: pointer; font-size: 0.78rem;
+      color: var(--muted); margin-bottom: 2px;
+      transition: all 0.13s; border: 1px solid transparent;
+    }
+    .mode-tab:hover { background: var(--surface); color: var(--text); }
+    .mode-tab.active {
+      background: var(--surface);
+      border-color: var(--border);
+      color: var(--teal); font-weight: 500;
+    }
+    .mode-icon { font-size: 0.95rem; width: 18px; text-align: center; }
+
+    .sample-tab {
+      display: flex; align-items: center; gap: 9px;
+      padding: 8px 10px; border-radius: 7px;
+      cursor: pointer; font-size: 0.78rem;
+      color: var(--muted); margin-top: 8px;
+      transition: all 0.13s; border: 1px solid transparent;
+    }
+    .sample-tab:hover { background: var(--surface); color: var(--text); }
+    .sample-divider { height: 1px; background: var(--border); margin: 8px 4px 0; }
+    .sample-hint { font-size: 0.62rem; color: var(--muted); margin-top: 6px; line-height: 1.5; padding-left: 6px; }
+
+    .char-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 9px; border-radius: 20px;
+      font-size: 0.68rem; margin: 2px 2px 2px 0;
+      border: 1px solid var(--border);
+      background: var(--surface); color: var(--text);
+    }
+    .char-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+    .export-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 10px; border-radius: 7px;
+      font-size: 0.72rem; color: var(--muted);
+      cursor: pointer; margin-bottom: 2px;
+      transition: all 0.13s;
+    }
+    .export-item:hover { background: var(--surface); color: var(--teal); }
+    .export-icon { font-size: 0.85rem; }
+
+    .project-stat { font-size: 0.68rem; color: var(--muted); line-height: 2; display: flex; justify-content: space-between; align-items: center; }
+    .project-stat span { color: var(--text); font-weight: 500; }
+
+    .ratio-select {
+      font-family: 'Inter', sans-serif; font-size: 0.65rem;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); padding: 2px 6px; border-radius: 4px;
+      cursor: pointer; outline: none;
+    }
+    .ratio-select:hover, .ratio-select:focus { border-color: var(--teal); }
+
+
+    /* MAIN */
+    .main-canvas { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .timeline-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
       display: flex; align-items: center; gap: 6px;
-      padding: 16px 20px;
-      background: #07070d;
-      border-bottom: 1px solid var(--line);
+      min-height: 50px;
       overflow-x: auto;
     }
-    .timeline-item { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
-    .timeline-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--hero); box-shadow: 0 0 8px currentColor; }
-    .timeline-line { height: 2px; flex: 1; min-width: 24px; background: var(--line-2); opacity: 0.7; }
-    .timeline-label { font-size: 0.55rem; color: var(--dim); letter-spacing: 0.08em; white-space: nowrap; text-align: center; }
-
-    /* ─────────── Layout ─────────── */
-    main { padding: 24px 20px 80px; max-width: 1400px; margin: 0 auto; }
-
-    .act {
-      margin-bottom: 36px;
-      border: 1px solid var(--line);
-      border-radius: 4px;
-      background: var(--bg-2);
-      overflow: hidden;
+    .timeline-bar-empty { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.02em; }
+    .tl-act-pill {
+      font-size: 0.62rem; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 3px 9px; border-radius: 20px;
+      border: 1px solid; white-space: nowrap;
     }
-    .act-header {
-      display: flex; align-items: center; gap: 12px;
-      padding: 14px 18px;
-      border-bottom: 1px solid var(--line);
-      background: linear-gradient(90deg, rgba(255,60,90,0.08) 0%, transparent 100%);
+    .tl-act-1 { color: var(--teal); border-color: rgba(74,140,140,0.3); background: rgba(74,140,140,0.07); }
+    .tl-act-2 { color: var(--sage); border-color: rgba(107,143,113,0.3); background: rgba(107,143,113,0.07); }
+    .tl-line { height: 1px; width: 28px; flex-shrink: 0; background: var(--border); }
+    .tl-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--border); }
+    .tl-thumb {
+      width: 48px; height: 32px; border-radius: 5px;
+      border: 1px solid var(--border); background: var(--bg);
+      flex-shrink: 0; cursor: pointer; overflow: hidden;
     }
-    .act-header .act-dot { width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 10px currentColor; flex-shrink: 0; }
-    .act-header .act-name {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1.15rem; font-weight: 700;
-      letter-spacing: 0.18em; text-transform: uppercase;
-      background: transparent; border: none; color: var(--text);
-      flex: 1; min-width: 0;
-      padding: 4px 6px; border-radius: 3px;
-    }
-    .act-header .act-name:focus { outline: none; background: var(--bg-3); }
-    .act-header input[type="color"] {
-      width: 28px; height: 28px;
-      background: transparent; border: 1px solid var(--line-2);
-      border-radius: 3px; cursor: pointer; padding: 2px;
-    }
-
-    .scene-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-      gap: 16px;
-      padding: 18px;
-    }
-
-    /* ─────────── Shot panel ─────────── */
-    .panel {
-      background: var(--bg-3);
-      border: 1px solid var(--line-2);
-      border-radius: 4px;
-      overflow: hidden;
-      display: flex; flex-direction: column;
-      transition: border-color 0.15s ease, transform 0.15s ease;
-    }
-    .panel:hover { border-color: var(--hero); }
-    .panel-head {
-      display: flex; align-items: center; gap: 8px;
-      padding: 8px 12px;
-      background: #0a0a14;
-      border-bottom: 1px solid var(--line);
-      font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase;
-    }
-    .panel-head .num { color: var(--accent); font-weight: 700; }
-    .panel-head .dur { color: var(--muted); }
-    .panel-head .spacer { flex: 1; }
-    .panel-head .reorder { display: flex; gap: 2px; }
-
-    .canvas-wrap {
-      position: relative;
-      aspect-ratio: 16 / 9;
-      background: linear-gradient(135deg, #0a0a18 0%, #1a0a2e 100%);
-      border-bottom: 1px solid var(--line);
-      overflow: hidden;
-      cursor: pointer;
-    }
-    .canvas-wrap svg { width: 100%; height: 100%; display: block; }
-    .canvas-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .canvas-wrap .empty {
-      position: absolute; inset: 0;
+    .tl-thumb.active { border-color: var(--teal); box-shadow: 0 0 0 2px rgba(74,140,140,0.15); }
+    .tl-thumb svg { width: 100%; height: 100%; }
+    .tl-add {
+      width: 32px; height: 32px; border-radius: 5px;
+      border: 1px dashed var(--border); flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      color: var(--dim); font-size: 0.7rem; letter-spacing: 0.15em;
-      text-transform: uppercase;
+      color: var(--muted); font-size: 1rem; cursor: pointer;
     }
-    .canvas-wrap .frame-overlay {
-      position: absolute; inset: 0;
-      border: 1.5px solid rgba(255,60,90,0.3);
-      pointer-events: none;
-    }
-    .canvas-wrap .upload-hint {
-      position: absolute; bottom: 6px; right: 8px;
-      font-size: 0.55rem; letter-spacing: 0.1em;
-      color: var(--muted); text-transform: uppercase;
-      opacity: 0; transition: opacity 0.15s ease;
-    }
-    .canvas-wrap:hover .upload-hint { opacity: 1; }
+    .tl-add:hover { border-color: var(--teal); color: var(--teal); }
 
-    .panel-body { padding: 12px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
-    .panel-body .row {
-      display: grid;
-      grid-template-columns: 70px 1fr;
-      gap: 8px;
-      align-items: start;
-      font-size: 0.7rem;
+    .view-toggle-row {
+      padding: 12px 24px 0;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px;
     }
-    .panel-body .row label {
-      color: var(--accent); letter-spacing: 0.1em;
-      text-transform: uppercase; font-size: 0.6rem;
-      padding-top: 4px;
+    .view-toggle {
+      display: inline-flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 2px;
     }
-    .panel-body .row input,
-    .panel-body .row textarea,
-    .panel-body .row select {
+    .view-tab {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 5px;
+      font-size: 0.72rem; font-weight: 500;
+      color: var(--muted); cursor: pointer;
       background: transparent; border: none;
-      border-bottom: 1px dashed var(--line-2);
-      color: var(--text); font-family: inherit;
-      font-size: 0.72rem; padding: 3px 0;
-      width: 100%; resize: none;
+      font-family: 'Inter', sans-serif;
     }
-    .panel-body .row input:focus,
-    .panel-body .row textarea:focus,
-    .panel-body .row select:focus {
-      outline: none; border-bottom-color: var(--hero);
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active { background: var(--bg); color: var(--teal); }
+    .view-tab-icon { font-size: 0.85rem; }
+    .view-meta { font-size: 0.65rem; color: var(--muted); }
+    .view-meta strong { color: var(--text); font-weight: 500; }
+
+    .panel-grid { flex: 1; overflow-y: auto; padding: 20px 24px; }
+
+    .empty-state {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      height: 100%; min-height: 400px;
+      text-align: center; padding: 40px 20px;
     }
-    .panel-body .row textarea {
-      min-height: 32px;
-      font-family: inherit;
+    .empty-icon { font-size: 3rem; color: var(--border); margin-bottom: 16px; }
+    .empty-title {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1.4rem; font-weight: 500;
+      color: var(--text); margin-bottom: 8px;
     }
-    .panel-foot {
-      display: flex; gap: 6px;
-      padding: 8px 12px;
-      border-top: 1px solid var(--line);
-      background: #0a0a14;
+    .empty-desc {
+      font-size: 0.85rem; color: var(--muted);
+      max-width: 420px; line-height: 1.6; margin-bottom: 24px;
+    }
+    .empty-actions { display: flex; gap: 10px; }
+    .empty-actions .btn { padding: 10px 20px; font-size: 0.78rem; }
+
+    .act-heading {
+      font-size: 0.7rem; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 12px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .act-heading::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 14px; margin-bottom: 28px;
     }
 
-    /* ─────────── Add buttons ─────────── */
-    .add-shot, .add-act {
-      display: flex; align-items: center; justify-content: center;
-      gap: 8px;
-      padding: 18px;
-      border: 1.5px dashed var(--line-2);
-      border-radius: 4px;
-      color: var(--muted);
-      cursor: pointer;
-      font-size: 0.7rem; letter-spacing: 0.15em;
-      text-transform: uppercase;
-      transition: all 0.15s ease;
-      background: transparent;
-      font-family: inherit;
-      width: 100%;
+    .panel-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden;
+      cursor: pointer; transition: all 0.15s;
+      animation: fadeUp 0.35s ease both;
+      position: relative;
     }
-    .add-shot { min-height: 100%; }
-    .add-shot:hover, .add-act:hover {
-      color: var(--hero); border-color: var(--hero);
-      background: rgba(255,60,90,0.04);
+    .panel-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.07); transform: translateY(-2px); }
+    .panel-card.selected { border-color: var(--teal); box-shadow: 0 0 0 2px rgba(74,140,140,0.18); }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    .add-act { margin-top: 16px; }
+    .panel-scene { width: 100%; height: 160px; background: #EDECEA; position: relative; overflow: hidden; }
+    .panel-scene svg { width: 100%; height: 100%; }
+    .panel-badge {
+      position: absolute; top: 8px; left: 8px;
+      background: rgba(255,255,255,0.88);
+      color: var(--muted); font-size: 0.58rem;
+      font-weight: 600; letter-spacing: 0.08em;
+      padding: 2px 7px; border-radius: 4px;
+      border: 1px solid var(--border); z-index: 5;
+    }
+    .panel-dur {
+      position: absolute; top: 8px; right: 8px;
+      background: rgba(255,255,255,0.88);
+      color: var(--muted); font-size: 0.58rem;
+      padding: 2px 7px; border-radius: 4px;
+      border: 1px solid var(--border); z-index: 5;
+    }
+    .panel-mode {
+      position: absolute; bottom: 8px; right: 8px;
+      font-size: 0.58rem; font-weight: 500;
+      padding: 2px 7px; border-radius: 4px; z-index: 5;
+    }
+    .m-card { background: rgba(74,140,140,0.12); color: var(--teal); }
+    .m-template { background: rgba(107,143,113,0.12); color: var(--sage); }
+    .m-text { background: rgba(123,123,168,0.12); color: var(--lavender); }
+    .m-sketch { background: rgba(160,113,79,0.12); color: var(--clay); }
 
-    /* ─────────── Toast ─────────── */
-    #toast {
-      position: fixed; bottom: 24px; left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      background: var(--hero); color: #fff;
-      padding: 10px 20px; border-radius: 3px;
-      font-size: 0.7rem; letter-spacing: 0.15em;
-      text-transform: uppercase; font-weight: 700;
-      box-shadow: 0 6px 20px rgba(255,60,90,0.5);
-      transition: transform 0.25s ease;
-      z-index: 100; pointer-events: none;
-    }
-    #toast.show { transform: translateX(-50%) translateY(0); }
 
-    /* ─────────── Empty state ─────────── */
-    .empty-board {
-      text-align: center; padding: 60px 20px;
-      color: var(--muted);
+    .panel-body { padding: 12px 14px; }
+    .panel-title { font-size: 0.82rem; font-weight: 600; color: var(--text); margin-bottom: 7px; }
+    .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+    .tag {
+      font-size: 0.6rem; font-weight: 500;
+      padding: 2px 8px; border-radius: 20px;
     }
-    .empty-board h2 {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1.4rem; letter-spacing: 0.2em;
-      text-transform: uppercase; color: var(--text);
-      margin-bottom: 8px;
+    .t-shot { background: rgba(74,140,140,0.1); color: var(--teal); }
+    .t-move { background: rgba(107,143,113,0.1); color: var(--sage); }
+    .t-emotion { background: rgba(123,123,168,0.1); color: var(--lavender); }
+    .t-light { background: rgba(160,113,79,0.1); color: var(--clay); }
+    .panel-desc { font-size: 0.68rem; color: var(--muted); line-height: 1.6; margin-bottom: 10px; }
+    .panel-actions {
+      display: flex; gap: 6px; justify-content: flex-end;
+      padding-top: 8px; border-top: 1px solid var(--border);
     }
-    .empty-board p { font-size: 0.75rem; letter-spacing: 0.1em; margin-bottom: 20px; }
+    .panel-btn {
+      font-family: 'Inter', sans-serif; font-size: 0.65rem; font-weight: 500;
+      padding: 4px 10px; border-radius: 6px; cursor: pointer;
+      border: 1px solid var(--border); background: var(--bg); color: var(--muted);
+    }
+    .panel-btn:hover { border-color: var(--teal); color: var(--teal); background: var(--surface); }
+    .panel-btn.del:hover { border-color: var(--red-soft); color: var(--red-soft); }
 
-    /* ─────────── Print ─────────── */
+    .add-card {
+      background: transparent; border: 1.5px dashed var(--border);
+      border-radius: 10px; min-height: 240px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 8px;
+      cursor: pointer; color: var(--muted);
+    }
+    .add-card:hover { border-color: var(--teal); color: var(--teal); background: rgba(74,140,140,0.04); }
+    .add-card-icon { font-size: 1.6rem; }
+    .add-card-label { font-size: 0.68rem; font-weight: 500; }
+
+    /* Outline view */
+    .outline-list { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px; }
+    .outline-row { display: flex; gap: 14px; padding: 12px 14px; border-radius: 7px; cursor: pointer; transition: background 0.13s; }
+    .outline-row:hover { background: var(--bg); }
+    .outline-num { font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--muted); width: 28px; }
+    .outline-body { flex: 1; }
+    .outline-title { font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .outline-dur { font-family: 'Inter', sans-serif; font-size: 0.65rem; font-weight: 400; color: var(--muted); margin-left: 6px; }
+    .outline-vo { font-size: 0.7rem; color: var(--muted); line-height: 1.5; font-style: italic; }
+    .outline-meta { font-size: 0.65rem; color: var(--muted); align-self: center; }
+
+    /* Templates */
+    .template-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; cursor: pointer; transition: all 0.13s; min-height: 80px; display: flex; flex-direction: column; justify-content: center; }
+    .template-card:hover { border-color: var(--teal); box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+    .template-name { font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .template-meta { font-size: 0.65rem; color: var(--muted); text-transform: capitalize; }
+
+    /* Editor drawer */
+    .editor-drawer {
+      height: 240px; background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex; flex-direction: column;
+    }
+    .drawer-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 20px; border-bottom: 1px solid var(--border);
+    }
+    .drawer-title { font-size: 0.78rem; font-weight: 600; color: var(--text); }
+    .drawer-subtitle { font-size: 0.65rem; color: var(--muted); margin-top: 1px; }
+    .drawer-body {
+      flex: 1; padding: 12px 20px;
+      display: grid; grid-template-columns: repeat(5, 1fr) 2fr;
+      gap: 12px; overflow-y: auto; align-items: start;
+    }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field-label { font-size: 0.6rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+    .field-select, .field-input {
+      font-family: 'Inter', sans-serif; font-size: 0.72rem;
+      background: var(--bg); border: 1px solid var(--border);
+      color: var(--text); padding: 5px 8px; border-radius: 6px;
+      outline: none; width: 100%;
+    }
+    .field-select:focus, .field-input:focus { border-color: var(--teal); }
+    .field-textarea {
+      font-family: 'Inter', sans-serif; font-size: 0.7rem;
+      background: var(--bg); border: 1px solid var(--border);
+      color: var(--text); padding: 6px 8px; border-radius: 6px;
+      outline: none; resize: none; width: 100%; height: 56px; line-height: 1.5;
+    }
+    .field-textarea:focus { border-color: var(--teal); }
+    .char-checks { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 2px; }
+    .char-ck {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 0.65rem; padding: 3px 8px; border-radius: 20px;
+      border: 1px solid var(--border); cursor: pointer;
+      color: var(--muted); background: var(--bg);
+    }
+    .char-ck.on { background: rgba(74,140,140,0.08); }
+
+    /* Status bar */
+    .status-bar {
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      padding: 6px 20px;
+      display: flex; gap: 20px;
+      font-size: 0.62rem; color: var(--muted);
+      align-items: center;
+    }
+    .status-bar b { color: var(--text); font-weight: 500; }
+    .status-bar-right { margin-left: auto; transition: color 0.3s; }
+
+    /* Print styles */
     @media print {
-      body { background: #fff; color: #000; }
-      .topbar, .meta-bar, .add-shot, .add-act, .panel-foot, .reorder, .btn,
-      .topbar h1, .upload-hint, .frame-overlay { color: #000 !important; }
-      .topbar .spacer, .topbar .btn, .panel-foot, .add-shot, .add-act,
-      .reorder { display: none !important; }
-      .timeline { background: #fff; border-color: #ccc; }
-      .act, .panel { background: #fff; border-color: #999; break-inside: avoid; }
-      .act-header { background: #f5f5f5; }
-      .scene-grid { grid-template-columns: repeat(2, 1fr); }
-      .panel-head { background: #f0f0f0; color: #000; }
-      .panel-body .row label { color: #000; }
-      .panel-body .row input,
-      .panel-body .row textarea,
-      .panel-body .row select { color: #000; border-bottom-color: #999; }
-      main { padding: 8px; }
+      .app-header, .sidebar, .timeline-bar, .view-toggle-row, .editor-drawer, .status-bar, .panel-actions, .add-card { display: none !important; }
+      body { background: white; }
+      .main-canvas { display: block; height: auto; }
+      .app-body { height: auto; display: block; }
+      .panel-grid { padding: 0; overflow: visible; }
+      .panel-card { break-inside: avoid; page-break-inside: avoid; box-shadow: none; }
+      .grid { grid-template-columns: repeat(2, 1fr) !important; gap: 12px; }
     }
   </style>
 </head>
 <body>
 
-<div class="topbar">
-  <h1>&#9876; Shot Studio</h1>
-  <span class="tag">Storyboard Builder</span>
-  <div class="spacer"></div>
-  <button class="btn" id="btnAddAct">+ Act</button>
-  <button class="btn" id="btnImport">Import</button>
-  <button class="btn" id="btnExport">Export</button>
-  <button class="btn" id="btnPrint">Print</button>
-  <button class="btn danger" id="btnReset">Reset</button>
-  <input type="file" id="fileImport" accept="application/json" hidden />
+<header class="app-header">
+  <div class="app-logo">
+    <div class="app-logo-dot"></div>
+    Shot Builder Studio
+  </div>
+  <div class="header-right">
+    <div class="project-label">Project: <span id="project-name">Untitled</span></div>
+    <button class="btn btn-ghost" id="btn-undo">Undo</button>
+    <button class="btn btn-primary" id="btn-save">Save</button>
+  </div>
+</header>
+
+<div class="app-body">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-canvas">
+    <div class="timeline-bar" id="timeline-bar"></div>
+    <div class="view-toggle-row" id="view-toggle-row"></div>
+    <div class="panel-grid" id="panel-grid"></div>
+    <div class="editor-drawer" id="editor-drawer" style="display:none"></div>
+    <div class="status-bar" id="status-bar"></div>
+  </div>
 </div>
-
-<div class="meta-bar" id="metaBar">
-  <div class="field"><label>Title</label><input class="wide" data-meta="title" placeholder="Untitled Project"/></div>
-  <div class="field"><label>Format</label><input data-meta="format" placeholder="16:9 2K"/></div>
-  <div class="field"><label>FPS</label><input data-meta="fps" placeholder="24fps"/></div>
-  <div class="field"><label>Duration</label><input data-meta="duration" placeholder="2:30"/></div>
-  <div class="field"><label>Style</label><input data-meta="style" placeholder="Animated Realism"/></div>
-  <div class="field"><label>Grade</label><input class="wide" data-meta="grade" placeholder="High-contrast, rim light"/></div>
-</div>
-
-<div class="timeline" id="timeline"></div>
-
-<main id="board"></main>
-
-<div id="toast">Saved</div>
 
 <script>
-/* ════════════════════════════════════════════════════════
-   Shot Studio — single-file storyboard builder
-   State is the source of truth, render() repaints from it.
-   ════════════════════════════════════════════════════════ */
 
-const STORAGE_KEY = 'shotstudio.project.v1';
+'use strict';
 
-const ACT_PALETTE = ['#64c8ff', '#ff9800', '#c080ff', '#4ade80', '#ff3c5a', '#ffd84d'];
+// ====== STATE ======
+const STORAGE_KEY = 'shotBuilderStudio.project.v1';
 
-const ANGLE_OPTIONS = [
-  'Wide', 'Medium', 'Close-up', 'ECU', 'Over-shoulder',
-  'Low angle', 'High angle', 'Overhead / crane', 'Dutch tilt',
-  'POV', 'Two-shot', 'Insert', 'Establishing'
+const App = {
+  project: {
+    name: 'Untitled',
+    aspectRatio: '16:9',
+    characters: [],
+    panels: [],
+    acts: ['Act I'],
+  },
+  ui: {
+    view: 'grid',
+    activeMode: 'card',
+    selectedPanelId: null,
+  },
+};
+
+const TEMPLATES = [
+  { id: 't-wide-establish', label: 'Wide Establishing Shot', shotType: 'wide',     cameraMove: 'static',   cameraAngle: 'eye',  background: 'street', lighting: 'sunset',    emotion: 'neutral', duration: 8 },
+  { id: 't-talking-head',   label: 'Talking Head',           shotType: 'medium',   cameraMove: 'static',   cameraAngle: 'eye',  background: 'studio', lighting: 'spotlight', emotion: 'neutral', duration: 10 },
+  { id: 't-product-reveal', label: 'Product Reveal',         shotType: 'close-up', cameraMove: 'zoom',     cameraAngle: 'low',  background: 'studio', lighting: 'spotlight', emotion: 'excited', duration: 5 },
+  { id: 't-hook-opener',    label: 'Hook Opener',            shotType: 'close-up', cameraMove: 'zoom',     cameraAngle: 'eye',  background: 'studio', lighting: 'bright',    emotion: 'tense',   duration: 3 },
+  { id: 't-cta-closer',     label: 'CTA Closer',             shotType: 'medium',   cameraMove: 'static',   cameraAngle: 'eye',  background: 'studio', lighting: 'bright',    emotion: 'happy',   duration: 4 },
+  { id: 't-step-callout',   label: 'Tutorial Step',          shotType: 'medium',   cameraMove: 'static',   cameraAngle: 'high', background: 'studio', lighting: 'bright',    emotion: 'neutral', duration: 6 },
 ];
 
-const MOTION_OPTIONS = [
-  'Static', 'Pan', 'Tilt', 'Dolly in', 'Dolly out',
-  'Tracking', 'Whip pan', 'Snap zoom', 'Crane', 'Handheld',
-  'Steadicam', 'Orbit / 360°', 'Slow-mo', 'Speed ramp'
-];
+const CHARACTER_COLORS = ['#4A8C8C', '#6B8F71', '#A0714F', '#7B7BA8', '#C0524A', '#9A9590'];
 
-/* ─── Default seed project ─── */
-function defaultProject() {
-  return {
-    meta: {
-      title: 'Untitled Project',
-      format: '16:9 2K',
-      fps: '24fps',
-      duration: '2:30',
-      style: 'Animated Realism',
-      grade: 'High-contrast, desaturated + rim light'
-    },
-    acts: [
-      {
-        id: uid(),
-        name: 'Act I — The Setup',
-        color: '#64c8ff',
-        shots: [
-          {
-            id: uid(),
-            duration: 8,
-            angle: 'Wide',
-            motion: 'Dolly in',
-            lens: '24mm',
-            vfx: 'Atmospheric fog, rim light',
-            audio: 'Low ambient drone, distant rain',
-            desc: 'Hero stands alone on a wet street. Neon reflects in the puddle.',
-            heroColor: '#ff3c5a',
-            villainColor: '#c080ff',
-            image: null
-          },
-          {
-            id: uid(),
-            duration: 6,
-            angle: 'Close-up',
-            motion: 'Static',
-            lens: '85mm',
-            vfx: 'Subtle eye glint',
-            audio: 'Heartbeat thump',
-            desc: 'Tight on hero\'s eyes. Determination locks in.',
-            heroColor: '#ff3c5a',
-            villainColor: '#c080ff',
-            image: null
-          }
-        ]
-      },
-      {
-        id: uid(),
-        name: 'Act II — The Confrontation',
-        color: '#ff9800',
-        shots: [
-          {
-            id: uid(),
-            duration: 10,
-            angle: 'Two-shot',
-            motion: 'Orbit / 360°',
-            lens: '35mm',
-            vfx: 'Dust kick-up, motion blur trails',
-            audio: 'Bass swell, percussive build',
-            desc: 'Hero and villain circle each other in a derelict warehouse.',
-            heroColor: '#ff3c5a',
-            villainColor: '#c080ff',
-            image: null
-          }
-        ]
-      }
-    ]
-  };
-}
+const SCENE_BG_BY_MODE = {
+  card: '#EDECEA', template: '#EAE9F0', text: '#E8F0E9', sketch: '#F5EFE9',
+};
+const BG_TINT_BY_LIGHTING = {
+  dark: '#D9D5CF', bright: '#FFFFFF', neon: '#DFF0EF', sunset: '#F5E2D0', spotlight: '#FFFDE7', silhouette: '#C9C5BF',
+};
 
-/* ─── Utilities ─── */
-function uid() { return Math.random().toString(36).slice(2, 10); }
-
-function fmtTime(sec) {
-  sec = Math.max(0, Math.round(sec));
-  const m = Math.floor(sec / 60);
-  const s = sec % 60;
-  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-}
-
+// ====== HELPERS ======
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
 function escapeHtml(s) {
-  return String(s ?? '').replace(/[&<>"']/g, c => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-  }[c]));
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function capitalize(s) { return String(s || '').charAt(0).toUpperCase() + String(s || '').slice(1); }
+function totalDuration() { return App.project.panels.reduce((sum, p) => sum + (Number(p.duration) || 0), 0); }
+function formatDuration(s) { if (s < 60) return s + 's'; return Math.floor(s / 60) + 'm ' + (s % 60) + 's'; }
+function totalVoiceoverWords() {
+  return App.project.panels.reduce((sum, p) => {
+    const w = (p.voiceover || '').trim();
+    return sum + (w ? w.split(/\s+/).length : 0);
+  }, 0);
+}
+function aspectFor(ratio) {
+  if (ratio === '9:16') return { w: 90, h: 160 };
+  if (ratio === '1:1')  return { w: 160, h: 160 };
+  return { w: 400, h: 160 };
+}
+function selectOptions(opts, selected) {
+  return opts.map(o => '<option value="' + o + '"' + (o === selected ? ' selected' : '') + '>' + capitalize(o) + '</option>').join('');
 }
 
-function showToast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  clearTimeout(showToast._t);
-  showToast._t = setTimeout(() => el.classList.remove('show'), 1500);
+// ====== PERSISTENCE ======
+function saveToStorage() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(App.project)); }
+  catch (e) { console.warn('Save failed:', e); }
 }
-
-/* ─── State ─── */
-let project = load() || defaultProject();
-
-function load() {
+function loadFromStorage() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return false;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const p = JSON.parse(raw);
-    if (!p || !p.meta || !Array.isArray(p.acts)) return null;
-    return p;
-  } catch (e) { return null; }
+    const proj = JSON.parse(raw);
+    // Basic shape validation
+    if (proj && Array.isArray(proj.panels) && Array.isArray(proj.acts)) {
+      App.project = proj;
+      // Backfill new fields for older saves
+      App.project.characters = App.project.characters || [];
+      App.project.aspectRatio = App.project.aspectRatio || '16:9';
+      return true;
+    }
+  } catch (e) { console.warn('Load failed:', e); }
+  return false;
 }
+setInterval(saveToStorage, 30000);
 
-function save() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(project));
-  } catch (e) {
-    showToast('Save failed: storage full');
-  }
-}
 
-function persist(toastMsg = 'Saved') {
-  save();
-  render();
-  if (toastMsg) showToast(toastMsg);
-}
-
-/* ─── Helpers to find items ─── */
-function findAct(actId) { return project.acts.find(a => a.id === actId); }
-function findShot(actId, shotId) {
-  const a = findAct(actId);
-  return a ? a.shots.find(s => s.id === shotId) : null;
-}
-
-/* ─── Mutations ─── */
-function addAct() {
-  const idx = project.acts.length;
-  const color = ACT_PALETTE[idx % ACT_PALETTE.length];
-  project.acts.push({
-    id: uid(),
-    name: `Act ${romanize(idx + 1)} — New Act`,
-    color,
-    shots: []
+// ====== SVG SCENE GENERATOR ======
+function renderPanelScene(p) {
+  const { w, h } = aspectFor(App.project.aspectRatio);
+  const tint = BG_TINT_BY_LIGHTING[p.lighting] || SCENE_BG_BY_MODE[p.creationMode] || '#EDECEA';
+  const chars = (p.characters || []).map(id => App.project.characters.find(c => c.id === id)).filter(Boolean);
+  let silhouettes = '';
+  chars.slice(0, 2).forEach((c, i) => {
+    const cx = chars.length === 1 ? w / 2 : (i === 0 ? w * 0.3 : w * 0.7);
+    const cy = h * 0.55;
+    silhouettes += `
+      <ellipse cx="${cx}" cy="${cy - 18}" rx="9" ry="10" fill="#FFFFFF" stroke="${c.color}" stroke-width="1.2"/>
+      <rect x="${cx - 9}" y="${cy - 6}" width="18" height="32" rx="4" fill="#FFFFFF" stroke="${c.color}" stroke-width="1"/>
+      <line x1="${cx - 9}" y1="${cy + 2}" x2="${cx - 22}" y2="${cy + 20}" stroke="${c.color}" stroke-width="1.4"/>
+      <line x1="${cx + 9}" y1="${cy + 2}" x2="${cx + 22}" y2="${cy + 20}" stroke="${c.color}" stroke-width="1.4"/>
+      <line x1="${cx - 4}" y1="${cy + 26}" x2="${cx - 7}" y2="${cy + 38}" stroke="${c.color}" stroke-width="1.4"/>
+      <line x1="${cx + 4}" y1="${cy + 26}" x2="${cx + 7}" y2="${cy + 38}" stroke="${c.color}" stroke-width="1.4"/>`;
   });
-  persist('Act added');
-}
-
-function deleteAct(actId) {
-  const a = findAct(actId);
-  if (!a) return;
-  if (!confirm(`Delete "${a.name}" and all its shots?`)) return;
-  project.acts = project.acts.filter(x => x.id !== actId);
-  persist('Act deleted');
-}
-
-function addShot(actId) {
-  const a = findAct(actId);
-  if (!a) return;
-  a.shots.push({
-    id: uid(),
-    duration: 5,
-    angle: 'Wide',
-    motion: 'Static',
-    lens: '35mm',
-    vfx: '',
-    audio: '',
-    desc: 'New shot — describe the action.',
-    heroColor: '#ff3c5a',
-    villainColor: '#c080ff',
-    image: null
-  });
-  persist('Shot added');
-}
-
-function deleteShot(actId, shotId) {
-  const a = findAct(actId);
-  if (!a) return;
-  a.shots = a.shots.filter(s => s.id !== shotId);
-  persist('Shot deleted');
-}
-
-function moveShot(actId, shotId, dir) {
-  const a = findAct(actId);
-  if (!a) return;
-  const i = a.shots.findIndex(s => s.id === shotId);
-  if (i < 0) return;
-  const j = i + dir;
-  if (j < 0 || j >= a.shots.length) return;
-  [a.shots[i], a.shots[j]] = [a.shots[j], a.shots[i]];
-  persist();
-}
-
-function moveAct(actId, dir) {
-  const i = project.acts.findIndex(a => a.id === actId);
-  if (i < 0) return;
-  const j = i + dir;
-  if (j < 0 || j >= project.acts.length) return;
-  [project.acts[i], project.acts[j]] = [project.acts[j], project.acts[i]];
-  persist();
-}
-
-function romanize(n) {
-  const r = [['M',1000],['CM',900],['D',500],['CD',400],['C',100],['XC',90],
-             ['L',50],['XL',40],['X',10],['IX',9],['V',5],['IV',4],['I',1]];
-  let out = '';
-  for (const [s, v] of r) { while (n >= v) { out += s; n -= v; } }
-  return out || 'I';
-}
-
-/* ─── Procedural placeholder SVG (so empty shots still look cinematic) ─── */
-function placeholderSvg(shot, scene) {
-  // Pick a vibe based on hash of shot id so each shot looks different but stable
-  const h = [...shot.id].reduce((a,c) => a + c.charCodeAt(0), 0);
-  const sceneHue = 220 + (h % 60); // blue-purple range
-  const heroX = 100 + (h % 80);
-  const villX = 300 - (h % 60);
-  const fogY = 70 + (h % 30);
-  const lampX = 60 + ((h * 7) % 280);
-  const moon = (h % 3) === 0;
-  const hero = shot.heroColor || '#ff3c5a';
-  const vill = shot.villainColor || '#c080ff';
-
-  return `
-  <svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-    <defs>
-      <radialGradient id="bg-${shot.id}" cx="50%" cy="80%" r="80%">
-        <stop offset="0%" stop-color="hsl(${sceneHue}, 35%, 14%)"/>
-        <stop offset="100%" stop-color="#000005"/>
-      </radialGradient>
-      <filter id="glow-${shot.id}"><feGaussianBlur stdDeviation="3"/></filter>
-    </defs>
-    <rect width="400" height="220" fill="url(#bg-${shot.id})"/>
-    <!-- atmospheric haze -->
-    <ellipse cx="200" cy="${fogY+120}" rx="240" ry="40" fill="#0a0a18" opacity="0.55"/>
-    ${moon ? `<circle cx="${lampX}" cy="40" r="14" fill="#ffd9a0" opacity="0.7" filter="url(#glow-${shot.id})"/>` : ''}
-    <!-- horizon -->
-    <line x1="0" y1="180" x2="400" y2="180" stroke="#222" stroke-width="1"/>
-    <!-- hero silhouette -->
-    <g fill="#0d0d1a" stroke="${hero}" stroke-width="0.8">
-      <ellipse cx="${heroX}" cy="108" rx="11" ry="13"/>
-      <rect x="${heroX-12}" y="121" width="24" height="48" rx="3"/>
-      <line x1="${heroX-12}" y1="130" x2="${heroX-30}" y2="155"/>
-      <line x1="${heroX+12}" y1="130" x2="${heroX+25}" y2="158"/>
-      <line x1="${heroX-5}" y1="169" x2="${heroX-8}" y2="190"/>
-      <line x1="${heroX+5}" y1="169" x2="${heroX+8}" y2="190"/>
-    </g>
-    <!-- villain silhouette -->
-    <g fill="#0d0d1a" stroke="${vill}" stroke-width="0.8">
-      <ellipse cx="${villX}" cy="108" rx="12" ry="14"/>
-      <rect x="${villX-12}" y="122" width="24" height="48" rx="3"/>
-      <line x1="${villX-12}" y1="130" x2="${villX-32}" y2="148"/>
-      <line x1="${villX+12}" y1="130" x2="${villX+32}" y2="148"/>
-      <line x1="${villX-5}" y1="170" x2="${villX-8}" y2="192"/>
-      <line x1="${villX+5}" y1="170" x2="${villX+8}" y2="192"/>
-    </g>
-    <!-- ground fog -->
-    <ellipse cx="200" cy="200" rx="220" ry="22" fill="#0a0a18" opacity="0.7"/>
-    <!-- accent rim -->
-    <rect x="80" y="184" width="240" height="3" fill="${hero}" opacity="0.08" rx="1"/>
-    <!-- scene number watermark -->
-    <text x="380" y="210" font-family="Rajdhani, sans-serif" font-size="14" font-weight="700"
-          text-anchor="end" fill="${hero}" opacity="0.35" letter-spacing="2">S-${String(scene).padStart(2,'0')}</text>
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+    <rect width="${w}" height="${h}" fill="${tint}"/>
+    <rect x="0" y="${h - 22}" width="${w}" height="22" fill="rgba(0,0,0,0.05)"/>
+    ${silhouettes}
   </svg>`;
 }
 
-/* ─── Render ─── */
-function render() {
-  // meta bar fields
-  document.querySelectorAll('[data-meta]').forEach(input => {
-    const k = input.dataset.meta;
-    if (document.activeElement !== input) input.value = project.meta[k] ?? '';
-  });
-
-  // Compute scene numbers + cumulative timestamps
-  let sceneCounter = 0;
-  let timeCursor = 0;
-  const flatActs = project.acts.map(act => {
-    const shots = act.shots.map(s => {
-      sceneCounter++;
-      const start = timeCursor;
-      const dur = Number(s.duration) || 0;
-      timeCursor += dur;
-      return { ...s, _scene: sceneCounter, _start: start, _dur: dur };
-    });
-    return { ...act, _shots: shots, _start: shots[0]?._start ?? null };
-  });
-
-  renderTimeline(flatActs, timeCursor);
-  renderBoard(flatActs);
-}
-
-function renderTimeline(flatActs, total) {
-  const tl = document.getElementById('timeline');
-  if (!flatActs.length || flatActs.every(a => a._shots.length === 0)) {
-    tl.innerHTML = '<span style="color:var(--dim);font-size:0.65rem;letter-spacing:0.15em;">EMPTY TIMELINE</span>';
-    return;
-  }
-  const parts = [];
-  flatActs.forEach((act, ai) => {
-    if (ai > 0) parts.push(`<div class="timeline-line"></div>`);
-    parts.push(`
-      <div class="timeline-item">
-        <div class="timeline-dot" style="background:${act.color};color:${act.color}"></div>
-        <div class="timeline-label" style="color:${act.color}">ACT ${romanize(ai+1)}<br/>${fmtTime(act._start ?? 0)}</div>
-      </div>`);
-    act._shots.forEach(shot => {
-      parts.push(`<div class="timeline-line"></div>`);
-      parts.push(`
-        <div class="timeline-item">
-          <div class="timeline-dot" style="background:var(--hero);color:var(--hero)"></div>
-          <div class="timeline-label">S-${String(shot._scene).padStart(2,'0')}<br/>${fmtTime(shot._start)}</div>
-        </div>`);
-    });
-  });
-  parts.push(`<div class="timeline-line"></div>`);
-  parts.push(`
-    <div class="timeline-item">
-      <div class="timeline-dot" style="background:var(--accent);color:var(--accent)"></div>
-      <div class="timeline-label" style="color:var(--accent)">END<br/>${fmtTime(total)}</div>
-    </div>`);
-  tl.innerHTML = parts.join('');
-}
-
-function renderBoard(flatActs) {
-  const board = document.getElementById('board');
-  if (!flatActs.length) {
-    board.innerHTML = `
-      <div class="empty-board">
-        <h2>No acts yet</h2>
-        <p>Start by adding your first act.</p>
-        <button class="btn primary" onclick="addAct()">+ Add Act</button>
-      </div>`;
-    return;
-  }
-
-  const html = flatActs.map((act, ai) => `
-    <section class="act" data-act-id="${act.id}">
-      <div class="act-header">
-        <div class="act-dot" style="background:${act.color};color:${act.color}"></div>
-        <input class="act-name" value="${escapeHtml(act.name)}"
-          onchange="findAct('${act.id}').name=this.value;persist('')"/>
-        <input type="color" value="${act.color}"
-          onchange="findAct('${act.id}').color=this.value;persist('')"/>
-        <button class="btn tiny ghost" onclick="moveAct('${act.id}',-1)" title="Move act up">&#9650;</button>
-        <button class="btn tiny ghost" onclick="moveAct('${act.id}',1)" title="Move act down">&#9660;</button>
-        <button class="btn tiny danger" onclick="deleteAct('${act.id}')">Delete</button>
-      </div>
-      <div class="scene-grid">
-        ${act._shots.map(shot => renderShot(act, shot)).join('')}
-        <button class="add-shot" onclick="addShot('${act.id}')">+ Add Shot</button>
-      </div>
-    </section>
-  `).join('');
-
-  board.innerHTML = html + `<button class="add-act" onclick="addAct()">+ Add Act</button>`;
-}
-
-function renderShot(act, shot) {
-  const angleOpts = ANGLE_OPTIONS.map(o =>
-    `<option ${o===shot.angle?'selected':''}>${o}</option>`).join('');
-  const motionOpts = MOTION_OPTIONS.map(o =>
-    `<option ${o===shot.motion?'selected':''}>${o}</option>`).join('');
-
-  const visual = shot.image
-    ? `<img src="${escapeHtml(shot.image)}" alt=""/>`
-    : placeholderSvg(shot, shot._scene);
-
-  return `
-    <article class="panel" data-shot-id="${shot.id}">
-      <div class="panel-head">
-        <span class="num">SCENE ${String(shot._scene).padStart(2,'0')}</span>
-        <span class="dur">${fmtTime(shot._start)} – ${fmtTime(shot._start + shot._dur)} · ${shot._dur}s</span>
-        <span class="spacer"></span>
-        <div class="reorder">
-          <button class="btn tiny ghost" onclick="moveShot('${act.id}','${shot.id}',-1)" title="Move left">&#9664;</button>
-          <button class="btn tiny ghost" onclick="moveShot('${act.id}','${shot.id}',1)" title="Move right">&#9654;</button>
-        </div>
-      </div>
-      <div class="canvas-wrap" onclick="pickImage('${act.id}','${shot.id}')">
-        ${visual}
-        <div class="frame-overlay"></div>
-        <div class="upload-hint">Click to upload image</div>
-      </div>
-      <div class="panel-body">
-        <div class="row">
-          <label>Duration</label>
-          <input type="number" min="0" step="1" value="${shot.duration}"
-            oninput="findShot('${act.id}','${shot.id}').duration=Number(this.value)||0;persist('')"/>
-        </div>
-        <div class="row">
-          <label>Angle</label>
-          <select onchange="findShot('${act.id}','${shot.id}').angle=this.value;persist('')">${angleOpts}</select>
-        </div>
-        <div class="row">
-          <label>Motion</label>
-          <select onchange="findShot('${act.id}','${shot.id}').motion=this.value;persist('')">${motionOpts}</select>
-        </div>
-        <div class="row">
-          <label>Lens</label>
-          <input value="${escapeHtml(shot.lens)}" placeholder="e.g. 35mm"
-            onchange="findShot('${act.id}','${shot.id}').lens=this.value;persist('')"/>
-        </div>
-        <div class="row">
-          <label>VFX</label>
-          <textarea rows="2" placeholder="VFX notes"
-            onchange="findShot('${act.id}','${shot.id}').vfx=this.value;persist('')">${escapeHtml(shot.vfx)}</textarea>
-        </div>
-        <div class="row">
-          <label>Audio</label>
-          <textarea rows="2" placeholder="Audio cue"
-            onchange="findShot('${act.id}','${shot.id}').audio=this.value;persist('')">${escapeHtml(shot.audio)}</textarea>
-        </div>
-        <div class="row">
-          <label>Action</label>
-          <textarea rows="3" placeholder="Describe the shot"
-            onchange="findShot('${act.id}','${shot.id}').desc=this.value;persist('')">${escapeHtml(shot.desc)}</textarea>
-        </div>
-      </div>
-      <div class="panel-foot">
-        <span style="display:flex;align-items:center;gap:6px;font-size:0.6rem;color:var(--muted);letter-spacing:0.1em;">
-          HERO <input type="color" value="${shot.heroColor}" style="width:22px;height:22px;background:transparent;border:1px solid var(--line-2);border-radius:3px;cursor:pointer"
-            onchange="findShot('${act.id}','${shot.id}').heroColor=this.value;persist('')"/>
-        </span>
-        <span style="display:flex;align-items:center;gap:6px;font-size:0.6rem;color:var(--muted);letter-spacing:0.1em;">
-          VILLAIN <input type="color" value="${shot.villainColor}" style="width:22px;height:22px;background:transparent;border:1px solid var(--line-2);border-radius:3px;cursor:pointer"
-            onchange="findShot('${act.id}','${shot.id}').villainColor=this.value;persist('')"/>
-        </span>
-        <span class="spacer" style="flex:1"></span>
-        ${shot.image ? `<button class="btn tiny ghost" onclick="clearImage('${act.id}','${shot.id}')">Clear image</button>` : ''}
-        <button class="btn tiny danger" onclick="deleteShot('${act.id}','${shot.id}')">Delete</button>
-      </div>
-    </article>`;
-}
-
-/* ─── Image upload (per shot) ─── */
-function pickImage(actId, shotId) {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*';
-  input.onchange = e => {
-    const f = e.target.files[0];
-    if (!f) return;
-    if (f.size > 2 * 1024 * 1024) {
-      if (!confirm('Image is over 2MB and will inflate localStorage. Continue?')) return;
-    }
-    const reader = new FileReader();
-    reader.onload = ev => {
-      const shot = findShot(actId, shotId);
-      if (!shot) return;
-      shot.image = ev.target.result;
-      persist('Image set');
-    };
-    reader.readAsDataURL(f);
+// ====== PANEL CRUD ======
+function addPanel(actIdx) {
+  const lastPanel = App.project.panels[App.project.panels.length - 1];
+  const targetAct = (actIdx != null) ? actIdx : (lastPanel ? lastPanel.act : 0);
+  const newPanel = {
+    id: uid(),
+    act: targetAct,
+    order: App.project.panels.length,
+    creationMode: App.ui.activeMode,
+    label: 'Untitled Panel',
+    shotType: 'medium', cameraAngle: 'eye', cameraMove: 'static',
+    duration: 5,
+    background: 'studio', lighting: 'bright', emotion: 'neutral',
+    characters: [],
+    visualStyle: 'animated-realism', videoStyle: 'youtube',
+    description: '', voiceover: '', motionNotes: '', audioNotes: '',
+    sketchDataUrl: null, templateId: null, textPrompt: null,
   };
-  input.click();
+  App.project.panels.push(newPanel);
+  App.ui.selectedPanelId = newPanel.id;
+  saveToStorage();
+  render();
 }
 
-function clearImage(actId, shotId) {
-  const shot = findShot(actId, shotId);
-  if (!shot) return;
-  shot.image = null;
-  persist('Image cleared');
+function duplicatePanel(id) {
+  const p = App.project.panels.find(x => x.id === id);
+  if (!p) return;
+  const copy = Object.assign({}, p, { id: uid(), order: App.project.panels.length, label: p.label + ' (copy)' });
+  App.project.panels.push(copy);
+  saveToStorage();
+  render();
 }
 
-/* ─── Meta inputs ─── */
-document.getElementById('metaBar').addEventListener('input', e => {
-  const k = e.target.dataset?.meta;
-  if (!k) return;
-  project.meta[k] = e.target.value;
-  save();
+function deletePanel(id) {
+  if (!confirm('Delete this panel?')) return;
+  App.project.panels = App.project.panels.filter(p => p.id !== id);
+  if (App.ui.selectedPanelId === id) App.ui.selectedPanelId = null;
+  saveToStorage();
+  render();
+}
+
+function addCharacter() {
+  if (App.project.characters.length >= 6) {
+    alert('Maximum of 6 characters per project.');
+    return;
+  }
+  const name = prompt('Character name:', 'Hero');
+  if (!name) return;
+  const role = prompt('Role (hero / villain / narrator / host / product / extra):', 'hero');
+  if (!role) return;
+  const used = new Set(App.project.characters.map(c => c.color));
+  const color = CHARACTER_COLORS.find(c => !used.has(c)) || '#9A9590';
+  App.project.characters.push({ id: uid(), name, role, color });
+  saveToStorage();
+  render();
+}
+
+
+// ====== SAMPLE LOADER ======
+function loadSample() {
+  if (App.project.panels.length > 0) {
+    if (!confirm('Loading the sample will replace your current project. Continue?')) return;
+  }
+  const heroId = uid();
+  const hostId = uid();
+  App.project = {
+    name: 'Sample Storyboard',
+    aspectRatio: '16:9',
+    acts: ['Act I — The Hook', 'Act II — The Action'],
+    characters: [
+      { id: heroId, name: 'Hero', role: 'hero', color: '#4A8C8C' },
+      { id: hostId, name: 'Host', role: 'host', color: '#7B7BA8' },
+    ],
+    panels: [
+      { id: uid(), act: 0, order: 0, creationMode: 'card',     label: 'Wide Establishing — Alley', shotType: 'wide',     cameraAngle: 'eye', cameraMove: 'static',   duration: 18, background: 'alley',  lighting: 'neon',      emotion: 'tense',   characters: [heroId, hostId], visualStyle: 'animated-realism', videoStyle: 'cinematic', description: 'Two figures face each other in a rain-soaked alley.', voiceover: 'The night was cold. Two figures stood, separated by silence and rain.', motionNotes: 'Slow dolly push', audioNotes: 'Rain · low drone', sketchDataUrl: null, templateId: null, textPrompt: null },
+      { id: uid(), act: 0, order: 1, creationMode: 'template', label: 'ECU Face — Host Close-Up',   shotType: 'close-up', cameraAngle: 'low', cameraMove: 'static',   duration: 7,  background: 'studio', lighting: 'spotlight', emotion: 'excited', characters: [hostId],         visualStyle: 'animated-realism', videoStyle: 'youtube',   description: 'Host extreme close-up, low angle.',                voiceover: "Today, we're talking about something that changed everything.", motionNotes: 'Locked',          audioNotes: 'Heartbeat',     sketchDataUrl: null, templateId: 't-talking-head', textPrompt: null },
+      { id: uid(), act: 1, order: 2, creationMode: 'text',     label: 'Punch Impact',               shotType: 'medium',   cameraAngle: 'eye', cameraMove: 'handheld', duration: 13, background: 'street', lighting: 'dark',      emotion: 'angry',   characters: [heroId, hostId], visualStyle: 'animated-realism', videoStyle: 'cinematic', description: 'Hero right cross connects.',                       voiceover: 'And then it happened in a single moment.',                       motionNotes: 'Camera shake',    audioNotes: 'Bone crack',    sketchDataUrl: null, templateId: null, textPrompt: 'punch impact slow motion' },
+      { id: uid(), act: 1, order: 3, creationMode: 'sketch',   label: 'Outro — CTA Sketch',         shotType: 'medium',   cameraAngle: 'eye', cameraMove: 'zoom',     duration: 9,  background: 'studio', lighting: 'bright',    emotion: 'happy',   characters: [hostId],         visualStyle: 'sketch',           videoStyle: 'youtube',   description: 'Hand-sketched CTA frame.',                         voiceover: 'If this helped you, smash that subscribe button.',               motionNotes: 'Zoom in slight',  audioNotes: 'Upbeat sting',  sketchDataUrl: null, templateId: null, textPrompt: null },
+    ],
+  };
+  App.ui.selectedPanelId = null;
+  saveToStorage();
+  render();
+  flashStatus('Sample loaded');
+}
+
+// ====== EXPORT ======
+function exportProject(kind) {
+  if (App.project.panels.length === 0) {
+    alert('Add at least one panel before exporting.');
+    return;
+  }
+  if (kind === 'json') return exportJson();
+  if (kind === 'html') return exportHtml();
+  if (kind === 'pdf')  return exportPdf();
+}
+
+function downloadBlob(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function safeName() {
+  return (App.project.name || 'storyboard').replace(/[^a-z0-9]/gi, '-').toLowerCase();
+}
+
+function exportJson() {
+  downloadBlob(JSON.stringify(App.project, null, 2), safeName() + '.json', 'application/json');
+  flashStatus('JSON exported');
+}
+
+function exportHtml() {
+  const styles = document.querySelector('style').innerHTML;
+  const panelHtml = App.project.acts.map((name, idx) => {
+    const cards = App.project.panels.filter(p => p.act === idx).map(renderPanelCard).join('');
+    if (!cards) return '';
+    return '<div class="act-heading">' + escapeHtml(name) + '</div><div class="grid">' + cards + '</div>';
+  }).join('');
+  const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + escapeHtml(App.project.name) +
+    ' — Storyboard</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"><style>' + styles +
+    '</style></head><body style="background:var(--bg);padding:30px"><h1 style="font-family:\'DM Sans\',sans-serif;color:var(--text);margin-bottom:24px;font-weight:500">' +
+    escapeHtml(App.project.name) + '</h1>' + panelHtml + '</body></html>';
+  downloadBlob(html, safeName() + '.html', 'text/html');
+  flashStatus('HTML exported');
+}
+
+function exportPdf() {
+  const original = document.title;
+  document.title = App.project.name + ' — Storyboard';
+  window.print();
+  setTimeout(() => { document.title = original; }, 500);
+}
+
+
+// ====== RENDER ======
+function render() {
+  document.getElementById('project-name').textContent = App.project.name;
+  renderSidebar();
+  renderTimeline();
+  renderViewToggle();
+  renderMain();
+  renderEditor();
+  renderStatusBar();
+}
+
+function renderSidebar() {
+  const modes = [
+    { id: 'card',     icon: '📋', label: 'Card' },
+    { id: 'template', icon: '🎬', label: 'Templates' },
+    { id: 'text',     icon: '✨', label: 'Text to Panel' },
+    { id: 'sketch',   icon: '✏️', label: 'Sketch' },
+  ];
+  const modesHtml = modes.map(m =>
+    '<div class="mode-tab ' + (App.ui.activeMode === m.id ? 'active' : '') + '" data-mode="' + m.id + '">' +
+    '<span class="mode-icon">' + m.icon + '</span> ' + m.label + '</div>'
+  ).join('');
+
+  const charsHtml = App.project.characters.length === 0
+    ? '<div style="color:var(--muted);font-size:0.7rem;margin-bottom:8px">No characters yet</div>'
+    : App.project.characters.map(c =>
+        '<span class="char-chip"><span class="char-dot" style="background:' + c.color + '"></span>' + escapeHtml(c.name) + '</span>'
+      ).join('');
+
+  document.getElementById('sidebar').innerHTML = `
+    <div class="sidebar-section">
+      <div class="sidebar-label">Mode</div>
+      ${modesHtml}
+      <div class="sample-divider"></div>
+      <div class="sample-tab" id="btn-load-sample"><span class="mode-icon">📖</span><span>Load Sample</span></div>
+      <div class="sample-hint">See a pre-filled example storyboard with all 4 modes in action.</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Characters</div>
+      <div>${charsHtml}</div>
+      <button class="btn btn-ghost" id="btn-add-character" style="margin-top:10px;width:100%;font-size:0.65rem">+ Add Character</button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Export</div>
+      <div class="export-item" data-export="html"><span class="export-icon">🌐</span> Shareable HTML</div>
+      <div class="export-item" data-export="pdf"><span class="export-icon">📄</span> PDF</div>
+      <div class="export-item" data-export="json"><span class="export-icon">💾</span> JSON Backup</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Project Info</div>
+      <div class="project-stat">Panels <span>${App.project.panels.length}</span></div>
+      <div class="project-stat">Duration <span>${formatDuration(totalDuration())}</span></div>
+      <div class="project-stat">Acts <span>${App.project.acts.length}</span></div>
+      <div class="project-stat">Format
+        <select class="ratio-select" id="ratio-select">
+          <option value="16:9" ${App.project.aspectRatio === '16:9' ? 'selected' : ''}>16:9 — YouTube</option>
+          <option value="9:16" ${App.project.aspectRatio === '9:16' ? 'selected' : ''}>9:16 — TikTok / Shorts</option>
+          <option value="1:1"  ${App.project.aspectRatio === '1:1'  ? 'selected' : ''}>1:1 — Instagram</option>
+        </select>
+      </div>
+    </div>`;
+
+  // Wire up
+  document.querySelectorAll('.mode-tab').forEach(el => {
+    el.onclick = () => { App.ui.activeMode = el.dataset.mode; render(); };
+  });
+  document.getElementById('btn-load-sample').onclick = loadSample;
+  document.getElementById('btn-add-character').onclick = addCharacter;
+  document.querySelectorAll('.export-item').forEach(el => {
+    el.onclick = () => exportProject(el.dataset.export);
+  });
+  document.getElementById('ratio-select').onchange = (e) => {
+    App.project.aspectRatio = e.target.value;
+    saveToStorage();
+    render();
+  };
+}
+
+function renderTimeline() {
+  const bar = document.getElementById('timeline-bar');
+  if (App.project.panels.length === 0) {
+    bar.innerHTML = '<span class="timeline-bar-empty">Timeline · empty</span>';
+    return;
+  }
+  const actColors = ['var(--teal)', 'var(--sage)', 'var(--lavender)', 'var(--clay)'];
+  let html = '';
+  App.project.acts.forEach((name, actIdx) => {
+    const panels = App.project.panels.filter(p => p.act === actIdx);
+    if (panels.length === 0 && actIdx > 0) return;
+    const pillClass = (actIdx % 2) === 0 ? 'tl-act-1' : 'tl-act-2';
+    html += '<span class="tl-act-pill ' + pillClass + '">' + escapeHtml(name) + '</span>';
+    html += '<div class="tl-dot" style="background:' + actColors[actIdx % 4] + '"></div>';
+    panels.forEach(p => {
+      html += '<div class="tl-line"></div>';
+      html += '<div class="tl-thumb' + (App.ui.selectedPanelId === p.id ? ' active' : '') + '" data-panel-id="' + p.id + '">' + renderPanelScene(p) + '</div>';
+    });
+    html += '<div class="tl-line"></div><div class="tl-add" data-act="' + actIdx + '">+</div><div style="width:16px"></div>';
+  });
+  bar.innerHTML = html;
+  bar.onclick = (e) => {
+    const thumb = e.target.closest('.tl-thumb');
+    if (thumb) { App.ui.selectedPanelId = thumb.dataset.panelId; render(); return; }
+    const add = e.target.closest('.tl-add');
+    if (add) { addPanel(Number(add.dataset.act)); }
+  };
+}
+
+function renderViewToggle() {
+  const row = document.getElementById('view-toggle-row');
+  if (App.project.panels.length === 0) { row.innerHTML = ''; return; }
+  const totalWords = totalVoiceoverWords();
+  const totalRead = Math.ceil(totalWords / 150 * 60);
+  row.innerHTML = `
+    <div class="view-toggle">
+      <button class="view-tab ${App.ui.view === 'grid' ? 'active' : ''}" data-view="grid">
+        <span class="view-tab-icon">▦</span> Grid
+      </button>
+      <button class="view-tab ${App.ui.view === 'outline' ? 'active' : ''}" data-view="outline">
+        <span class="view-tab-icon">☰</span> Outline
+      </button>
+    </div>
+    <div class="view-meta">
+      Voiceover total: <strong>${totalWords} words</strong> · ~<strong>${totalRead}s</strong> read time
+    </div>`;
+  row.querySelectorAll('.view-tab').forEach(el => {
+    el.onclick = () => { App.ui.view = el.dataset.view; render(); };
+  });
+}
+
+
+function renderMain() {
+  const main = document.getElementById('panel-grid');
+  if (App.project.panels.length === 0) {
+    main.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">◇</div>
+        <div class="empty-title">Your storyboard is empty</div>
+        <div class="empty-desc">
+          Add your first panel to begin, or load the sample storyboard
+          to see a working example with voiceover scripts and all four creation modes.
+        </div>
+        <div class="empty-actions">
+          <button class="btn btn-primary" id="btn-add-first">+ Add First Panel</button>
+          <button class="btn btn-ghost" id="btn-load-sample-empty">📖 Load Sample</button>
+        </div>
+      </div>`;
+    document.getElementById('btn-add-first').onclick = () => addPanel();
+    document.getElementById('btn-load-sample-empty').onclick = loadSample;
+    return;
+  }
+
+  let html = '';
+  if (App.ui.activeMode === 'template') {
+    html += renderTemplateGallery();
+  }
+  html += App.ui.view === 'outline' ? renderOutlineView() : renderPanelGrid();
+  main.innerHTML = html;
+
+  if (App.ui.activeMode === 'template') wireTemplateGallery(main);
+  wirePanelActions(main);
+}
+
+function renderPanelGrid() {
+  let html = '';
+  App.project.acts.forEach((name, actIdx) => {
+    const panels = App.project.panels.filter(p => p.act === actIdx);
+    if (panels.length === 0) return;
+    html += '<div class="act-heading">' + escapeHtml(name) + '</div>';
+    html += '<div class="grid">';
+    panels.forEach(p => { html += renderPanelCard(p); });
+    html += '<div class="add-card" data-act="' + actIdx + '">';
+    html += '<div class="add-card-icon">＋</div><div class="add-card-label">Add Panel</div>';
+    html += '</div>';
+    html += '</div>';
+  });
+  return html;
+}
+
+function renderPanelCard(p) {
+  const idx = App.project.panels.indexOf(p) + 1;
+  const num = String(idx).padStart(2, '0');
+  const selected = App.ui.selectedPanelId === p.id ? ' selected' : '';
+  const desc = p.description ? escapeHtml(p.description) : '<em style="color:var(--muted)">No description yet</em>';
+  return `
+    <div class="panel-card${selected}" data-panel-id="${p.id}">
+      <span class="panel-badge">${num}</span>
+      <span class="panel-dur">${p.duration}s</span>
+      <span class="panel-mode m-${p.creationMode}">${capitalize(p.creationMode)}</span>
+      <div class="panel-scene">${renderPanelScene(p)}</div>
+      <div class="panel-body">
+        <div class="panel-title">${escapeHtml(p.label)}</div>
+        <div class="tags">
+          <span class="tag t-shot">${escapeHtml(p.shotType)}</span>
+          <span class="tag t-move">${escapeHtml(p.cameraMove)}</span>
+          <span class="tag t-emotion">${escapeHtml(p.emotion)}</span>
+          <span class="tag t-light">${escapeHtml(p.lighting)}</span>
+        </div>
+        <div class="panel-desc">${desc}</div>
+        <div class="panel-actions">
+          <button class="panel-btn" data-action="edit" data-id="${p.id}">Edit</button>
+          <button class="panel-btn" data-action="dupe" data-id="${p.id}">Duplicate</button>
+          <button class="panel-btn del" data-action="delete" data-id="${p.id}">Delete</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderOutlineView() {
+  const rows = App.project.panels.map((p, i) => {
+    const num = String(i + 1).padStart(2, '0');
+    const wc = (p.voiceover || '').trim().split(/\s+/).filter(Boolean).length;
+    const vo = p.voiceover
+      ? '"' + escapeHtml(p.voiceover.slice(0, 120)) + (p.voiceover.length > 120 ? '…' : '') + '"'
+      : '<em>No voiceover yet</em>';
+    return `
+      <div class="outline-row" data-panel-id="${p.id}">
+        <div class="outline-num">${num}</div>
+        <div class="outline-body">
+          <div class="outline-title">${escapeHtml(p.label)} <span class="outline-dur">${p.duration}s · ${escapeHtml(p.creationMode)}</span></div>
+          <div class="outline-vo">${vo}</div>
+        </div>
+        <div class="outline-meta">${wc} words</div>
+      </div>`;
+  }).join('');
+  return '<div class="outline-list">' + rows + '</div>';
+}
+
+function renderTemplateGallery() {
+  return `
+    <div class="act-heading">Templates — click to add</div>
+    <div class="grid" style="margin-bottom:32px">
+      ${TEMPLATES.map(t => `
+        <div class="template-card" data-tpl-id="${t.id}">
+          <div class="template-name">${escapeHtml(t.label)}</div>
+          <div class="template-meta">${t.shotType} · ${t.cameraMove} · ${t.duration}s</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function wireTemplateGallery(root) {
+  root.querySelectorAll('.template-card').forEach(el => {
+    el.onclick = () => {
+      const tpl = TEMPLATES.find(t => t.id === el.dataset.tplId);
+      if (!tpl) return;
+      addPanel();
+      const newPanel = App.project.panels[App.project.panels.length - 1];
+      Object.assign(newPanel, tpl, { creationMode: 'template', templateId: tpl.id });
+      saveToStorage();
+      render();
+    };
+  });
+}
+
+function wirePanelActions(root) {
+  root.onclick = (e) => {
+    const action = e.target.dataset.action;
+    const id = e.target.dataset.id;
+    if (action === 'edit')   { App.ui.selectedPanelId = id; render(); return; }
+    if (action === 'dupe')   { duplicatePanel(id); return; }
+    if (action === 'delete') { deletePanel(id); return; }
+    const addCard = e.target.closest('.add-card');
+    if (addCard) { addPanel(Number(addCard.dataset.act)); return; }
+    const outlineRow = e.target.closest('.outline-row');
+    if (outlineRow) { App.ui.selectedPanelId = outlineRow.dataset.panelId; render(); return; }
+    const card = e.target.closest('.panel-card');
+    if (card && !e.target.closest('button')) { App.ui.selectedPanelId = card.dataset.panelId; render(); return; }
+  };
+}
+
+
+function renderEditor() {
+  const drawer = document.getElementById('editor-drawer');
+  const p = App.project.panels.find(x => x.id === App.ui.selectedPanelId);
+  if (!p) { drawer.style.display = 'none'; drawer.innerHTML = ''; return; }
+  drawer.style.display = 'flex';
+
+  const wc = (p.voiceover || '').trim().split(/\s+/).filter(Boolean).length;
+  const readTime = Math.ceil(wc / 150 * 60);
+  const overrun = readTime > p.duration;
+  const voMetaStyle = overrun ? 'color:var(--red-soft);font-weight:500' : 'color:var(--muted)';
+  const voMetaText = wc + ' words · ~' + readTime + 's read time' + (overrun ? ' · exceeds duration' : '');
+
+  const charChecks = App.project.characters.length === 0
+    ? '<span style="color:var(--muted);font-size:0.65rem">Add characters in sidebar</span>'
+    : App.project.characters.map(c => {
+        const on = (p.characters || []).includes(c.id);
+        const style = on ? 'color:' + c.color + ';border-color:' + c.color + '66;background:' + c.color + '14' : '';
+        return '<div class="char-ck ' + (on ? 'on' : '') + '" data-char-id="' + c.id + '" style="' + style + '">' +
+          '<span style="width:6px;height:6px;border-radius:50%;background:' + c.color + ';display:inline-block"></span>' +
+          escapeHtml(c.name) + '</div>';
+      }).join('');
+
+  drawer.innerHTML = `
+    <div class="drawer-header">
+      <div>
+        <div class="drawer-title">Editing Panel ${App.project.panels.indexOf(p) + 1}</div>
+        <div class="drawer-subtitle">${escapeHtml(p.label)} · ${capitalize(p.creationMode)} mode</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" id="drawer-close">Close</button>
+        <button class="btn btn-primary" id="drawer-apply">Save</button>
+      </div>
+    </div>
+    <div class="drawer-body">
+
+      <div class="field">
+        <div class="field-label">Label</div>
+        <input class="field-input" data-field="label" value="${escapeHtml(p.label)}"/>
+        <div class="field-label" style="margin-top:8px">Duration (s)</div>
+        <input class="field-input" type="number" min="1" data-field="duration" value="${p.duration}"/>
+      </div>
+
+      <div class="field">
+        <div class="field-label">Shot Type</div>
+        <select class="field-select" data-field="shotType">${selectOptions(['wide','medium','close-up','aerial','POV'], p.shotType)}</select>
+        <div class="field-label" style="margin-top:8px">Camera Angle</div>
+        <select class="field-select" data-field="cameraAngle">${selectOptions(['low','eye','high','dutch'], p.cameraAngle)}</select>
+      </div>
+
+      <div class="field">
+        <div class="field-label">Camera Move</div>
+        <select class="field-select" data-field="cameraMove">${selectOptions(['static','pan','dolly','handheld','zoom'], p.cameraMove)}</select>
+        <div class="field-label" style="margin-top:8px">Background</div>
+        <select class="field-select" data-field="background">${selectOptions(['alley','office','street','rooftop','studio','room','forest'], p.background)}</select>
+      </div>
+
+      <div class="field">
+        <div class="field-label">Lighting</div>
+        <select class="field-select" data-field="lighting">${selectOptions(['dark','bright','neon','sunset','spotlight','silhouette'], p.lighting)}</select>
+        <div class="field-label" style="margin-top:8px">Emotion</div>
+        <select class="field-select" data-field="emotion">${selectOptions(['neutral','tense','excited','sad','mysterious','happy','angry','suspenseful'], p.emotion)}</select>
+      </div>
+
+      <div class="field">
+        <div class="field-label">Characters</div>
+        <div class="char-checks">${charChecks}</div>
+        <div class="field-label" style="margin-top:8px">Visual Style</div>
+        <select class="field-select" data-field="visualStyle">${selectOptions(['animated-realism','minimal','sketch','comic','cinematic','flat'], p.visualStyle)}</select>
+      </div>
+
+      <div class="field" style="grid-column: span 2">
+        <div class="field-label">Description</div>
+        <textarea class="field-textarea" data-field="description">${escapeHtml(p.description)}</textarea>
+        <div class="field-label" style="margin-top:6px">Voiceover Script</div>
+        <textarea class="field-textarea" data-field="voiceover">${escapeHtml(p.voiceover)}</textarea>
+        <div style="font-size:0.6rem;letter-spacing:0.04em;${voMetaStyle};margin-top:4px">${voMetaText}</div>
+      </div>
+
+    </div>`;
+
+  drawer.querySelector('#drawer-close').onclick = () => { App.ui.selectedPanelId = null; render(); };
+  drawer.querySelector('#drawer-apply').onclick = () => { saveToStorage(); flashStatus('Saved'); };
+
+  drawer.querySelectorAll('[data-field]').forEach(el => {
+    el.oninput = () => {
+      const key = el.dataset.field;
+      const val = el.type === 'number' ? Number(el.value) : el.value;
+      p[key] = val;
+      // Live update other regions without losing focus
+      renderTimeline();
+      renderViewToggle();
+      renderStatusBar();
+      // Re-render the live voiceover meter
+      const wc2 = (p.voiceover || '').trim().split(/\s+/).filter(Boolean).length;
+      const rt2 = Math.ceil(wc2 / 150 * 60);
+      const meter = drawer.querySelector('[data-field="voiceover"]').nextElementSibling;
+      if (meter) {
+        const over = rt2 > p.duration;
+        meter.style.color = over ? 'var(--red-soft)' : 'var(--muted)';
+        meter.style.fontWeight = over ? '500' : 'normal';
+        meter.textContent = wc2 + ' words · ~' + rt2 + 's read time' + (over ? ' · exceeds duration' : '');
+      }
+      // If visible-on-card field changed, update only the card grid (preserve drawer focus)
+      if (['label','duration','shotType','cameraMove','emotion','lighting','description','background'].includes(key)) {
+        const main = document.getElementById('panel-grid');
+        main.innerHTML = App.ui.view === 'outline' ? renderOutlineView() : renderPanelGrid();
+        wirePanelActions(main);
+      }
+      // Update header subtitle
+      const sub = drawer.querySelector('.drawer-subtitle');
+      if (sub) sub.textContent = p.label + ' · ' + capitalize(p.creationMode) + ' mode';
+    };
+  });
+
+  drawer.querySelectorAll('[data-char-id]').forEach(el => {
+    el.onclick = () => {
+      const id = el.dataset.charId;
+      p.characters = p.characters || [];
+      if (p.characters.includes(id)) {
+        p.characters = p.characters.filter(x => x !== id);
+      } else {
+        p.characters.push(id);
+      }
+      saveToStorage();
+      render();
+    };
+  });
+}
+
+function renderStatusBar() {
+  const total = App.project.panels.length;
+  const dur = formatDuration(totalDuration());
+  const acts = App.project.acts.length;
+  const ratio = App.project.aspectRatio;
+  const words = totalVoiceoverWords();
+  document.getElementById('status-bar').innerHTML = `
+    <span><b>${total}</b> panels</span>
+    <span><b>${dur}</b> total</span>
+    <span><b>${acts}</b> acts</span>
+    <span><b>${ratio}</b></span>
+    <span><b>${words}</b> words voiceover</span>
+    <span class="status-bar-right" id="status-msg">Shot Builder Studio</span>`;
+}
+
+function flashStatus(msg) {
+  const el = document.getElementById('status-msg');
+  if (!el) return;
+  const prev = el.textContent;
+  el.textContent = msg;
+  el.style.color = 'var(--sage)';
+  setTimeout(() => { el.textContent = prev; el.style.color = ''; }, 1500);
+}
+
+// ====== INIT ======
+document.addEventListener('DOMContentLoaded', () => {
+  loadFromStorage();
+  render();
 });
 
-/* ─── Top bar buttons ─── */
-document.getElementById('btnAddAct').onclick = addAct;
-document.getElementById('btnPrint').onclick = () => window.print();
-document.getElementById('btnReset').onclick = () => {
-  if (!confirm('Reset to default starter project? Current work will be lost.')) return;
-  project = defaultProject();
-  persist('Reset');
-};
-document.getElementById('btnExport').onclick = () => {
-  const blob = new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = (project.meta.title || 'shotstudio').replace(/\s+/g,'-').toLowerCase() + '.json';
-  a.click();
-  URL.revokeObjectURL(a.href);
-  showToast('Exported');
-};
-document.getElementById('btnImport').onclick = () => document.getElementById('fileImport').click();
-document.getElementById('fileImport').onchange = e => {
-  const f = e.target.files[0];
-  if (!f) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    try {
-      const p = JSON.parse(ev.target.result);
-      if (!p.meta || !Array.isArray(p.acts)) throw new Error('bad shape');
-      // ensure ids
-      p.acts.forEach(a => {
-        a.id = a.id || uid();
-        a.shots = (a.shots || []).map(s => ({ ...s, id: s.id || uid() }));
-      });
-      project = p;
-      persist('Imported');
-    } catch (err) {
-      alert('Import failed: not a valid Shot Studio project JSON.');
-    }
-  };
-  reader.readAsText(f);
-  e.target.value = '';
-};
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    saveToStorage();
+    flashStatus('Saved');
+  }
+});
 
-// Expose mutators used by inline handlers
-window.addAct = addAct;
-window.deleteAct = deleteAct;
-window.moveAct = moveAct;
-window.addShot = addShot;
-window.deleteShot = deleteShot;
-window.moveShot = moveShot;
-window.findAct = findAct;
-window.findShot = findShot;
-window.persist = persist;
-window.pickImage = pickImage;
-window.clearImage = clearImage;
-
-render();
+document.getElementById('btn-save').onclick = () => { saveToStorage(); flashStatus('Saved'); };
+document.getElementById('btn-undo').onclick = () => {
+  if (confirm('Reload from last saved version? Unsaved changes will be lost.')) {
+    if (loadFromStorage()) { render(); flashStatus('Restored'); }
+  }
+};
 </script>
+
 </body>
 </html>
