@@ -367,19 +367,19 @@ function concatAudioBuffers(buffers) {
 // ─── Trim / Cut / Merge ───────────────────────────────────
 // After any operation, replace the waveform with the result so the user
 // SEES what happened and can continue editing (re-trim, re-cut, etc).
+// We DO NOT scroll away — the user stays on the waveform and can keep
+// editing. The export section remains visible below; they go to it when ready.
 function commitResult(audioBuffer, label, sourceName) {
   lastOutput = audioBuffer;
   const newName = label + '_' + (sourceName || 'audio') + '.wav';
   const virtualFile = { name: newName, audioBuffer };
   loadFileIntoWaveform(virtualFile);
   document.getElementById('export-section').classList.remove('hidden');
-  // Briefly flash the export section so the user notices it
-  const exp = document.getElementById('export-section');
-  exp.style.transition = 'box-shadow 0.4s';
-  exp.style.boxShadow = '0 0 0 3px var(--success)';
-  setTimeout(() => { exp.style.boxShadow = ''; }, 1200);
-  // Scroll the export section into view
-  exp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  // Briefly flash the waveform card so the user sees something happened
+  const wf = document.getElementById('waveform-section');
+  wf.style.transition = 'box-shadow 0.4s';
+  wf.style.boxShadow = '0 0 0 3px var(--success)';
+  setTimeout(() => { wf.style.boxShadow = ''; }, 800);
 }
 
 document.getElementById('btn-trim').addEventListener('click', () => {
