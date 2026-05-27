@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Shot Studio — Storyboard Builder</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Roboto+Mono:wght@400;500&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --bg-2: #0f0f1a;
+      --bg-3: #14141f;
+      --line: #1f1f2e;
+      --line-2: #2a2a40;
+      --text: #e8e8f0;
+      --muted: #8a8aa0;
+      --dim: #5a5a70;
+      --hero: #ff3c5a;
+      --accent: #ff9800;
+      --villain: #c080ff;
+      --good: #4ade80;
+      --info: #64c8ff;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Roboto Mono', monospace;
+      min-height: 100vh;
+      font-size: 14px;
+    }
+
+    /* ─────────── Top bar ─────────── */
+    .topbar {
+      position: sticky; top: 0; z-index: 50;
+      display: flex; align-items: center; gap: 16px;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, #0d0d1a 0%, #1a0a2e 50%, #0d0d1a 100%);
+      border-bottom: 2px solid var(--hero);
+    }
+    .topbar h1 {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.4rem; font-weight: 700;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      background: linear-gradient(90deg, var(--hero), var(--accent), var(--hero));
+      background-size: 200% auto;
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 4s linear infinite;
+    }
+    @keyframes shimmer { 0% { background-position: 0%; } 100% { background-position: 200%; } }
+    .topbar .spacer { flex: 1; }
+    .topbar .tag {
+      font-size: 0.65rem; letter-spacing: 0.2em; color: var(--muted);
+      text-transform: uppercase; padding: 4px 10px;
+      border: 1px solid var(--line-2); border-radius: 3px;
+    }
+
+    /* ─────────── Buttons ─────────── */
+    .btn {
+      font-family: inherit; font-size: 0.72rem;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 7px 14px; border-radius: 3px; cursor: pointer;
+      background: transparent; color: var(--text);
+      border: 1px solid var(--line-2);
+      transition: all 0.15s ease;
+    }
+    .btn:hover { background: var(--bg-3); border-color: var(--hero); color: var(--hero); }
+    .btn.primary { background: var(--hero); color: #fff; border-color: var(--hero); }
+    .btn.primary:hover { background: #ff5572; color: #fff; }
+    .btn.ghost { border-color: transparent; color: var(--muted); padding: 4px 8px; }
+    .btn.ghost:hover { color: var(--hero); background: transparent; border-color: transparent; }
+    .btn.tiny { font-size: 0.6rem; padding: 4px 8px; letter-spacing: 0.08em; }
+    .btn.danger:hover { background: #3a0a18; color: var(--hero); border-color: var(--hero); }
+
+    /* ─────────── Meta bar ─────────── */
+    .meta-bar {
+      display: flex; flex-wrap: wrap; gap: 8px 24px;
+      padding: 14px 20px;
+      background: var(--bg-2);
+      border-bottom: 1px solid var(--line);
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    .meta-bar .field { display: flex; align-items: center; gap: 6px; }
+    .meta-bar .field label { color: var(--accent); font-weight: 700; }
+    .meta-bar .field input,
+    .meta-bar .field select {
+      background: transparent; border: none;
+      border-bottom: 1px dashed var(--line-2);
+      color: var(--text); font-family: inherit;
+      font-size: 0.7rem; letter-spacing: 0.08em;
+      padding: 2px 4px; width: 90px;
+    }
+    .meta-bar .field input:focus,
+    .meta-bar .field select:focus {
+      outline: none; border-bottom-color: var(--hero);
+    }
+    .meta-bar .field input.wide { width: 200px; }
+
+    /* ─────────── Timeline ─────────── */
+    .timeline {
+      display: flex; align-items: center; gap: 6px;
+      padding: 16px 20px;
+      background: #07070d;
+      border-bottom: 1px solid var(--line);
+      overflow-x: auto;
+    }
+    .timeline-item { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
+    .timeline-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--hero); box-shadow: 0 0 8px currentColor; }
+    .timeline-line { height: 2px; flex: 1; min-width: 24px; background: var(--line-2); opacity: 0.7; }
+    .timeline-label { font-size: 0.55rem; color: var(--dim); letter-spacing: 0.08em; white-space: nowrap; text-align: center; }
+
+    /* ─────────── Layout ─────────── */
+    main { padding: 24px 20px 80px; max-width: 1400px; margin: 0 auto; }
+
+    .act {
+      margin-bottom: 36px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: var(--bg-2);
+      overflow: hidden;
+    }
+    .act-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(90deg, rgba(255,60,90,0.08) 0%, transparent 100%);
+    }
+    .act-header .act-dot { width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 10px currentColor; flex-shrink: 0; }
+    .act-header .act-name {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.15rem; font-weight: 700;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      background: transparent; border: none; color: var(--text);
+      flex: 1; min-width: 0;
+      padding: 4px 6px; border-radius: 3px;
+    }
+    .act-header .act-name:focus { outline: none; background: var(--bg-3); }
+    .act-header input[type="color"] {
+      width: 28px; height: 28px;
+      background: transparent; border: 1px solid var(--line-2);
+      border-radius: 3px; cursor: pointer; padding: 2px;
+    }
+
+    .scene-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 16px;
+      padding: 18px;
+    }
+
+    /* ─────────── Shot panel ─────────── */
+    .panel {
+      background: var(--bg-3);
+      border: 1px solid var(--line-2);
+      border-radius: 4px;
+      overflow: hidden;
+      display: flex; flex-direction: column;
+      transition: border-color 0.15s ease, transform 0.15s ease;
+    }
+    .panel:hover { border-color: var(--hero); }
+    .panel-head {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px;
+      background: #0a0a14;
+      border-bottom: 1px solid var(--line);
+      font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase;
+    }
+    .panel-head .num { color: var(--accent); font-weight: 700; }
+    .panel-head .dur { color: var(--muted); }
+    .panel-head .spacer { flex: 1; }
+    .panel-head .reorder { display: flex; gap: 2px; }
+
+    .canvas-wrap {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      background: linear-gradient(135deg, #0a0a18 0%, #1a0a2e 100%);
+      border-bottom: 1px solid var(--line);
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .canvas-wrap svg { width: 100%; height: 100%; display: block; }
+    .canvas-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .canvas-wrap .empty {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--dim); font-size: 0.7rem; letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+    .canvas-wrap .frame-overlay {
+      position: absolute; inset: 0;
+      border: 1.5px solid rgba(255,60,90,0.3);
+      pointer-events: none;
+    }
+    .canvas-wrap .upload-hint {
+      position: absolute; bottom: 6px; right: 8px;
+      font-size: 0.55rem; letter-spacing: 0.1em;
+      color: var(--muted); text-transform: uppercase;
+      opacity: 0; transition: opacity 0.15s ease;
+    }
+    .canvas-wrap:hover .upload-hint { opacity: 1; }
+
+    .panel-body { padding: 12px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+    .panel-body .row {
+      display: grid;
+      grid-template-columns: 70px 1fr;
+      gap: 8px;
+      align-items: start;
+      font-size: 0.7rem;
+    }
+    .panel-body .row label {
+      color: var(--accent); letter-spacing: 0.1em;
+      text-transform: uppercase; font-size: 0.6rem;
+      padding-top: 4px;
+    }
+    .panel-body .row input,
+    .panel-body .row textarea,
+    .panel-body .row select {
+      background: transparent; border: none;
+      border-bottom: 1px dashed var(--line-2);
+      color: var(--text); font-family: inherit;
+      font-size: 0.72rem; padding: 3px 0;
+      width: 100%; resize: none;
+    }
+    .panel-body .row input:focus,
+    .panel-body .row textarea:focus,
+    .panel-body .row select:focus {
+      outline: none; border-bottom-color: var(--hero);
+    }
+    .panel-body .row textarea {
+      min-height: 32px;
+      font-family: inherit;
+    }
+    .panel-foot {
+      display: flex; gap: 6px;
+      padding: 8px 12px;
+      border-top: 1px solid var(--line);
+      background: #0a0a14;
+    }
+
+    /* ─────────── Add buttons ─────────── */
+    .add-shot, .add-act {
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px;
+      padding: 18px;
+      border: 1.5px dashed var(--line-2);
+      border-radius: 4px;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.7rem; letter-spacing: 0.15em;
+      text-transform: uppercase;
+      transition: all 0.15s ease;
+      background: transparent;
+      font-family: inherit;
+      width: 100%;
+    }
+    .add-shot { min-height: 100%; }
+    .add-shot:hover, .add-act:hover {
+      color: var(--hero); border-color: var(--hero);
+      background: rgba(255,60,90,0.04);
+    }
+    .add-act { margin-top: 16px; }
+
+    /* ─────────── Toast ─────────── */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--hero); color: #fff;
+      padding: 10px 20px; border-radius: 3px;
+      font-size: 0.7rem; letter-spacing: 0.15em;
+      text-transform: uppercase; font-weight: 700;
+      box-shadow: 0 6px 20px rgba(255,60,90,0.5);
+      transition: transform 0.25s ease;
+      z-index: 100; pointer-events: none;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ─────────── Empty state ─────────── */
+    .empty-board {
+      text-align: center; padding: 60px 20px;
+      color: var(--muted);
+    }
+    .empty-board h2 {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.4rem; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--text);
+      margin-bottom: 8px;
+    }
+    .empty-board p { font-size: 0.75rem; letter-spacing: 0.1em; margin-bottom: 20px; }
+
+    /* ─────────── Print ─────────── */
+    @media print {
+      body { background: #fff; color: #000; }
+      .topbar, .meta-bar, .add-shot, .add-act, .panel-foot, .reorder, .btn,
+      .topbar h1, .upload-hint, .frame-overlay { color: #000 !important; }
+      .topbar .spacer, .topbar .btn, .panel-foot, .add-shot, .add-act,
+      .reorder { display: none !important; }
+      .timeline { background: #fff; border-color: #ccc; }
+      .act, .panel { background: #fff; border-color: #999; break-inside: avoid; }
+      .act-header { background: #f5f5f5; }
+      .scene-grid { grid-template-columns: repeat(2, 1fr); }
+      .panel-head { background: #f0f0f0; color: #000; }
+      .panel-body .row label { color: #000; }
+      .panel-body .row input,
+      .panel-body .row textarea,
+      .panel-body .row select { color: #000; border-bottom-color: #999; }
+      main { padding: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>&#9876; Shot Studio</h1>
+  <span class="tag">Storyboard Builder</span>
+  <div class="spacer"></div>
+  <button class="btn" id="btnAddAct">+ Act</button>
+  <button class="btn" id="btnImport">Import</button>
+  <button class="btn" id="btnExport">Export</button>
+  <button class="btn" id="btnPrint">Print</button>
+  <button class="btn danger" id="btnReset">Reset</button>
+  <input type="file" id="fileImport" accept="application/json" hidden />
+</div>
+
+<div class="meta-bar" id="metaBar">
+  <div class="field"><label>Title</label><input class="wide" data-meta="title" placeholder="Untitled Project"/></div>
+  <div class="field"><label>Format</label><input data-meta="format" placeholder="16:9 2K"/></div>
+  <div class="field"><label>FPS</label><input data-meta="fps" placeholder="24fps"/></div>
+  <div class="field"><label>Duration</label><input data-meta="duration" placeholder="2:30"/></div>
+  <div class="field"><label>Style</label><input data-meta="style" placeholder="Animated Realism"/></div>
+  <div class="field"><label>Grade</label><input class="wide" data-meta="grade" placeholder="High-contrast, rim light"/></div>
+</div>
+
+<div class="timeline" id="timeline"></div>
+
+<main id="board"></main>
+
+<div id="toast">Saved</div>
+
+<script>
+/* ════════════════════════════════════════════════════════
+   Shot Studio — single-file storyboard builder
+   State is the source of truth, render() repaints from it.
+   ════════════════════════════════════════════════════════ */
+
+const STORAGE_KEY = 'shotstudio.project.v1';
+
+const ACT_PALETTE = ['#64c8ff', '#ff9800', '#c080ff', '#4ade80', '#ff3c5a', '#ffd84d'];
+
+const ANGLE_OPTIONS = [
+  'Wide', 'Medium', 'Close-up', 'ECU', 'Over-shoulder',
+  'Low angle', 'High angle', 'Overhead / crane', 'Dutch tilt',
+  'POV', 'Two-shot', 'Insert', 'Establishing'
+];
+
+const MOTION_OPTIONS = [
+  'Static', 'Pan', 'Tilt', 'Dolly in', 'Dolly out',
+  'Tracking', 'Whip pan', 'Snap zoom', 'Crane', 'Handheld',
+  'Steadicam', 'Orbit / 360°', 'Slow-mo', 'Speed ramp'
+];
+
+/* ─── Default seed project ─── */
+function defaultProject() {
+  return {
+    meta: {
+      title: 'Untitled Project',
+      format: '16:9 2K',
+      fps: '24fps',
+      duration: '2:30',
+      style: 'Animated Realism',
+      grade: 'High-contrast, desaturated + rim light'
+    },
+    acts: [
+      {
+        id: uid(),
+        name: 'Act I — The Setup',
+        color: '#64c8ff',
+        shots: [
+          {
+            id: uid(),
+            duration: 8,
+            angle: 'Wide',
+            motion: 'Dolly in',
+            lens: '24mm',
+            vfx: 'Atmospheric fog, rim light',
+            audio: 'Low ambient drone, distant rain',
+            desc: 'Hero stands alone on a wet street. Neon reflects in the puddle.',
+            heroColor: '#ff3c5a',
+            villainColor: '#c080ff',
+            image: null
+          },
+          {
+            id: uid(),
+            duration: 6,
+            angle: 'Close-up',
+            motion: 'Static',
+            lens: '85mm',
+            vfx: 'Subtle eye glint',
+            audio: 'Heartbeat thump',
+            desc: 'Tight on hero\'s eyes. Determination locks in.',
+            heroColor: '#ff3c5a',
+            villainColor: '#c080ff',
+            image: null
+          }
+        ]
+      },
+      {
+        id: uid(),
+        name: 'Act II — The Confrontation',
+        color: '#ff9800',
+        shots: [
+          {
+            id: uid(),
+            duration: 10,
+            angle: 'Two-shot',
+            motion: 'Orbit / 360°',
+            lens: '35mm',
+            vfx: 'Dust kick-up, motion blur trails',
+            audio: 'Bass swell, percussive build',
+            desc: 'Hero and villain circle each other in a derelict warehouse.',
+            heroColor: '#ff3c5a',
+            villainColor: '#c080ff',
+            image: null
+          }
+        ]
+      }
+    ]
+  };
+}
+
+/* ─── Utilities ─── */
+function uid() { return Math.random().toString(36).slice(2, 10); }
+
+function fmtTime(sec) {
+  sec = Math.max(0, Math.round(sec));
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => el.classList.remove('show'), 1500);
+}
+
+/* ─── State ─── */
+let project = load() || defaultProject();
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const p = JSON.parse(raw);
+    if (!p || !p.meta || !Array.isArray(p.acts)) return null;
+    return p;
+  } catch (e) { return null; }
+}
+
+function save() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(project));
+  } catch (e) {
+    showToast('Save failed: storage full');
+  }
+}
+
+function persist(toastMsg = 'Saved') {
+  save();
+  render();
+  if (toastMsg) showToast(toastMsg);
+}
+
+/* ─── Helpers to find items ─── */
+function findAct(actId) { return project.acts.find(a => a.id === actId); }
+function findShot(actId, shotId) {
+  const a = findAct(actId);
+  return a ? a.shots.find(s => s.id === shotId) : null;
+}
+
+/* ─── Mutations ─── */
+function addAct() {
+  const idx = project.acts.length;
+  const color = ACT_PALETTE[idx % ACT_PALETTE.length];
+  project.acts.push({
+    id: uid(),
+    name: `Act ${romanize(idx + 1)} — New Act`,
+    color,
+    shots: []
+  });
+  persist('Act added');
+}
+
+function deleteAct(actId) {
+  const a = findAct(actId);
+  if (!a) return;
+  if (!confirm(`Delete "${a.name}" and all its shots?`)) return;
+  project.acts = project.acts.filter(x => x.id !== actId);
+  persist('Act deleted');
+}
+
+function addShot(actId) {
+  const a = findAct(actId);
+  if (!a) return;
+  a.shots.push({
+    id: uid(),
+    duration: 5,
+    angle: 'Wide',
+    motion: 'Static',
+    lens: '35mm',
+    vfx: '',
+    audio: '',
+    desc: 'New shot — describe the action.',
+    heroColor: '#ff3c5a',
+    villainColor: '#c080ff',
+    image: null
+  });
+  persist('Shot added');
+}
+
+function deleteShot(actId, shotId) {
+  const a = findAct(actId);
+  if (!a) return;
+  a.shots = a.shots.filter(s => s.id !== shotId);
+  persist('Shot deleted');
+}
+
+function moveShot(actId, shotId, dir) {
+  const a = findAct(actId);
+  if (!a) return;
+  const i = a.shots.findIndex(s => s.id === shotId);
+  if (i < 0) return;
+  const j = i + dir;
+  if (j < 0 || j >= a.shots.length) return;
+  [a.shots[i], a.shots[j]] = [a.shots[j], a.shots[i]];
+  persist();
+}
+
+function moveAct(actId, dir) {
+  const i = project.acts.findIndex(a => a.id === actId);
+  if (i < 0) return;
+  const j = i + dir;
+  if (j < 0 || j >= project.acts.length) return;
+  [project.acts[i], project.acts[j]] = [project.acts[j], project.acts[i]];
+  persist();
+}
+
+function romanize(n) {
+  const r = [['M',1000],['CM',900],['D',500],['CD',400],['C',100],['XC',90],
+             ['L',50],['XL',40],['X',10],['IX',9],['V',5],['IV',4],['I',1]];
+  let out = '';
+  for (const [s, v] of r) { while (n >= v) { out += s; n -= v; } }
+  return out || 'I';
+}
+
+/* ─── Procedural placeholder SVG (so empty shots still look cinematic) ─── */
+function placeholderSvg(shot, scene) {
+  // Pick a vibe based on hash of shot id so each shot looks different but stable
+  const h = [...shot.id].reduce((a,c) => a + c.charCodeAt(0), 0);
+  const sceneHue = 220 + (h % 60); // blue-purple range
+  const heroX = 100 + (h % 80);
+  const villX = 300 - (h % 60);
+  const fogY = 70 + (h % 30);
+  const lampX = 60 + ((h * 7) % 280);
+  const moon = (h % 3) === 0;
+  const hero = shot.heroColor || '#ff3c5a';
+  const vill = shot.villainColor || '#c080ff';
+
+  return `
+  <svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <radialGradient id="bg-${shot.id}" cx="50%" cy="80%" r="80%">
+        <stop offset="0%" stop-color="hsl(${sceneHue}, 35%, 14%)"/>
+        <stop offset="100%" stop-color="#000005"/>
+      </radialGradient>
+      <filter id="glow-${shot.id}"><feGaussianBlur stdDeviation="3"/></filter>
+    </defs>
+    <rect width="400" height="220" fill="url(#bg-${shot.id})"/>
+    <!-- atmospheric haze -->
+    <ellipse cx="200" cy="${fogY+120}" rx="240" ry="40" fill="#0a0a18" opacity="0.55"/>
+    ${moon ? `<circle cx="${lampX}" cy="40" r="14" fill="#ffd9a0" opacity="0.7" filter="url(#glow-${shot.id})"/>` : ''}
+    <!-- horizon -->
+    <line x1="0" y1="180" x2="400" y2="180" stroke="#222" stroke-width="1"/>
+    <!-- hero silhouette -->
+    <g fill="#0d0d1a" stroke="${hero}" stroke-width="0.8">
+      <ellipse cx="${heroX}" cy="108" rx="11" ry="13"/>
+      <rect x="${heroX-12}" y="121" width="24" height="48" rx="3"/>
+      <line x1="${heroX-12}" y1="130" x2="${heroX-30}" y2="155"/>
+      <line x1="${heroX+12}" y1="130" x2="${heroX+25}" y2="158"/>
+      <line x1="${heroX-5}" y1="169" x2="${heroX-8}" y2="190"/>
+      <line x1="${heroX+5}" y1="169" x2="${heroX+8}" y2="190"/>
+    </g>
+    <!-- villain silhouette -->
+    <g fill="#0d0d1a" stroke="${vill}" stroke-width="0.8">
+      <ellipse cx="${villX}" cy="108" rx="12" ry="14"/>
+      <rect x="${villX-12}" y="122" width="24" height="48" rx="3"/>
+      <line x1="${villX-12}" y1="130" x2="${villX-32}" y2="148"/>
+      <line x1="${villX+12}" y1="130" x2="${villX+32}" y2="148"/>
+      <line x1="${villX-5}" y1="170" x2="${villX-8}" y2="192"/>
+      <line x1="${villX+5}" y1="170" x2="${villX+8}" y2="192"/>
+    </g>
+    <!-- ground fog -->
+    <ellipse cx="200" cy="200" rx="220" ry="22" fill="#0a0a18" opacity="0.7"/>
+    <!-- accent rim -->
+    <rect x="80" y="184" width="240" height="3" fill="${hero}" opacity="0.08" rx="1"/>
+    <!-- scene number watermark -->
+    <text x="380" y="210" font-family="Rajdhani, sans-serif" font-size="14" font-weight="700"
+          text-anchor="end" fill="${hero}" opacity="0.35" letter-spacing="2">S-${String(scene).padStart(2,'0')}</text>
+  </svg>`;
+}
+
+/* ─── Render ─── */
+function render() {
+  // meta bar fields
+  document.querySelectorAll('[data-meta]').forEach(input => {
+    const k = input.dataset.meta;
+    if (document.activeElement !== input) input.value = project.meta[k] ?? '';
+  });
+
+  // Compute scene numbers + cumulative timestamps
+  let sceneCounter = 0;
+  let timeCursor = 0;
+  const flatActs = project.acts.map(act => {
+    const shots = act.shots.map(s => {
+      sceneCounter++;
+      const start = timeCursor;
+      const dur = Number(s.duration) || 0;
+      timeCursor += dur;
+      return { ...s, _scene: sceneCounter, _start: start, _dur: dur };
+    });
+    return { ...act, _shots: shots, _start: shots[0]?._start ?? null };
+  });
+
+  renderTimeline(flatActs, timeCursor);
+  renderBoard(flatActs);
+}
+
+function renderTimeline(flatActs, total) {
+  const tl = document.getElementById('timeline');
+  if (!flatActs.length || flatActs.every(a => a._shots.length === 0)) {
+    tl.innerHTML = '<span style="color:var(--dim);font-size:0.65rem;letter-spacing:0.15em;">EMPTY TIMELINE</span>';
+    return;
+  }
+  const parts = [];
+  flatActs.forEach((act, ai) => {
+    if (ai > 0) parts.push(`<div class="timeline-line"></div>`);
+    parts.push(`
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background:${act.color};color:${act.color}"></div>
+        <div class="timeline-label" style="color:${act.color}">ACT ${romanize(ai+1)}<br/>${fmtTime(act._start ?? 0)}</div>
+      </div>`);
+    act._shots.forEach(shot => {
+      parts.push(`<div class="timeline-line"></div>`);
+      parts.push(`
+        <div class="timeline-item">
+          <div class="timeline-dot" style="background:var(--hero);color:var(--hero)"></div>
+          <div class="timeline-label">S-${String(shot._scene).padStart(2,'0')}<br/>${fmtTime(shot._start)}</div>
+        </div>`);
+    });
+  });
+  parts.push(`<div class="timeline-line"></div>`);
+  parts.push(`
+    <div class="timeline-item">
+      <div class="timeline-dot" style="background:var(--accent);color:var(--accent)"></div>
+      <div class="timeline-label" style="color:var(--accent)">END<br/>${fmtTime(total)}</div>
+    </div>`);
+  tl.innerHTML = parts.join('');
+}
+
+function renderBoard(flatActs) {
+  const board = document.getElementById('board');
+  if (!flatActs.length) {
+    board.innerHTML = `
+      <div class="empty-board">
+        <h2>No acts yet</h2>
+        <p>Start by adding your first act.</p>
+        <button class="btn primary" onclick="addAct()">+ Add Act</button>
+      </div>`;
+    return;
+  }
+
+  const html = flatActs.map((act, ai) => `
+    <section class="act" data-act-id="${act.id}">
+      <div class="act-header">
+        <div class="act-dot" style="background:${act.color};color:${act.color}"></div>
+        <input class="act-name" value="${escapeHtml(act.name)}"
+          onchange="findAct('${act.id}').name=this.value;persist('')"/>
+        <input type="color" value="${act.color}"
+          onchange="findAct('${act.id}').color=this.value;persist('')"/>
+        <button class="btn tiny ghost" onclick="moveAct('${act.id}',-1)" title="Move act up">&#9650;</button>
+        <button class="btn tiny ghost" onclick="moveAct('${act.id}',1)" title="Move act down">&#9660;</button>
+        <button class="btn tiny danger" onclick="deleteAct('${act.id}')">Delete</button>
+      </div>
+      <div class="scene-grid">
+        ${act._shots.map(shot => renderShot(act, shot)).join('')}
+        <button class="add-shot" onclick="addShot('${act.id}')">+ Add Shot</button>
+      </div>
+    </section>
+  `).join('');
+
+  board.innerHTML = html + `<button class="add-act" onclick="addAct()">+ Add Act</button>`;
+}
+
+function renderShot(act, shot) {
+  const angleOpts = ANGLE_OPTIONS.map(o =>
+    `<option ${o===shot.angle?'selected':''}>${o}</option>`).join('');
+  const motionOpts = MOTION_OPTIONS.map(o =>
+    `<option ${o===shot.motion?'selected':''}>${o}</option>`).join('');
+
+  const visual = shot.image
+    ? `<img src="${escapeHtml(shot.image)}" alt=""/>`
+    : placeholderSvg(shot, shot._scene);
+
+  return `
+    <article class="panel" data-shot-id="${shot.id}">
+      <div class="panel-head">
+        <span class="num">SCENE ${String(shot._scene).padStart(2,'0')}</span>
+        <span class="dur">${fmtTime(shot._start)} – ${fmtTime(shot._start + shot._dur)} · ${shot._dur}s</span>
+        <span class="spacer"></span>
+        <div class="reorder">
+          <button class="btn tiny ghost" onclick="moveShot('${act.id}','${shot.id}',-1)" title="Move left">&#9664;</button>
+          <button class="btn tiny ghost" onclick="moveShot('${act.id}','${shot.id}',1)" title="Move right">&#9654;</button>
+        </div>
+      </div>
+      <div class="canvas-wrap" onclick="pickImage('${act.id}','${shot.id}')">
+        ${visual}
+        <div class="frame-overlay"></div>
+        <div class="upload-hint">Click to upload image</div>
+      </div>
+      <div class="panel-body">
+        <div class="row">
+          <label>Duration</label>
+          <input type="number" min="0" step="1" value="${shot.duration}"
+            oninput="findShot('${act.id}','${shot.id}').duration=Number(this.value)||0;persist('')"/>
+        </div>
+        <div class="row">
+          <label>Angle</label>
+          <select onchange="findShot('${act.id}','${shot.id}').angle=this.value;persist('')">${angleOpts}</select>
+        </div>
+        <div class="row">
+          <label>Motion</label>
+          <select onchange="findShot('${act.id}','${shot.id}').motion=this.value;persist('')">${motionOpts}</select>
+        </div>
+        <div class="row">
+          <label>Lens</label>
+          <input value="${escapeHtml(shot.lens)}" placeholder="e.g. 35mm"
+            onchange="findShot('${act.id}','${shot.id}').lens=this.value;persist('')"/>
+        </div>
+        <div class="row">
+          <label>VFX</label>
+          <textarea rows="2" placeholder="VFX notes"
+            onchange="findShot('${act.id}','${shot.id}').vfx=this.value;persist('')">${escapeHtml(shot.vfx)}</textarea>
+        </div>
+        <div class="row">
+          <label>Audio</label>
+          <textarea rows="2" placeholder="Audio cue"
+            onchange="findShot('${act.id}','${shot.id}').audio=this.value;persist('')">${escapeHtml(shot.audio)}</textarea>
+        </div>
+        <div class="row">
+          <label>Action</label>
+          <textarea rows="3" placeholder="Describe the shot"
+            onchange="findShot('${act.id}','${shot.id}').desc=this.value;persist('')">${escapeHtml(shot.desc)}</textarea>
+        </div>
+      </div>
+      <div class="panel-foot">
+        <span style="display:flex;align-items:center;gap:6px;font-size:0.6rem;color:var(--muted);letter-spacing:0.1em;">
+          HERO <input type="color" value="${shot.heroColor}" style="width:22px;height:22px;background:transparent;border:1px solid var(--line-2);border-radius:3px;cursor:pointer"
+            onchange="findShot('${act.id}','${shot.id}').heroColor=this.value;persist('')"/>
+        </span>
+        <span style="display:flex;align-items:center;gap:6px;font-size:0.6rem;color:var(--muted);letter-spacing:0.1em;">
+          VILLAIN <input type="color" value="${shot.villainColor}" style="width:22px;height:22px;background:transparent;border:1px solid var(--line-2);border-radius:3px;cursor:pointer"
+            onchange="findShot('${act.id}','${shot.id}').villainColor=this.value;persist('')"/>
+        </span>
+        <span class="spacer" style="flex:1"></span>
+        ${shot.image ? `<button class="btn tiny ghost" onclick="clearImage('${act.id}','${shot.id}')">Clear image</button>` : ''}
+        <button class="btn tiny danger" onclick="deleteShot('${act.id}','${shot.id}')">Delete</button>
+      </div>
+    </article>`;
+}
+
+/* ─── Image upload (per shot) ─── */
+function pickImage(actId, shotId) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    if (f.size > 2 * 1024 * 1024) {
+      if (!confirm('Image is over 2MB and will inflate localStorage. Continue?')) return;
+    }
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const shot = findShot(actId, shotId);
+      if (!shot) return;
+      shot.image = ev.target.result;
+      persist('Image set');
+    };
+    reader.readAsDataURL(f);
+  };
+  input.click();
+}
+
+function clearImage(actId, shotId) {
+  const shot = findShot(actId, shotId);
+  if (!shot) return;
+  shot.image = null;
+  persist('Image cleared');
+}
+
+/* ─── Meta inputs ─── */
+document.getElementById('metaBar').addEventListener('input', e => {
+  const k = e.target.dataset?.meta;
+  if (!k) return;
+  project.meta[k] = e.target.value;
+  save();
+});
+
+/* ─── Top bar buttons ─── */
+document.getElementById('btnAddAct').onclick = addAct;
+document.getElementById('btnPrint').onclick = () => window.print();
+document.getElementById('btnReset').onclick = () => {
+  if (!confirm('Reset to default starter project? Current work will be lost.')) return;
+  project = defaultProject();
+  persist('Reset');
+};
+document.getElementById('btnExport').onclick = () => {
+  const blob = new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (project.meta.title || 'shotstudio').replace(/\s+/g,'-').toLowerCase() + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Exported');
+};
+document.getElementById('btnImport').onclick = () => document.getElementById('fileImport').click();
+document.getElementById('fileImport').onchange = e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const p = JSON.parse(ev.target.result);
+      if (!p.meta || !Array.isArray(p.acts)) throw new Error('bad shape');
+      // ensure ids
+      p.acts.forEach(a => {
+        a.id = a.id || uid();
+        a.shots = (a.shots || []).map(s => ({ ...s, id: s.id || uid() }));
+      });
+      project = p;
+      persist('Imported');
+    } catch (err) {
+      alert('Import failed: not a valid Shot Studio project JSON.');
+    }
+  };
+  reader.readAsText(f);
+  e.target.value = '';
+};
+
+// Expose mutators used by inline handlers
+window.addAct = addAct;
+window.deleteAct = deleteAct;
+window.moveAct = moveAct;
+window.addShot = addShot;
+window.deleteShot = deleteShot;
+window.moveShot = moveShot;
+window.findAct = findAct;
+window.findShot = findShot;
+window.persist = persist;
+window.pickImage = pickImage;
+window.clearImage = clearImage;
+
+render();
+</script>
+</body>
+</html>
