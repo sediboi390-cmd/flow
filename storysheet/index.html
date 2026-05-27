@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Story Sheet Maker v2.0 — templates, drag-drop, undo/redo, dark mode, PDF export — 2026-05-27 -->
+<!-- Story Sheet Maker v3.0 — All improvements: crop/zoom, rich captions, metadata, sizing, ZIP, custom colors, touch drag, duplicate, notes, keyboard nav — 2026-05-27 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -54,8 +55,6 @@ html.dark {
   --shadow: 0 4px 14px rgba(0,0,0,0.3);
   --shadow-lg: 0 10px 30px rgba(0,0,0,0.4);
 }
-
-
 body {
   background: var(--bg);
   color: var(--text);
@@ -135,6 +134,29 @@ body {
   max-width: 620px;
   line-height: 1.6;
 }
+
+/* Project Notes */
+.project-notes {
+  margin-top: 12px;
+  width: 100%;
+  max-width: 620px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: var(--text);
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 10px 14px;
+  resize: vertical;
+  min-height: 40px;
+  max-height: 200px;
+  outline: none;
+  transition: border-color 0.2s;
+  line-height: 1.5;
+}
+.project-notes:focus { border-color: var(--sage); }
+.project-notes::placeholder { color: var(--dim); font-style: italic; }
+
 
 
 /* ━━━━━━━━ Toolbar ━━━━━━━━ */
@@ -224,7 +246,6 @@ body {
 
 .spacer { flex: 1; min-width: 12px; }
 
-
 .btn {
   font-family: inherit;
   font-size: 0.78rem;
@@ -255,6 +276,7 @@ body {
 .btn.primary:hover { background: var(--sage-dark); border-color: var(--sage-dark); color: #fff; }
 .btn.sm { padding: 6px 12px; font-size: 0.72rem; }
 
+
 /* ━━━━━━━━ Grid of panels ━━━━━━━━ */
 main {
   max-width: 1240px;
@@ -277,10 +299,12 @@ main {
   display: flex;
   flex-direction: column;
   cursor: grab;
+  position: relative;
 }
 .panel:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
 .panel.dragging { opacity: 0.5; transform: scale(0.95); }
 .panel.drag-over { border-color: var(--sage); box-shadow: 0 0 0 2px var(--sage); }
+.panel.focused { outline: 2px solid var(--sage); outline-offset: 2px; }
 @keyframes rise {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -298,6 +322,7 @@ main {
   width: 100%; height: 100%;
   object-fit: cover;
   display: block;
+  transition: transform 0.2s;
 }
 .panel-img.empty {
   display: flex;
@@ -313,7 +338,6 @@ main {
 .panel-img.empty:hover { border-color: var(--sage); color: var(--sage); background: var(--sage-soft); }
 .panel-img.empty .icon { font-size: 1.4rem; opacity: 0.7; }
 .panel-img.empty .lbl { font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; }
-
 
 .panel-num {
   position: absolute;
@@ -353,7 +377,50 @@ main {
 }
 .ptool:hover { color: var(--sage-dark); border-color: var(--sage); }
 .ptool.del:hover { color: var(--warn); border-color: var(--warn); }
-.panel-body { padding: 12px 14px 14px; }
+
+/* Crop/Zoom controls */
+.crop-controls {
+  position: absolute;
+  bottom: 8px; left: 8px; right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+.panel:hover .crop-controls { opacity: 1; pointer-events: auto; }
+.crop-controls input[type="range"] {
+  flex: 1;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255,255,255,0.6);
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+.crop-controls input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  background: var(--sage);
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: var(--shadow-sm);
+}
+.crop-controls .zoom-label {
+  font-size: 0.6rem;
+  color: #fff;
+  background: rgba(0,0,0,0.5);
+  padding: 2px 6px;
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+  white-space: nowrap;
+}
+
+
+/* Panel body - rich captions & metadata */
+.panel-body { padding: 10px 14px 14px; display: flex; flex-direction: column; gap: 6px; }
 .caption-input {
   width: 100%;
   font-family: inherit;
@@ -368,6 +435,42 @@ main {
 }
 .caption-input::placeholder { color: var(--dim); font-style: italic; }
 .caption-input:hover, .caption-input:focus { border-bottom-color: var(--border-2); }
+
+.panel-meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.panel-meta select {
+  font-family: inherit;
+  font-size: 0.68rem;
+  color: var(--muted);
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 3px 6px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.panel-meta select:focus { border-color: var(--sage); color: var(--text); }
+
+.panel-notes {
+  width: 100%;
+  font-family: inherit;
+  font-size: 0.72rem;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed transparent;
+  padding: 2px 0;
+  outline: none;
+  resize: none;
+  min-height: 18px;
+  transition: border-color 0.15s;
+}
+.panel-notes:hover, .panel-notes:focus { border-bottom-color: var(--border-2); color: var(--text); }
+.panel-notes::placeholder { color: var(--dim); }
 
 /* Add card */
 .add-card {
@@ -395,7 +498,6 @@ main {
 .add-card .plus { font-size: 1.8rem; line-height: 1; opacity: 0.8; }
 .add-card .lbl { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 500; }
 
-
 /* ━━━━━━━━ Empty state ━━━━━━━━ */
 .empty-state {
   text-align: center;
@@ -416,6 +518,7 @@ main {
   line-height: 1.65;
 }
 .empty-state .btn { padding: 12px 26px; font-size: 0.85rem; }
+
 
 /* ━━━━━━━━ Floating Done bar ━━━━━━━━ */
 .done-bar {
@@ -508,7 +611,6 @@ html.dark .modal-veil { background: rgba(0,0,0,0.7); }
 }
 .modal-foot .spacer { flex: 1; }
 
-
 /* ━━━━━━━━ Template Grid ━━━━━━━━ */
 .template-grid {
   display: grid;
@@ -529,6 +631,36 @@ html.dark .modal-veil { background: rgba(0,0,0,0.7); }
 .template-card .tpl-icon { font-size: 2rem; margin-bottom: 8px; }
 .template-card .tpl-name { font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 4px; }
 .template-card .tpl-desc { font-size: 0.72rem; color: var(--muted); line-height: 1.4; }
+
+/* Custom color picker in modal */
+.color-customizer {
+  margin-top: 16px;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+}
+.color-customizer label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.68rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.color-customizer input[type="color"] {
+  width: 36px; height: 28px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 2px;
+}
+
 
 /* ━━━━━━━━ Toast ━━━━━━━━ */
 .toast {
@@ -562,6 +694,30 @@ html.dark .modal-veil { background: rgba(0,0,0,0.7); }
 .undo-bar .btn { padding: 6px 12px; font-size: 0.75rem; }
 .undo-bar .btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
+/* ━━━━━━━━ Keyboard nav hint ━━━━━━━━ */
+.kb-hint {
+  position: fixed;
+  bottom: 80px;
+  right: 16px;
+  font-size: 0.65rem;
+  color: var(--dim);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  border-radius: var(--r);
+  opacity: 0.7;
+  z-index: 40;
+  line-height: 1.5;
+}
+.kb-hint kbd {
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.62rem;
+}
+
 /* ━━━━━━━━ Responsive ━━━━━━━━ */
 @media (max-width: 640px) {
   .top, main { padding-left: 18px; padding-right: 18px; }
@@ -570,11 +726,11 @@ html.dark .modal-veil { background: rgba(0,0,0,0.7); }
   .done-bar { padding: 6px 6px 6px 18px; gap: 10px; }
   .done-bar .meta { display: none; }
   .template-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .kb-hint { display: none; }
 }
 </style>
 </head>
 <body>
-
 
 <!-- Undo/Redo floating buttons -->
 <div class="undo-bar">
@@ -582,18 +738,28 @@ html.dark .modal-veil { background: rgba(0,0,0,0.7); }
   <button class="btn sm" id="btnRedo" disabled title="Redo (Ctrl+Y)">↪ Redo</button>
 </div>
 
+<!-- Keyboard navigation hint -->
+<div class="kb-hint">
+  <kbd>←</kbd><kbd>→</kbd> navigate &nbsp;
+  <kbd>D</kbd> duplicate &nbsp;
+  <kbd>Del</kbd> remove &nbsp;
+  <kbd>Ctrl+Enter</kbd> compose
+</div>
+
 <header class="top">
   <div class="brand">
     <div class="brand-mark"></div>
     <div class="brand-name">Story Sheet</div>
-    <div class="brand-sub">Maker</div>
+    <div class="brand-sub">Maker v3</div>
   </div>
   <div class="title-row">
     <input class="project-title" id="projectTitle" placeholder="Untitled story sheet" maxlength="80"/>
     <span class="panel-count"><b id="panelCount">0</b> panels</span>
   </div>
-  <p class="tagline">Add images, drag to reorder, then hit Compose Sheet to pick a template and generate your final sheet.</p>
+  <p class="tagline">Add images, drag to reorder, adjust crop/zoom, add captions & metadata, then compose your sheet.</p>
+  <textarea class="project-notes" id="projectNotes" placeholder="Project notes — add scene descriptions, director notes, or general context here..." rows="2"></textarea>
 </header>
+
 
 <section class="toolbar">
   <div class="tool">
@@ -646,6 +812,7 @@ html.dark .modal-veil { background: rgba(0,0,0,0.7); }
   <div class="spacer"></div>
 
   <button class="btn ghost" id="btnReset" title="Clear all panels">Reset</button>
+  <button class="btn" id="btnZip" title="Export all images as ZIP">📦 ZIP</button>
 </section>
 
 <main>
@@ -665,16 +832,19 @@ html.dark .modal-veil { background: rgba(0,0,0,0.7); }
 'use strict';
 
 /* ════════════════════════════════════════════════
-   Story Sheet Maker v2.0
-   Templates, Drag-Drop, Undo/Redo, Dark Mode, PDF
+   Story Sheet Maker v3.0
+   Full feature set: crop/zoom, rich captions, metadata,
+   panel sizing, ZIP export, custom colors, touch drag,
+   duplicate/copy, sheet notes, keyboard navigation
    ════════════════════════════════════════════════ */
 
-const STORAGE_KEY = 'storySheet.project.v2';
+const STORAGE_KEY = 'storySheet.project.v3';
 const MAX_UNDO = 40;
 
 const App = {
   project: {
     title: '',
+    notes: '',
     aspect: '16:9',
     cols: 'auto',
     gap: 'normal',
@@ -683,7 +853,11 @@ const App = {
     darkMode: false,
     panels: [],
   },
+  focusedIndex: -1,
 };
+
+const SHOT_TYPES = ['', 'Wide', 'Medium', 'Close-up', 'Extreme CU', 'Over Shoulder', 'POV', 'Aerial', 'Low Angle', 'High Angle', 'Dutch'];
+const MOVEMENTS = ['', 'Static', 'Pan L', 'Pan R', 'Tilt Up', 'Tilt Down', 'Dolly In', 'Dolly Out', 'Tracking', 'Crane', 'Handheld', 'Zoom In', 'Zoom Out'];
 
 /* ─── Undo/Redo ─── */
 const History = {
@@ -761,7 +935,6 @@ const TEMPLATES = [
     bg: '#0A0A0A', cellBg: '#141414', border: '#2A2A2A', text: '#FFFFFF', accent: '#E50914', numBg: '#E50914', numColor: '#FFFFFF', font: 'Inter', captionColor: '#AAAAAA' },
 ];
 
-
 /* ─── Persistence ─── */
 function save(skipHistory) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(App.project)); }
@@ -779,13 +952,24 @@ function load() {
     if (p && Array.isArray(p.panels)) {
       Object.assign(App.project, {
         title: p.title || '',
+        notes: p.notes || '',
         aspect: p.aspect || '16:9',
         cols: p.cols || 'auto',
         gap: p.gap || 'normal',
         showNumbers: p.showNumbers !== false,
         showCaptions: p.showCaptions !== false,
         darkMode: p.darkMode || false,
-        panels: p.panels.map(x => ({ id: x.id || uid(), image: x.image || null, caption: x.caption || '' })),
+        panels: p.panels.map(x => ({
+          id: x.id || uid(),
+          image: x.image || null,
+          caption: x.caption || '',
+          notes: x.notes || '',
+          shotType: x.shotType || '',
+          movement: x.movement || '',
+          zoom: x.zoom || 1,
+          panX: x.panX || 0,
+          panY: x.panY || 0,
+        })),
       });
       return true;
     }
@@ -793,15 +977,32 @@ function load() {
   return false;
 }
 
+
 /* ─── State mutations ─── */
 function addPanel(image) {
-  App.project.panels.push({ id: uid(), image: image || null, caption: '' });
+  App.project.panels.push({ id: uid(), image: image || null, caption: '', notes: '', shotType: '', movement: '', zoom: 1, panX: 0, panY: 0 });
   save(); render();
 }
 function removePanel(id) {
   if (!confirm('Remove this panel?')) return;
   App.project.panels = App.project.panels.filter(p => p.id !== id);
   save(); render();
+}
+function duplicatePanel(id) {
+  const src = App.project.panels.find(p => p.id === id);
+  if (!src) return;
+  const idx = App.project.panels.indexOf(src);
+  const dup = { ...src, id: uid() };
+  App.project.panels.splice(idx + 1, 0, dup);
+  save(); render();
+  flashToast('Panel duplicated');
+}
+function copyCaption(id) {
+  const src = App.project.panels.find(p => p.id === id);
+  if (!src || !src.caption) { flashToast('No caption to copy', true); return; }
+  App.project.panels.forEach(p => { if (p.id !== id) p.caption = src.caption; });
+  save(); render();
+  flashToast('Caption copied to all panels');
 }
 function movePanel(id, dir) {
   const i = App.project.panels.findIndex(p => p.id === id);
@@ -816,19 +1017,72 @@ function setCaption(id, value) {
   const p = App.project.panels.find(x => x.id === id);
   if (!p) return;
   p.caption = value;
-  save(true); // don't push to history on every keystroke
+  save(true);
+}
+function setPanelNotes(id, value) {
+  const p = App.project.panels.find(x => x.id === id);
+  if (!p) return;
+  p.notes = value;
+  save(true);
+}
+function setPanelMeta(id, key, value) {
+  const p = App.project.panels.find(x => x.id === id);
+  if (!p) return;
+  p[key] = value;
+  save(true);
+}
+function setPanelZoom(id, zoom) {
+  const p = App.project.panels.find(x => x.id === id);
+  if (!p) return;
+  p.zoom = parseFloat(zoom);
+  save(true);
+  // Update image transform in-place without re-render
+  const imgEl = document.querySelector(`[data-zoom-pid="${id}"] img`);
+  if (imgEl) imgEl.style.transform = `scale(${p.zoom})`;
 }
 function reset() {
   if (App.project.panels.length === 0) return;
   if (!confirm('Clear all panels and start over?')) return;
   App.project.panels = [];
   App.project.title = '';
+  App.project.notes = '';
   save(); render();
 }
 
 
-/* ─── Drag and Drop ─── */
+/* ─── ZIP Export ─── */
+async function exportZip() {
+  const panels = App.project.panels.filter(p => p.image);
+  if (panels.length === 0) { flashToast('No images to export', true); return; }
+  flashToast('Preparing ZIP...');
+  try {
+    const zip = new JSZip();
+    for (let i = 0; i < panels.length; i++) {
+      const p = panels[i];
+      const base64 = p.image.split(',')[1];
+      const ext = p.image.startsWith('data:image/png') ? 'png' : 'jpg';
+      const name = `panel-${String(i + 1).padStart(3, '0')}${p.caption ? '-' + p.caption.slice(0, 30).replace(/[^a-z0-9]/gi, '_') : ''}.${ext}`;
+      zip.file(name, base64, { base64: true });
+    }
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = safeName() + '-panels.zip';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    flashToast('ZIP downloaded!');
+  } catch (e) {
+    console.error('ZIP error:', e);
+    flashToast('ZIP export failed', true);
+  }
+}
+
+/* ─── Touch Drag & Drop ─── */
 let dragSrcId = null;
+let touchDragEl = null;
+let touchStartY = 0;
+let touchStartX = 0;
 
 function handleDragStart(e) {
   dragSrcId = e.currentTarget.dataset.panelId;
@@ -867,6 +1121,68 @@ function handleDragEnd(e) {
   dragSrcId = null;
 }
 
+/* Touch drag support for mobile */
+function handleTouchStart(e) {
+  const panel = e.currentTarget.closest('.panel');
+  if (!panel) return;
+  const touch = e.touches[0];
+  touchStartX = touch.clientX;
+  touchStartY = touch.clientY;
+  touchDragEl = panel;
+  dragSrcId = panel.dataset.panelId;
+  setTimeout(() => {
+    if (touchDragEl) touchDragEl.classList.add('dragging');
+  }, 200);
+}
+function handleTouchMove(e) {
+  if (!touchDragEl) return;
+  e.preventDefault();
+  const touch = e.touches[0];
+  const dx = touch.clientX - touchStartX;
+  const dy = touch.clientY - touchStartY;
+  if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+    touchDragEl.style.transform = `translate(${dx}px, ${dy}px) scale(0.95)`;
+    touchDragEl.style.zIndex = '1000';
+    // Find element under finger
+    touchDragEl.style.pointerEvents = 'none';
+    const under = document.elementFromPoint(touch.clientX, touch.clientY);
+    touchDragEl.style.pointerEvents = '';
+    document.querySelectorAll('.panel.drag-over').forEach(el => el.classList.remove('drag-over'));
+    const targetPanel = under?.closest?.('.panel');
+    if (targetPanel && targetPanel !== touchDragEl) {
+      targetPanel.classList.add('drag-over');
+    }
+  }
+}
+function handleTouchEnd(e) {
+  if (!touchDragEl) return;
+  touchDragEl.classList.remove('dragging');
+  touchDragEl.style.transform = '';
+  touchDragEl.style.zIndex = '';
+  // Find drop target
+  const touch = e.changedTouches[0];
+  const under = document.elementFromPoint(touch.clientX, touch.clientY);
+  const targetPanel = under?.closest?.('.panel');
+  document.querySelectorAll('.panel.drag-over').forEach(el => el.classList.remove('drag-over'));
+  if (targetPanel && dragSrcId) {
+    const targetId = targetPanel.dataset.panelId;
+    if (targetId && targetId !== dragSrcId) {
+      const arr = App.project.panels;
+      const from = arr.findIndex(p => p.id === dragSrcId);
+      const to = arr.findIndex(p => p.id === targetId);
+      if (from >= 0 && to >= 0) {
+        const [item] = arr.splice(from, 1);
+        arr.splice(to, 0, item);
+        save(); render();
+        flashToast('Panel reordered');
+      }
+    }
+  }
+  touchDragEl = null;
+  dragSrcId = null;
+}
+
+
 /* ─── Image upload ─── */
 function chooseImageFor(targetId) {
   const inp = document.createElement('input');
@@ -883,7 +1199,7 @@ function chooseImageFor(targetId) {
       if (targetId === '__new__') { addPanel(ev.target.result); }
       else {
         const p = App.project.panels.find(x => x.id === targetId);
-        if (p) { p.image = ev.target.result; save(); render(); }
+        if (p) { p.image = ev.target.result; p.zoom = 1; p.panX = 0; p.panY = 0; save(); render(); }
       }
       flashToast('Image added');
     };
@@ -903,7 +1219,7 @@ function chooseMultiImages() {
       if (!f.type.startsWith('image/')) { pending--; return; }
       const reader = new FileReader();
       reader.onload = (ev) => {
-        App.project.panels.push({ id: uid(), image: ev.target.result, caption: '' });
+        App.project.panels.push({ id: uid(), image: ev.target.result, caption: '', notes: '', shotType: '', movement: '', zoom: 1, panX: 0, panY: 0 });
         pending--;
         if (pending === 0) { save(); render(); flashToast(`${files.length} image(s) added`); }
       };
@@ -914,11 +1230,58 @@ function chooseMultiImages() {
   inp.click();
 }
 
+/* ─── Keyboard Navigation ─── */
+function handleKeyNav(e) {
+  // Don't intercept when typing in inputs
+  const tag = e.target.tagName.toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+  const panels = App.project.panels;
+  if (panels.length === 0) return;
+
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+    e.preventDefault();
+    App.focusedIndex = Math.min(App.focusedIndex + 1, panels.length - 1);
+    highlightFocused();
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    App.focusedIndex = Math.max(App.focusedIndex - 1, 0);
+    highlightFocused();
+  } else if (e.key === 'd' || e.key === 'D') {
+    if (App.focusedIndex >= 0 && App.focusedIndex < panels.length) {
+      duplicatePanel(panels[App.focusedIndex].id);
+    }
+  } else if (e.key === 'Delete' || e.key === 'Backspace') {
+    if (App.focusedIndex >= 0 && App.focusedIndex < panels.length) {
+      removePanel(panels[App.focusedIndex].id);
+      App.focusedIndex = Math.min(App.focusedIndex, panels.length - 1);
+    }
+  } else if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+    e.preventDefault();
+    showTemplatePicker();
+  } else if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+    e.preventDefault(); History.undo();
+  } else if ((e.metaKey || e.ctrlKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+    e.preventDefault(); History.redo();
+  }
+}
+
+function highlightFocused() {
+  document.querySelectorAll('.panel.focused').forEach(el => el.classList.remove('focused'));
+  const panelEls = document.querySelectorAll('.panel[data-panel-id]');
+  if (App.focusedIndex >= 0 && App.focusedIndex < panelEls.length) {
+    panelEls[App.focusedIndex].classList.add('focused');
+    panelEls[App.focusedIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
 
 /* ─── Render ─── */
 function render() {
   const t = $('#projectTitle');
   if (document.activeElement !== t) t.value = App.project.title;
+  const n = $('#projectNotes');
+  if (document.activeElement !== n) n.value = App.project.notes;
   $('#panelCount').textContent = App.project.panels.length;
   $('#doneCount').textContent = App.project.panels.length;
   $('#aspect').value = App.project.aspect;
@@ -935,7 +1298,7 @@ function render() {
     board.innerHTML = `
       <div class="empty-state">
         <h2>Start your sheet</h2>
-        <p>Add images one by one or multiple at once. Drag to reorder. Then compose them into a beautiful sheet using one of 10 templates.</p>
+        <p>Add images one by one or multiple at once. Drag to reorder (works on mobile too!). Adjust crop/zoom per panel. Add captions, shot types, and notes. Then compose into a beautiful sheet.</p>
         <button class="btn primary" id="btnFirstAdd">+ Add your first image</button>
       </div>`;
     $('#btnFirstAdd').onclick = chooseMultiImages;
@@ -955,32 +1318,60 @@ function render() {
     else if (action === 'down') el.onclick = (e) => { e.stopPropagation(); movePanel(pid, 1); };
     else if (action === 'replace') el.onclick = (e) => { e.stopPropagation(); chooseImageFor(pid); };
     else if (action === 'delete') el.onclick = (e) => { e.stopPropagation(); removePanel(pid); };
+    else if (action === 'dup') el.onclick = (e) => { e.stopPropagation(); duplicatePanel(pid); };
+    else if (action === 'copycap') el.onclick = (e) => { e.stopPropagation(); copyCaption(pid); };
   });
   board.querySelectorAll('input[data-caption]').forEach(el => {
     el.oninput = () => setCaption(el.dataset.caption, el.value);
   });
+  board.querySelectorAll('textarea[data-notes]').forEach(el => {
+    el.oninput = () => setPanelNotes(el.dataset.notes, el.value);
+  });
+  board.querySelectorAll('select[data-meta]').forEach(el => {
+    el.onchange = () => setPanelMeta(el.dataset.pid, el.dataset.meta, el.value);
+  });
+  board.querySelectorAll('input[data-zoom]').forEach(el => {
+    el.oninput = () => setPanelZoom(el.dataset.zoom, el.value);
+  });
   $('#addCard').onclick = chooseMultiImages;
 
-  // Wire drag-and-drop
+  // Wire drag-and-drop (mouse + touch)
   board.querySelectorAll('.panel[draggable]').forEach(el => {
     el.addEventListener('dragstart', handleDragStart);
     el.addEventListener('dragover', handleDragOver);
     el.addEventListener('dragleave', handleDragLeave);
     el.addEventListener('drop', handleDrop);
     el.addEventListener('dragend', handleDragEnd);
+    // Touch
+    el.addEventListener('touchstart', handleTouchStart, { passive: true });
+    el.addEventListener('touchmove', handleTouchMove, { passive: false });
+    el.addEventListener('touchend', handleTouchEnd);
   });
+
+  highlightFocused();
 }
+
 
 function panelCardHtml(p, i) {
   const num = String(i + 1).padStart(2, '0');
+  const zoomStyle = p.zoom && p.zoom !== 1 ? `transform: scale(${p.zoom})` : '';
+  const shotOpts = SHOT_TYPES.map(s => `<option value="${s}" ${p.shotType === s ? 'selected' : ''}>${s || '— Shot type'}</option>`).join('');
+  const moveOpts = MOVEMENTS.map(m => `<option value="${m}" ${p.movement === m ? 'selected' : ''}>${m || '— Movement'}</option>`).join('');
+
   const imgSection = p.image
-    ? `<div class="panel-img" data-pid="${p.id}" data-action="replace" title="Click to replace">
-         <img src="${escapeHtml(p.image)}" alt=""/>
+    ? `<div class="panel-img" data-zoom-pid="${p.id}" data-pid="${p.id}" data-action="replace" title="Click to replace">
+         <img src="${escapeHtml(p.image)}" alt="" style="${zoomStyle}"/>
          <span class="panel-num">${num}</span>
          <div class="panel-tools">
-           <button class="ptool" data-pid="${p.id}" data-action="up" title="Move up">▲</button>
-           <button class="ptool" data-pid="${p.id}" data-action="down" title="Move down">▼</button>
+           <button class="ptool" data-pid="${p.id}" data-action="dup" title="Duplicate">⧉</button>
+           <button class="ptool" data-pid="${p.id}" data-action="copycap" title="Copy caption to all">📋</button>
+           <button class="ptool" data-pid="${p.id}" data-action="up" title="Move left">◀</button>
+           <button class="ptool" data-pid="${p.id}" data-action="down" title="Move right">▶</button>
            <button class="ptool del" data-pid="${p.id}" data-action="delete" title="Remove">×</button>
+         </div>
+         <div class="crop-controls">
+           <span class="zoom-label">🔍 ${Math.round((p.zoom || 1) * 100)}%</span>
+           <input type="range" min="1" max="3" step="0.05" value="${p.zoom || 1}" data-zoom="${p.id}" title="Zoom/Crop"/>
          </div>
        </div>`
     : `<div class="panel-img empty" data-pid="${p.id}" data-action="open" title="Click to add image">
@@ -988,15 +1379,22 @@ function panelCardHtml(p, i) {
          <div class="lbl">Choose image</div>
          <span class="panel-num">${num}</span>
          <div class="panel-tools">
+           <button class="ptool" data-pid="${p.id}" data-action="dup" title="Duplicate">⧉</button>
            <button class="ptool del" data-pid="${p.id}" data-action="delete" title="Remove">×</button>
          </div>
        </div>`;
+
   return `
     <div class="panel" draggable="true" data-panel-id="${p.id}">
       ${imgSection}
       <div class="panel-body">
         <input class="caption-input" data-caption="${p.id}"
                placeholder="Caption (optional)" value="${escapeHtml(p.caption)}" maxlength="120"/>
+        <div class="panel-meta">
+          <select data-pid="${p.id}" data-meta="shotType">${shotOpts}</select>
+          <select data-pid="${p.id}" data-meta="movement">${moveOpts}</select>
+        </div>
+        <textarea class="panel-notes" data-notes="${p.id}" placeholder="Notes (dialogue, direction...)" rows="1">${escapeHtml(p.notes)}</textarea>
       </div>
     </div>`;
 }
@@ -1027,27 +1425,67 @@ function showTemplatePicker() {
         </div>
         <div class="modal-body">
           <div class="template-grid">${cardsHtml}</div>
+          <div class="color-customizer" id="colorCustomizer" style="display:none">
+            <label>Background <input type="color" id="custBg" value="#F6F1E8"/></label>
+            <label>Accent <input type="color" id="custAccent" value="#6B9286"/></label>
+            <label>Text <input type="color" id="custText" value="#3A3A3A"/></label>
+            <label>Border <input type="color" id="custBorder" value="#E5DCC9"/></label>
+            <button class="btn sm" id="custApply">Apply Custom Colors</button>
+          </div>
         </div>
         <div class="modal-foot">
+          <button class="btn sm" id="toggleCustomColors">🎨 Customize Colors</button>
+          <span class="spacer"></span>
           <span style="font-size:0.74rem;color:var(--muted)">Click a template to generate your sheet</span>
         </div>
       </div>
     </div>`;
 
+  let selectedTpl = null;
+  let customColors = null;
+
   const close = () => mount.innerHTML = '';
   $('#tplVeil').onclick = close;
   $('#closeTpl').onclick = close;
+
+  $('#toggleCustomColors').onclick = () => {
+    const cc = $('#colorCustomizer');
+    cc.style.display = cc.style.display === 'none' ? 'flex' : 'none';
+  };
+
+  $('#custApply').onclick = () => {
+    customColors = {
+      bg: $('#custBg').value,
+      accent: $('#custAccent').value,
+      text: $('#custText').value,
+      border: $('#custBorder').value,
+    };
+    flashToast('Custom colors set — now click a template');
+  };
+
   mount.querySelectorAll('.template-card').forEach(card => {
     card.onclick = () => {
+      selectedTpl = card.dataset.tpl;
       close();
-      composeSheet(card.dataset.tpl);
+      composeSheet(selectedTpl, customColors);
     };
   });
 }
 
+
 /* ─── Compose Sheet with Template ─── */
-async function composeSheet(templateId) {
-  const tpl = TEMPLATES.find(t => t.id === templateId) || TEMPLATES[0];
+async function composeSheet(templateId, customColors) {
+  let tpl = { ...(TEMPLATES.find(t => t.id === templateId) || TEMPLATES[0]) };
+  // Apply custom color overrides
+  if (customColors) {
+    tpl.bg = customColors.bg;
+    tpl.accent = customColors.accent;
+    tpl.text = customColors.text;
+    tpl.border = customColors.border;
+    tpl.captionColor = customColors.text;
+    tpl.numColor = customColors.accent;
+  }
+
   const panels = App.project.panels.filter(p => p.image);
   if (panels.length === 0) return;
 
@@ -1076,13 +1514,14 @@ async function composeSheet(templateId) {
   const gap = GAPS[App.project.gap] || 18;
   const headerH = 100;
   const captionH = App.project.showCaptions ? 44 : 0;
+  const metaH = 20; // extra space for shot type labels
 
   const availableW = targetW - padding * 2 - gap * (cols - 1);
   const cellW = Math.floor(availableW / cols);
   const cellH = Math.round(cellW / aspectRatio);
 
   const canvasW = padding * 2 + cols * cellW + (cols - 1) * gap;
-  const canvasH = padding * 2 + headerH + rows * (cellH + captionH) + (rows - 1) * gap;
+  const canvasH = padding * 2 + headerH + rows * (cellH + captionH + metaH) + (rows - 1) * gap;
 
   const canvas = document.createElement('canvas');
   canvas.width = canvasW;
@@ -1105,6 +1544,14 @@ async function composeSheet(templateId) {
   const subtitle = `${n} panel${n === 1 ? '' : 's'}  ·  ${App.project.aspect}  ·  ${tpl.name}  ·  ${new Date().toLocaleDateString()}`;
   ctx.fillText(subtitle, padding, padding + 44);
 
+  // Project notes in header
+  if (App.project.notes) {
+    ctx.fillStyle = tpl.captionColor || tpl.text;
+    ctx.font = `400 12px "${tpl.font}", system-ui, sans-serif`;
+    const noteText = App.project.notes.length > 120 ? App.project.notes.slice(0, 117) + '...' : App.project.notes;
+    ctx.fillText(noteText, padding, padding + 64);
+  }
+
   // Divider
   ctx.strokeStyle = tpl.border;
   ctx.lineWidth = 1;
@@ -1112,7 +1559,6 @@ async function composeSheet(templateId) {
   ctx.moveTo(padding, padding + headerH - 16);
   ctx.lineTo(canvasW - padding, padding + headerH - 16);
   ctx.stroke();
-
 
   // Load images
   const loadImage = (src) => new Promise((resolve) => {
@@ -1124,21 +1570,21 @@ async function composeSheet(templateId) {
   });
   const images = await Promise.all(panels.map(p => loadImage(p.image)));
 
+
   // Draw cells
   for (let i = 0; i < n; i++) {
     const r = Math.floor(i / cols);
     const c = i % cols;
     const x = padding + c * (cellW + gap);
-    const y = padding + headerH + r * (cellH + captionH + gap);
+    const y = padding + headerH + r * (cellH + captionH + metaH + gap);
 
-    // Polaroid effect - slight rotation
+    // Polaroid effect
     if (tpl.polaroid) {
       ctx.save();
       const rot = (Math.random() - 0.5) * 0.06;
       ctx.translate(x + cellW / 2, y + cellH / 2);
       ctx.rotate(rot);
       ctx.translate(-(x + cellW / 2), -(y + cellH / 2));
-      // White polaroid border
       ctx.fillStyle = '#FFFFFF';
       ctx.shadowColor = 'rgba(0,0,0,0.15)';
       ctx.shadowBlur = 8;
@@ -1151,18 +1597,24 @@ async function composeSheet(templateId) {
     ctx.fillStyle = tpl.cellBg;
     ctx.fillRect(x, y, cellW, cellH);
 
-    // Sepia filter overlay
+    // Draw image with zoom/crop
     const img = images[i];
+    const panel = panels[i];
     if (img) {
       ctx.save();
       ctx.beginPath();
       ctx.rect(x, y, cellW, cellH);
       ctx.clip();
+      const zoom = panel.zoom || 1;
       const ir = img.width / img.height;
       const cr = cellW / cellH;
       let dw, dh, dx, dy;
       if (ir > cr) { dh = cellH; dw = dh * ir; dx = x + (cellW - dw) / 2; dy = y; }
       else { dw = cellW; dh = dw / ir; dx = x; dy = y + (cellH - dh) / 2; }
+      // Apply zoom
+      dw *= zoom; dh *= zoom;
+      dx = x + (cellW - dw) / 2;
+      dy = y + (cellH - dh) / 2;
       ctx.drawImage(img, dx, dy, dw, dh);
 
       // Sepia overlay
@@ -1203,21 +1655,30 @@ async function composeSheet(templateId) {
       ctx.textBaseline = 'top';
     }
 
+    // Shot type / movement metadata label
+    const shotLabel = [panel.shotType, panel.movement].filter(Boolean).join(' · ');
+    if (shotLabel) {
+      ctx.fillStyle = tpl.accent;
+      ctx.font = `600 10px "${tpl.font}", system-ui, sans-serif`;
+      ctx.fillText(shotLabel, x + 4, y + cellH + 6);
+    }
+
     // Technical labels for storyboard pro
     if (tpl.technical) {
       ctx.fillStyle = tpl.accent;
       ctx.font = `600 10px "Courier New", monospace`;
-      ctx.fillText(`SCENE ${i + 1}  |  SHOT 1  |  TAKE 1`, x + 4, y + cellH + 6);
+      const techLabel = `SCENE ${i + 1}  |  ${panel.shotType || 'WIDE'}  |  ${panel.movement || 'STATIC'}`;
+      ctx.fillText(techLabel, x + 4, y + cellH + 6);
     }
 
     // Caption
     if (App.project.showCaptions && !tpl.technical) {
-      const cap = (panels[i].caption || '').trim();
+      const cap = (panel.caption || '').trim();
       if (cap) {
         ctx.fillStyle = tpl.captionColor;
         ctx.font = `500 14px "${tpl.font}", system-ui, sans-serif`;
         const text = cap.length > 90 ? cap.slice(0, 87) + '...' : cap;
-        ctx.fillText(text, x + 4, y + cellH + 10);
+        ctx.fillText(text, x + 4, y + cellH + (shotLabel ? 22 : 10));
       }
     }
 
@@ -1288,7 +1749,6 @@ function showResultModal(url, panelCount, canvas, tpl) {
   const close = () => { URL.revokeObjectURL(url); mount.innerHTML = ''; };
   $('#veil').onclick = close;
   $('#closeModal').onclick = close;
-
   $('#tryAnother').onclick = () => { close(); showTemplatePicker(); };
 
   $('#downloadImg').onclick = () => {
@@ -1328,7 +1788,6 @@ function showResultModal(url, panelCount, canvas, tpl) {
   };
 }
 
-
 /* ─── Toast ─── */
 function flashToast(msg, warn) {
   const el = $('#toast');
@@ -1346,8 +1805,10 @@ function applyDarkMode(on) {
   save(true);
 }
 
+
 /* ─── Wire up controls ─── */
 $('#projectTitle').addEventListener('input', e => { App.project.title = e.target.value; save(true); });
+$('#projectNotes').addEventListener('input', e => { App.project.notes = e.target.value; save(true); });
 $('#aspect').addEventListener('change', e => { App.project.aspect = e.target.value; save(); });
 $$('#cols button').forEach(b => b.addEventListener('click', () => { App.project.cols = b.dataset.cols; save(); render(); }));
 $$('#gap button').forEach(b => b.addEventListener('click', () => { App.project.gap = b.dataset.gap; save(); render(); }));
@@ -1358,13 +1819,10 @@ $('#btnReset').addEventListener('click', reset);
 $('#btnDone').addEventListener('click', showTemplatePicker);
 $('#btnUndo').addEventListener('click', () => History.undo());
 $('#btnRedo').addEventListener('click', () => History.redo());
+$('#btnZip').addEventListener('click', exportZip);
 
 /* Keyboard shortcuts */
-document.addEventListener('keydown', (e) => {
-  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); showTemplatePicker(); }
-  if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); History.undo(); }
-  if ((e.metaKey || e.ctrlKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); History.redo(); }
-});
+document.addEventListener('keydown', handleKeyNav);
 
 /* ─── Boot ─── */
 load();
