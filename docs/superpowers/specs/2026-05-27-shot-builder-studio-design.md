@@ -9,9 +9,11 @@
 
 **Shot Builder Studio** is a fully interactive, browser-based storyboard builder for faceless content creators. It allows creators to plan YouTube explainers, TikTok/Shorts, cinematic sequences, tutorials, and ad/promo videos by building storyboard panels using one of four creation modes.
 
-It ships as a single self-contained HTML file (`storyboard/index.html`), replacing the existing static fight-scene storyboard. It requires no build tools, no server, and no dependencies beyond two Google Fonts and JSZip (both CDN).
+It ships as a single self-contained HTML file (`storyboard/index.html`), replacing the existing static fight-scene storyboard. It requires no build tools, no server, and no dependencies beyond two Google Fonts (Inter + DM Sans) and JSZip (all CDN).
 
-**Visual aesthetic:** Matches the existing storyboard exactly — dark cinematic theme (`#0a0a0f` background, `#ff3c5a` / `#ff9800` / `#c080ff` accents, Rajdhani + Roboto Mono fonts).
+**Visual aesthetic:** Calm, minimalist design — warm off-white backgrounds, white card surfaces, soft warm borders, and a muted accent palette chosen for low eye-strain and long creative sessions. See Section 11 for the full design system.
+
+> **Design revision note (2026-05-27):** Original dark cinematic theme was replaced with a calm minimalist palette following user feedback. The new design prioritises readability and visual comfort over dramatic atmosphere.
 
 ---
 
@@ -84,8 +86,8 @@ Click a template → drops into timeline as a fully formed panel ready to custom
 ### Mode 3 — ✏️ Sketch
 Simple drawing canvas per panel:
 - **Tools:** pen, marker, eraser, rectangle, circle, arrow, text
-- **Colours:** preset palette matching dark cinematic theme
-- **Layers:** auto-filled dark background layer + drawing layer
+- **Colours:** preset palette matching calm minimalist theme
+- **Layers:** auto-filled warm off-white background layer + drawing layer
 - Sketch saved as embedded PNG data URL inside the panel object
 
 ### Mode 4 — 📋 Card
@@ -153,7 +155,7 @@ Per-panel, characters are selected via checkboxes. The SVG generator uses the se
 
 | Export | Format | Method |
 |--------|--------|--------|
-| Shareable HTML | `.html` | Blob URL — full standalone page, cinematic style |
+| Shareable HTML | `.html` | Blob URL — full standalone page, calm minimalist style |
 | PDF | `.pdf` | CSS `@media print` + `window.print()` |
 | PNG (single panel) | `.png` | Canvas `toDataURL()` |
 | PNG (all panels ZIP) | `.zip` | JSZip + Canvas `toDataURL()` per panel |
@@ -219,7 +221,59 @@ Phase 1 delivers a fully usable, impressive tool. Phases 2 and 3 add power featu
 
 ---
 
-## 11. Out of Scope
+## 11. Design System
+
+### Philosophy
+Calm, minimal, eye-friendly. Designed for long creative sessions — no harsh contrasts, no aggressive colours. Every element should feel quiet and purposeful.
+
+### Colour Palette
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `--bg` | `#F7F6F3` | Page background — warm off-white |
+| `--surface` | `#FFFFFF` | Cards, drawers, header |
+| `--border` | `#E8E5DF` | All borders and dividers |
+| `--sidebar` | `#F2F0EC` | Sidebar background |
+| `--text` | `#2D2D2D` | Primary text |
+| `--muted` | `#9A9590` | Labels, secondary text, placeholders |
+| `--teal` | `#4A8C8C` | Primary accent — active states, selections, CTA |
+| `--sage` | `#6B8F71` | Act II accent, success states |
+| `--clay` | `#A0714F` | Sketch mode, warm highlights |
+| `--lavender` | `#7B7BA8` | Template mode, secondary character |
+| `--red-soft` | `#C0524A` | Destructive actions (delete) only |
+
+### Typography
+
+| Font | Weight | Usage |
+|------|--------|-------|
+| **Inter** | 300, 400, 500, 600 | All UI text — body, labels, buttons |
+| **DM Sans** | 300, 400, 500 | Logo, headings, panel titles |
+
+### Component Rules
+- **Border radius:** 6–10px on cards, 6px on inputs, 20px on pills/chips
+- **Shadows:** Only on hover — `0 4px 20px rgba(0,0,0,0.07)`, never resting
+- **Borders:** `1px solid var(--border)` everywhere — no thick outlines
+- **Transitions:** 0.13–0.15s ease on all interactive states
+- **Selected state:** `border-color: var(--teal)` + `box-shadow: 0 0 0 2px rgba(74,140,140,0.18)`
+- **Spacing:** 8px base unit, multiples of 4
+
+### Panel Scene Backgrounds (per mode)
+| Mode | Background colour | Feel |
+|------|------------------|------|
+| Card | `#EDECEA` | Warm neutral |
+| Template | `#EAE9F0` | Cool lavender tint |
+| Text-to-Panel | `#E8F0E9` | Sage green tint |
+| Sketch | `#F5EFE9` | Warm clay tint |
+
+### SVG Illustration Style
+- White or light-filled silhouettes with muted accent colour strokes (not solid black)
+- Soft tinted backgrounds (no pure white or pure black scenes)
+- Stroke weights: 1–1.5px for figures, 0.6–1px for background details
+- All scene SVGs should feel light and airy, not heavy or dramatic
+
+---
+
+## 12. Out of Scope
 
 - No backend / server
 - No user accounts / cloud sync
