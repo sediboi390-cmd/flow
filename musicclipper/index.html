@@ -110,6 +110,7 @@ main { max-width:800px; margin:0 auto; padding:1.5rem 1rem 3rem; display:flex; f
     <div id="action-buttons">
       <button class="btn btn-primary" id="btn-trim">✂️ Trim (keep selection)</button>
       <button class="btn btn-danger" id="btn-cut">🔪 Cut (remove selection)</button>
+      <button class="btn btn-outline" id="btn-reset" title="Reload original audio">↺ Reset</button>
     </div>
   </section>
 
@@ -364,32 +365,59 @@ function concatAudioBuffers(buffers) {
 }
 
 // ─── Trim / Cut / Merge ───────────────────────────────────
+// After any operation, replace the waveform with the result so the user
+// SEES what happened and can continue editing (re-trim, re-cut, etc).
+function commitResult(audioBuffer, label, sourceName) {
+  lastOutput = audioBuffer;
+  const newName = label + '_' + (sourceName || 'audio') + '.wav';
+  const virtualFile = { name: newName, audioBuffer };
+  loadFileIntoWaveform(virtualFile);
+  document.getElementById('export-section').classList.remove('hidden');
+  // Briefly flash the export section so the user notices it
+  const exp = document.getElementById('export-section');
+  exp.style.transition = 'box-shadow 0.4s';
+  exp.style.boxShadow = '0 0 0 3px var(--success)';
+  setTimeout(() => { exp.style.boxShadow = ''; }, 1200);
+  // Scroll the export section into view
+  exp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
 document.getElementById('btn-trim').addEventListener('click', () => {
   if (!activeRegion || !wavesurfer?._sourceFile) return showToast('⚠ Nothing to trim');
   const file = wavesurfer._sourceFile;
-  lastOutput = sliceAudioBuffer(file.audioBuffer, activeRegion.start, activeRegion.end);
-  showToast('✅ Trimmed! Choose format and export below.');
-  document.getElementById('export-section').classList.remove('hidden');
+  const { start, end } = activeRegion;
+  if (end - start < 0.05) return showToast('⚠ Selection too short to trim');
+  const trimmed = sliceAudioBuffer(file.audioBuffer, start, end);
+  commitResult(trimmed, 'trimmed', file.name.replace(/\.[^.]+$/, ''));
+  showToast(`✅ Trimmed to ${formatTime(end - start)} — export below`);
 });
 
 document.getElementById('btn-cut').addEventListener('click', () => {
   if (!activeRegion || !wavesurfer?._sourceFile) return showToast('⚠ Nothing to cut');
   const file = wavesurfer._sourceFile;
   const dur = file.audioBuffer.duration;
+  const { start, end } = activeRegion;
   const parts = [];
-  if (activeRegion.start > 0.01)   parts.push(sliceAudioBuffer(file.audioBuffer, 0, activeRegion.start));
-  if (activeRegion.end < dur - 0.01) parts.push(sliceAudioBuffer(file.audioBuffer, activeRegion.end, dur));
+  if (start > 0.01)        parts.push(sliceAudioBuffer(file.audioBuffer, 0, start));
+  if (end < dur - 0.01)    parts.push(sliceAudioBuffer(file.audioBuffer, end, dur));
   if (!parts.length) return showToast('⚠ Nothing left after cut');
-  lastOutput = parts.length === 1 ? parts[0] : concatAudioBuffers(parts);
-  showToast('✅ Cut! Choose format and export below.');
-  document.getElementById('export-section').classList.remove('hidden');
+  const cut = parts.length === 1 ? parts[0] : concatAudioBuffers(parts);
+  commitResult(cut, 'cut', file.name.replace(/\.[^.]+$/, ''));
+  showToast(`✅ Cut ${formatTime(end - start)} removed — export below`);
 });
 
 document.getElementById('btn-merge').addEventListener('click', () => {
   if (loadedFiles.length < 2) return showToast('⚠ Load at least 2 files to merge');
-  lastOutput = concatAudioBuffers(loadedFiles.map(f => f.audioBuffer));
-  showToast('✅ Merged! Choose format and export below.');
-  document.getElementById('export-section').classList.remove('hidden');
+  const merged = concatAudioBuffers(loadedFiles.map(f => f.audioBuffer));
+  commitResult(merged, 'merged', loadedFiles.length + 'files');
+  showToast(`✅ Merged ${loadedFiles.length} files — export below`);
+});
+
+document.getElementById('btn-reset').addEventListener('click', () => {
+  if (!loadedFiles.length) return showToast('⚠ No file to reset');
+  loadFileIntoWaveform(loadedFiles[loadedFiles.length - 1]);
+  lastOutput = null;
+  showToast('↺ Reset to original');
 });
 
 // ─── Video → Audio (using browser's native decoder) ────────
