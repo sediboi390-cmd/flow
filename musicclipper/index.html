@@ -433,5 +433,19 @@ document.getElementById('btn-export').addEventListener('click', async () => {
   } catch(e) { showToast('❌ Export failed: ' + e.message); console.error(e); }
 });
 </script>
+
+<script>
+// ─── COOP/COEP Service Worker (enables SharedArrayBuffer for FFmpeg.wasm) ────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./coop-sw.js').then(reg => {
+    // If the SW was just installed (first visit), reload so headers take effect
+    if (reg.installing) {
+      reg.installing.addEventListener('statechange', e => {
+        if (e.target.state === 'activated') window.location.reload();
+      });
+    }
+  }).catch(err => console.warn('SW registration failed:', err));
+}
+</script>
 </body>
 </html>
