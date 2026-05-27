@@ -459,7 +459,6 @@ document.getElementById('btn-export').addEventListener('click', async () => {
     showToast('✅ Downloaded as ' + format.toUpperCase() + '!');
   } catch(e) { showToast('❌ Export failed: ' + e.message); console.error(e); }
 });
-</script>
 
 // ─── Video to Audio Extractor ─────────────────────────────
 const videoInput    = document.getElementById('video-input');
@@ -484,7 +483,6 @@ async function extractAudioFromVideo(file) {
     showToast('⚠ Not a video file: ' + file.name);
     return;
   }
-
   const progressWrap  = document.getElementById('video-extract-progress');
   const progressFill  = document.getElementById('video-progress-fill');
   const progressLabel = document.getElementById('video-progress-label');
@@ -496,44 +494,28 @@ async function extractAudioFromVideo(file) {
 
   try {
     await loadFFmpeg();
-
-    // track progress
     const onProgress = ({ progress }) => {
       const pct = Math.round(Math.min(progress, 1) * 100);
       progressFill.style.width = pct + '%';
       progressLabel.textContent = `Extracting… ${pct}%`;
     };
     ffmpeg.on('progress', onProgress);
-
     const videoExt = file.name.split('.').pop().toLowerCase();
     const outName  = file.name.replace(/\.[^.]+$/, '') + '_audio.mp3';
-
     videoStatus.textContent = `🎬 Extracting audio from "${file.name}"…`;
-
-    // Write video to FFmpeg virtual FS
     await ffmpeg.writeFile('video_in.' + videoExt, await fetchFile(new Blob([await file.arrayBuffer()], { type: file.type })));
-
-    // Extract audio — strip video track (-vn), encode as mp3
     await ffmpeg.exec(['-i', 'video_in.' + videoExt, '-vn', '-acodec', 'libmp3lame', '-q:a', '2', 'extracted_audio.mp3']);
-
     const data = await ffmpeg.readFile('extracted_audio.mp3');
     ffmpeg.off('progress', onProgress);
-
-    // Add to file list
-    const audioBuffer = data.buffer;
-    const audioFile   = { name: outName, buffer: audioBuffer, type: 'audio/mpeg' };
+    const audioFile = { name: outName, buffer: data.buffer, type: 'audio/mpeg' };
     loadedFiles.push(audioFile);
     renderFileList();
-
-    // Load into waveform
     loadFileIntoWaveform(audioFile);
-
     progressFill.style.width = '100%';
     progressLabel.textContent = 'Done!';
     videoStatus.textContent = `✅ Extracted: "${outName}" — loaded into waveform & file list`;
     setTimeout(() => progressWrap.classList.add('hidden'), 2500);
     showToast('✅ Audio extracted from video!');
-
   } catch(e) {
     progressWrap.classList.add('hidden');
     videoStatus.textContent = '❌ Extraction failed: ' + e.message;
@@ -542,10 +524,9 @@ async function extractAudioFromVideo(file) {
   }
 }
 
-
+// ─── COOP/COEP Service Worker ─────────────────────────────
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./coop-sw.js').then(reg => {
-    // If the SW was just installed (first visit), reload so headers take effect
     if (reg.installing) {
       reg.installing.addEventListener('statechange', e => {
         if (e.target.state === 'activated') window.location.reload();
