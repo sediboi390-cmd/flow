@@ -562,6 +562,61 @@ html.dark .modal-veil { background: rgba(0,0,0,0.7); }
 .undo-bar .btn { padding: 6px 12px; font-size: 0.75rem; }
 .undo-bar .btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
+/* ━━━━━━━━ Panel Notes textarea ━━━━━━━━ */
+.notes-input {
+  width: 100%;
+  font-family: inherit;
+  font-size: 0.75rem;
+  color: var(--text);
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  outline: none;
+  resize: vertical;
+  min-height: 36px;
+  max-height: 120px;
+  margin-top: 6px;
+  transition: border-color 0.15s;
+}
+.notes-input::placeholder { color: var(--dim); font-style: italic; }
+.notes-input:focus { border-color: var(--sage); }
+
+/* ━━━━━━━━ Keyboard-selected panel highlight ━━━━━━━━ */
+.panel.kb-selected { outline: 3px solid var(--sage); outline-offset: 2px; box-shadow: 0 0 0 5px var(--sage-soft); }
+
+/* ━━━━━━━━ Watermark input ━━━━━━━━ */
+.tool input[type="text"].wm-input {
+  font-family: inherit;
+  font-size: 0.78rem;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 5px 10px;
+  outline: none;
+  width: 140px;
+  transition: border-color 0.15s;
+}
+.tool input[type="text"].wm-input:focus { border-color: var(--sage); }
+
+/* ━━━━━━━━ Template preview swatch ━━━━━━━━ */
+.tpl-swatch {
+  display: flex;
+  gap: 3px;
+  justify-content: center;
+  margin-bottom: 6px;
+  height: 18px;
+  align-items: center;
+}
+.tpl-swatch span {
+  display: inline-block;
+  width: 18px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid rgba(0,0,0,0.1);
+}
+
 /* ━━━━━━━━ Responsive ━━━━━━━━ */
 @media (max-width: 640px) {
   .top, main { padding-left: 18px; padding-right: 18px; }
@@ -643,8 +698,22 @@ html.dark .modal-veil { background: rgba(0,0,0,0.7); }
     <span>🌙 Dark</span>
   </label>
 
+  <label class="toggle">
+    <input type="checkbox" id="showArrows"/>
+    <span class="toggle-track"></span>
+    <span>Arrows</span>
+  </label>
+
+  <div class="tool">
+    <div class="tool-label">Watermark</div>
+    <input type="text" class="wm-input" id="watermarkInput" placeholder="Your name/brand" maxlength="60"/>
+  </div>
+
   <div class="spacer"></div>
 
+  <button class="btn sm" id="btnShareLink" title="Copy share link (settings + captions, no images)">🔗 Share</button>
+  <button class="btn sm" id="btnExportJson" title="Export project as JSON">📦 Export</button>
+  <button class="btn sm" id="btnImportJson" title="Import project from JSON">📥 Import</button>
   <button class="btn ghost" id="btnReset" title="Clear all panels">Reset</button>
 </section>
 
@@ -680,10 +749,15 @@ const App = {
     gap: 'normal',
     showNumbers: true,
     showCaptions: true,
+    showArrows: false,
     darkMode: false,
+    watermark: '',
     panels: [],
   },
 };
+
+/* Keyboard nav state */
+let selectedPanelIndex = -1;
 
 /* ─── Undo/Redo ─── */
 const History = {
@@ -784,8 +858,10 @@ function load() {
         gap: p.gap || 'normal',
         showNumbers: p.showNumbers !== false,
         showCaptions: p.showCaptions !== false,
+        showArrows: p.showArrows || false,
         darkMode: p.darkMode || false,
-        panels: p.panels.map(x => ({ id: x.id || uid(), image: x.image || null, caption: x.caption || '' })),
+        watermark: p.watermark || '',
+        panels: p.panels.map(x => ({ id: x.id || uid(), image: x.image || null, caption: x.caption || '', notes: x.notes || '' })),
       });
       return true;
     }
@@ -795,7 +871,7 @@ function load() {
 
 /* ─── State mutations ─── */
 function addPanel(image) {
-  App.project.panels.push({ id: uid(), image: image || null, caption: '' });
+  App.project.panels.push({ id: uid(), image: image || null, caption: '', notes: '' });
   save(); render();
 }
 function removePanel(id) {
@@ -817,6 +893,12 @@ function setCaption(id, value) {
   if (!p) return;
   p.caption = value;
   save(true); // don't push to history on every keystroke
+}
+function setNotes(id, value) {
+  const p = App.project.panels.find(x => x.id === id);
+  if (!p) return;
+  p.notes = value;
+  save(true);
 }
 function reset() {
   if (App.project.panels.length === 0) return;
@@ -867,6 +949,25 @@ function handleDragEnd(e) {
   dragSrcId = null;
 }
 
+/* ─── Image compression ─── */
+function compressImage(dataUrl, maxWidth = 1920) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      if (img.width <= maxWidth) { resolve(dataUrl); return; }
+      const scale = maxWidth / img.width;
+      const canvas = document.createElement('canvas');
+      canvas.width = maxWidth;
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', 0.82));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
 /* ─── Image upload ─── */
 function chooseImageFor(targetId) {
   const inp = document.createElement('input');
@@ -879,11 +980,12 @@ function chooseImageFor(targetId) {
       if (!confirm('Image over 1.5MB — large images may exceed storage. Continue?')) return;
     }
     const reader = new FileReader();
-    reader.onload = (ev) => {
-      if (targetId === '__new__') { addPanel(ev.target.result); }
+    reader.onload = async (ev) => {
+      const compressed = await compressImage(ev.target.result);
+      if (targetId === '__new__') { addPanel(compressed); }
       else {
         const p = App.project.panels.find(x => x.id === targetId);
-        if (p) { p.image = ev.target.result; save(); render(); }
+        if (p) { p.image = compressed; save(); render(); }
       }
       flashToast('Image added');
     };
@@ -902,8 +1004,9 @@ function chooseMultiImages() {
     files.forEach((f) => {
       if (!f.type.startsWith('image/')) { pending--; return; }
       const reader = new FileReader();
-      reader.onload = (ev) => {
-        App.project.panels.push({ id: uid(), image: ev.target.result, caption: '' });
+      reader.onload = async (ev) => {
+        const compressed = await compressImage(ev.target.result);
+        App.project.panels.push({ id: uid(), image: compressed, caption: '', notes: '' });
         pending--;
         if (pending === 0) { save(); render(); flashToast(`${files.length} image(s) added`); }
       };
@@ -926,7 +1029,10 @@ function render() {
   $$('#gap button').forEach(b => b.classList.toggle('on', b.dataset.gap === App.project.gap));
   $('#showNumbers').checked = App.project.showNumbers;
   $('#showCaptions').checked = App.project.showCaptions;
+  $('#showArrows').checked = App.project.showArrows;
   $('#darkMode').checked = App.project.darkMode;
+  const wmInput = $('#watermarkInput');
+  if (document.activeElement !== wmInput) wmInput.value = App.project.watermark || '';
   document.documentElement.classList.toggle('dark', App.project.darkMode);
   $('#doneBar').style.display = App.project.panels.length > 0 ? 'flex' : 'none';
 
@@ -958,6 +1064,9 @@ function render() {
   });
   board.querySelectorAll('input[data-caption]').forEach(el => {
     el.oninput = () => setCaption(el.dataset.caption, el.value);
+  });
+  board.querySelectorAll('textarea[data-notes]').forEach(el => {
+    el.oninput = () => setNotes(el.dataset.notes, el.value);
   });
   $('#addCard').onclick = chooseMultiImages;
 
@@ -997,6 +1106,8 @@ function panelCardHtml(p, i) {
       <div class="panel-body">
         <input class="caption-input" data-caption="${p.id}"
                placeholder="Caption (optional)" value="${escapeHtml(p.caption)}" maxlength="120"/>
+        <textarea class="notes-input" data-notes="${p.id}"
+                  placeholder="Notes — dialogue, action, camera…" maxlength="500">${escapeHtml(p.notes || '')}</textarea>
       </div>
     </div>`;
 }
@@ -1010,6 +1121,12 @@ function showTemplatePicker() {
   const mount = $('#modalMount');
   const cardsHtml = TEMPLATES.map(t => `
     <div class="template-card" data-tpl="${t.id}">
+      <div class="tpl-swatch">
+        <span style="background:${t.bg}"></span>
+        <span style="background:${t.cellBg}"></span>
+        <span style="background:${t.border}"></span>
+        <span style="background:${t.accent}"></span>
+      </div>
       <div class="tpl-icon">${t.icon}</div>
       <div class="tpl-name">${t.name}</div>
       <div class="tpl-desc">${t.desc}</div>
@@ -1224,11 +1341,75 @@ async function composeSheet(templateId) {
     if (tpl.polaroid) ctx.restore();
   }
 
+  // Panel transition arrows
+  if (App.project.showArrows) {
+    ctx.strokeStyle = tpl.accent;
+    ctx.fillStyle = tpl.accent;
+    ctx.lineWidth = 2;
+    for (let i = 0; i < n - 1; i++) {
+      const r1 = Math.floor(i / cols), c1 = i % cols;
+      const r2 = Math.floor((i + 1) / cols), c2 = (i + 1) % cols;
+      const x1 = padding + c1 * (cellW + gap) + cellW;
+      const y1 = padding + headerH + r1 * (cellH + captionH + gap) + cellH / 2;
+      const x2 = padding + c2 * (cellW + gap);
+      const y2 = padding + headerH + r2 * (cellH + captionH + gap) + cellH / 2;
+
+      if (r1 === r2) {
+        // Same row: horizontal arrow in the gap
+        const midX = (x1 + x2) / 2;
+        ctx.beginPath();
+        ctx.moveTo(x1 + 4, y1);
+        ctx.lineTo(x2 - 4, y2);
+        ctx.stroke();
+        // Arrowhead
+        ctx.beginPath();
+        ctx.moveTo(x2 - 4, y2);
+        ctx.lineTo(x2 - 12, y2 - 5);
+        ctx.lineTo(x2 - 12, y2 + 5);
+        ctx.closePath();
+        ctx.fill();
+      } else {
+        // Next row: draw a curved arrow
+        const fromX = padding + c1 * (cellW + gap) + cellW / 2;
+        const fromY = padding + headerH + r1 * (cellH + captionH + gap) + cellH + captionH + 4;
+        const toX = padding + c2 * (cellW + gap) + cellW / 2;
+        const toY = padding + headerH + r2 * (cellH + captionH + gap) - 4;
+        ctx.beginPath();
+        ctx.moveTo(fromX, fromY);
+        ctx.quadraticCurveTo((fromX + toX) / 2, (fromY + toY) / 2, toX, toY);
+        ctx.stroke();
+        // Arrowhead
+        ctx.beginPath();
+        ctx.moveTo(toX, toY);
+        ctx.lineTo(toX - 5, toY - 10);
+        ctx.lineTo(toX + 5, toY - 10);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+  }
+
+  // Notes for Storyboard Pro template
+  if (tpl.technical) {
+    ctx.fillStyle = tpl.captionColor || tpl.text;
+    ctx.font = `400 10px "Courier New", monospace`;
+    for (let i = 0; i < n; i++) {
+      const note = (panels[i].notes || '').trim();
+      if (!note) continue;
+      const r = Math.floor(i / cols), c = i % cols;
+      const x = padding + c * (cellW + gap);
+      const y = padding + headerH + r * (cellH + captionH + gap) + cellH + 20;
+      const truncNote = note.length > 60 ? note.slice(0, 57) + '...' : note;
+      ctx.fillText(`[${truncNote}]`, x + 4, y);
+    }
+  }
+
   // Footer watermark
+  const wmText = (App.project.watermark || '').trim() || 'story sheet';
   ctx.fillStyle = tpl.accent;
   ctx.font = `400 11px "${tpl.font}", system-ui, sans-serif`;
   ctx.textAlign = 'right';
-  ctx.fillText(`story sheet · ${tpl.name.toLowerCase()}`, canvasW - padding, canvasH - padding + 16);
+  ctx.fillText(`${wmText} · ${tpl.name.toLowerCase()}`, canvasW - padding, canvasH - padding + 16);
   ctx.textAlign = 'left';
 
   // Show result
@@ -1313,13 +1494,40 @@ function showResultModal(url, panelCount, canvas, tpl) {
       const imgData = canvas.toDataURL('image/png');
       const pdfW = canvas.width * 0.75;
       const pdfH = canvas.height * 0.75;
-      const pdf = new jsPDF({
-        orientation: pdfW > pdfH ? 'landscape' : 'portrait',
-        unit: 'pt',
-        format: [pdfW, pdfH]
-      });
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH);
-      pdf.save(safeName() + '.pdf');
+
+      // Multi-page split for 12+ panels
+      if (panelCount >= 12) {
+        const maxPageH = 1100; // points
+        const scaleFactor = pdfW / canvas.width;
+        const totalH = canvas.height * scaleFactor;
+        const pages = Math.ceil(totalH / maxPageH);
+        const pdf = new jsPDF({
+          orientation: pdfW > maxPageH ? 'landscape' : 'portrait',
+          unit: 'pt',
+          format: [pdfW, Math.min(totalH, maxPageH)]
+        });
+        for (let pg = 0; pg < pages; pg++) {
+          if (pg > 0) pdf.addPage([pdfW, Math.min(totalH - pg * maxPageH, maxPageH)]);
+          const srcY = pg * (maxPageH / scaleFactor);
+          const srcH = Math.min(maxPageH / scaleFactor, canvas.height - srcY);
+          const sliceCanvas = document.createElement('canvas');
+          sliceCanvas.width = canvas.width;
+          sliceCanvas.height = srcH;
+          const sliceCtx = sliceCanvas.getContext('2d');
+          sliceCtx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+          const sliceData = sliceCanvas.toDataURL('image/png');
+          pdf.addImage(sliceData, 'PNG', 0, 0, pdfW, srcH * scaleFactor);
+        }
+        pdf.save(safeName() + '.pdf');
+      } else {
+        const pdf = new jsPDF({
+          orientation: pdfW > pdfH ? 'landscape' : 'portrait',
+          unit: 'pt',
+          format: [pdfW, pdfH]
+        });
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH);
+        pdf.save(safeName() + '.pdf');
+      }
       flashToast('Downloaded PDF');
     } catch (e) {
       console.error('PDF export error:', e);
@@ -1353,21 +1561,187 @@ $$('#cols button').forEach(b => b.addEventListener('click', () => { App.project.
 $$('#gap button').forEach(b => b.addEventListener('click', () => { App.project.gap = b.dataset.gap; save(); render(); }));
 $('#showNumbers').addEventListener('change', e => { App.project.showNumbers = e.target.checked; save(); });
 $('#showCaptions').addEventListener('change', e => { App.project.showCaptions = e.target.checked; save(); });
+$('#showArrows').addEventListener('change', e => { App.project.showArrows = e.target.checked; save(); });
 $('#darkMode').addEventListener('change', e => { applyDarkMode(e.target.checked); });
+$('#watermarkInput').addEventListener('input', e => { App.project.watermark = e.target.value; save(true); });
 $('#btnReset').addEventListener('click', reset);
 $('#btnDone').addEventListener('click', showTemplatePicker);
 $('#btnUndo').addEventListener('click', () => History.undo());
 $('#btnRedo').addEventListener('click', () => History.redo());
+
+/* ─── Share-via-URL ─── */
+$('#btnShareLink').addEventListener('click', () => {
+  const shareData = {
+    title: App.project.title,
+    aspect: App.project.aspect,
+    cols: App.project.cols,
+    gap: App.project.gap,
+    showNumbers: App.project.showNumbers,
+    showCaptions: App.project.showCaptions,
+    showArrows: App.project.showArrows,
+    watermark: App.project.watermark,
+    panels: App.project.panels.map(p => ({ caption: p.caption, notes: p.notes || '' })),
+  };
+  const hash = '#share=' + encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(shareData)))));
+  const url = location.origin + location.pathname + hash;
+  navigator.clipboard.writeText(url).then(() => {
+    flashToast('Share link copied (no images)');
+  }).catch(() => {
+    prompt('Copy this share link:', url);
+  });
+});
+
+/* ─── Export / Import JSON ─── */
+$('#btnExportJson').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(App.project, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = safeName() + '.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+  flashToast('Project exported as JSON');
+});
+
+$('#btnImportJson').addEventListener('click', () => {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.json,application/json';
+  inp.onchange = (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (!data || !Array.isArray(data.panels)) { alert('Invalid project file.'); return; }
+        Object.assign(App.project, {
+          title: data.title || '',
+          aspect: data.aspect || '16:9',
+          cols: data.cols || 'auto',
+          gap: data.gap || 'normal',
+          showNumbers: data.showNumbers !== false,
+          showCaptions: data.showCaptions !== false,
+          showArrows: data.showArrows || false,
+          darkMode: data.darkMode || false,
+          watermark: data.watermark || '',
+          panels: data.panels.map(x => ({ id: x.id || uid(), image: x.image || null, caption: x.caption || '', notes: x.notes || '' })),
+        });
+        save(); render();
+        flashToast('Project imported');
+      } catch (err) { alert('Could not parse JSON file.'); }
+    };
+    reader.readAsText(f);
+  };
+  inp.click();
+});
+
+/* ─── Load from share URL ─── */
+function loadFromShareURL() {
+  if (!location.hash.startsWith('#share=')) return false;
+  try {
+    const encoded = location.hash.slice(7);
+    const json = decodeURIComponent(escape(atob(decodeURIComponent(encoded))));
+    const data = JSON.parse(json);
+    if (data && Array.isArray(data.panels)) {
+      App.project.title = data.title || '';
+      App.project.aspect = data.aspect || '16:9';
+      App.project.cols = data.cols || 'auto';
+      App.project.gap = data.gap || 'normal';
+      App.project.showNumbers = data.showNumbers !== false;
+      App.project.showCaptions = data.showCaptions !== false;
+      App.project.showArrows = data.showArrows || false;
+      App.project.watermark = data.watermark || '';
+      App.project.panels = data.panels.map((p, i) => ({
+        id: uid(),
+        image: null,
+        caption: p.caption || '',
+        notes: p.notes || '',
+      }));
+      save(); render();
+      flashToast('Loaded from share link (add images)');
+      history.replaceState(null, '', location.pathname);
+      return true;
+    }
+  } catch (e) { console.warn('Share URL parse failed:', e); }
+  return false;
+}
 
 /* Keyboard shortcuts */
 document.addEventListener('keydown', (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); showTemplatePicker(); }
   if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); History.undo(); }
   if ((e.metaKey || e.ctrlKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); History.redo(); }
+
+  // Keyboard navigation for panels
+  const panels = App.project.panels;
+  if (panels.length === 0) return;
+  const activeTag = document.activeElement && document.activeElement.tagName;
+  if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') return;
+
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+    e.preventDefault();
+    selectedPanelIndex = Math.min(selectedPanelIndex + 1, panels.length - 1);
+    highlightSelected();
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    selectedPanelIndex = Math.max(selectedPanelIndex - 1, 0);
+    highlightSelected();
+  } else if (e.key === 'Delete' || e.key === 'Backspace') {
+    if (selectedPanelIndex >= 0 && selectedPanelIndex < panels.length) {
+      e.preventDefault();
+      const pid = panels[selectedPanelIndex].id;
+      App.project.panels = App.project.panels.filter(p => p.id !== pid);
+      selectedPanelIndex = Math.min(selectedPanelIndex, App.project.panels.length - 1);
+      save(); render(); highlightSelected();
+    }
+  } else if (e.key === 'Enter' && !e.metaKey && !e.ctrlKey) {
+    if (selectedPanelIndex >= 0 && selectedPanelIndex < panels.length) {
+      e.preventDefault();
+      chooseImageFor(panels[selectedPanelIndex].id);
+    }
+  } else if (e.key === 'Escape') {
+    selectedPanelIndex = -1;
+    highlightSelected();
+  }
+});
+
+function highlightSelected() {
+  document.querySelectorAll('.panel.kb-selected').forEach(el => el.classList.remove('kb-selected'));
+  if (selectedPanelIndex < 0) return;
+  const panels = document.querySelectorAll('.panel[data-panel-id]');
+  if (panels[selectedPanelIndex]) {
+    panels[selectedPanelIndex].classList.add('kb-selected');
+    panels[selectedPanelIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+}
+
+/* ─── Import from clipboard (Ctrl+V / Cmd+V paste) ─── */
+document.addEventListener('paste', async (e) => {
+  const activeTag = document.activeElement && document.activeElement.tagName;
+  if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;
+
+  const items = e.clipboardData && e.clipboardData.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      e.preventDefault();
+      const file = item.getAsFile();
+      if (!file) continue;
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        const compressed = await compressImage(ev.target.result);
+        addPanel(compressed);
+        flashToast('Pasted image added as panel');
+      };
+      reader.readAsDataURL(file);
+      break;
+    }
+  }
 });
 
 /* ─── Boot ─── */
-load();
+if (!loadFromShareURL()) {
+  load();
+}
 if (App.project.darkMode) document.documentElement.classList.add('dark');
 History.push({ ...App.project, panels: App.project.panels.map(p => ({...p})) });
 render();
