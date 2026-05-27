@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<!-- Shot Builder Studio v1.0 (Phase 1) — 2026-05-27 -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Shot Builder Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #F7F6F3;
+      --surface:  #FFFFFF;
+      --border:   #E8E5DF;
+      --sidebar:  #F2F0EC;
+      --text:     #2D2D2D;
+      --muted:    #9A9590;
+      --teal:     #4A8C8C;
+      --sage:     #6B8F71;
+      --clay:     #A0714F;
+      --lavender: #7B7BA8;
+      --red-soft: #C0524A;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      min-height: 100vh;
+    }
+
+    /* HEADER */
+    .app-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .app-logo {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .app-logo-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--teal);
+    }
+    .header-right { display: flex; gap: 8px; align-items: center; }
+    .project-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg);
+    }
+    .project-label span { color: var(--teal); font-weight: 500; }
+
+    /* BUTTONS */
+    .btn {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 7px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      transition: all 0.15s;
+    }
+    .btn-ghost { background: var(--surface); color: var(--muted); }
+    .btn-ghost:hover { border-color: var(--teal); color: var(--teal); }
+    .btn-primary { background: var(--teal); border-color: var(--teal); color: #fff; }
+    .btn-primary:hover { background: #3d7878; }
+    .btn-export { background: var(--surface); border-color: var(--border); color: var(--clay); }
+    .btn-export:hover { border-color: var(--clay); background: #fdf7f3; }
+
+    .app-body { display: flex; height: calc(100vh - 52px); }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 220px; min-width: 220px;
+      background: var(--sidebar);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      overflow-y: auto;
+    }
+    .sidebar-section { padding: 16px; border-bottom: 1px solid var(--border); }
+    .sidebar-label {
+      font-size: 0.62rem; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 8px;
+    }
+
+    .mode-tab {
+      display: flex; align-items: center; gap: 9px;
+      padding: 8px 10px; border-radius: 7px;
+      cursor: pointer; font-size: 0.78rem;
+      color: var(--muted); margin-bottom: 2px;
+      transition: all 0.13s; border: 1px solid transparent;
+    }
+    .mode-tab:hover { background: var(--surface); color: var(--text); }
+    .mode-tab.active {
+      background: var(--surface);
+      border-color: var(--border);
+      color: var(--teal); font-weight: 500;
+    }
+    .mode-icon { font-size: 0.95rem; width: 18px; text-align: center; }
+
+    .sample-tab {
+      display: flex; align-items: center; gap: 9px;
+      padding: 8px 10px; border-radius: 7px;
+      cursor: pointer; font-size: 0.78rem;
+      color: var(--muted); margin-top: 8px;
+      transition: all 0.13s; border: 1px solid transparent;
+    }
+    .sample-tab:hover { background: var(--surface); color: var(--text); }
+    .sample-divider { height: 1px; background: var(--border); margin: 8px 4px 0; }
+    .sample-hint { font-size: 0.62rem; color: var(--muted); margin-top: 6px; line-height: 1.5; padding-left: 6px; }
+
+    .char-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 9px; border-radius: 20px;
+      font-size: 0.68rem; margin: 2px 2px 2px 0;
+      border: 1px solid var(--border);
+      background: var(--surface); color: var(--text);
+    }
+    .char-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+    .export-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 10px; border-radius: 7px;
+      font-size: 0.72rem; color: var(--muted);
+      cursor: pointer; margin-bottom: 2px;
+      transition: all 0.13s;
+    }
+    .export-item:hover { background: var(--surface); color: var(--teal); }
+    .export-icon { font-size: 0.85rem; }
+
+    .project-stat { font-size: 0.68rem; color: var(--muted); line-height: 2; display: flex; justify-content: space-between; align-items: center; }
+    .project-stat span { color: var(--text); font-weight: 500; }
+
+    .ratio-select {
+      font-family: 'Inter', sans-serif; font-size: 0.65rem;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); padding: 2px 6px; border-radius: 4px;
+      cursor: pointer; outline: none;
+    }
+    .ratio-select:hover, .ratio-select:focus { border-color: var(--teal); }
+
+
+    /* MAIN */
+    .main-canvas { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .timeline-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex; align-items: center; gap: 6px;
+      min-height: 50px;
+      overflow-x: auto;
+    }
+    .timeline-bar-empty { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.02em; }
+    .tl-act-pill {
+      font-size: 0.62rem; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 3px 9px; border-radius: 20px;
+      border: 1px solid; white-space: nowrap;
+    }
+    .tl-act-1 { color: var(--teal); border-color: rgba(74,140,140,0.3); background: rgba(74,140,140,0.07); }
+    .tl-act-2 { color: var(--sage); border-color: rgba(107,143,113,0.3); background: rgba(107,143,113,0.07); }
+    .tl-line { height: 1px; width: 28px; flex-shrink: 0; background: var(--border); }
+    .tl-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--border); }
+    .tl-thumb {
+      width: 48px; height: 32px; border-radius: 5px;
+      border: 1px solid var(--border); background: var(--bg);
+      flex-shrink: 0; cursor: pointer; overflow: hidden;
+    }
+    .tl-thumb.active { border-color: var(--teal); box-shadow: 0 0 0 2px rgba(74,140,140,0.15); }
+    .tl-thumb svg { width: 100%; height: 100%; }
+    .tl-add {
+      width: 32px; height: 32px; border-radius: 5px;
+      border: 1px dashed var(--border); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--muted); font-size: 1rem; cursor: pointer;
+    }
+    .tl-add:hover { border-color: var(--teal); color: var(--teal); }
+
+    .view-toggle-row {
+      padding: 12px 24px 0;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px;
+    }
+    .view-toggle {
+      display: inline-flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 2px;
+    }
+    .view-tab {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 5px;
+      font-size: 0.72rem; font-weight: 500;
+      color: var(--muted); cursor: pointer;
+      background: transparent; border: none;
+      font-family: 'Inter', sans-serif;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active { background: var(--bg); color: var(--teal); }
+    .view-tab-icon { font-size: 0.85rem; }
+    .view-meta { font-size: 0.65rem; color: var(--muted); }
+    .view-meta strong { color: var(--text); font-weight: 500; }
+
+    .panel-grid { flex: 1; overflow-y: auto; padding: 20px 24px; }
+
+    .empty-state {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      height: 100%; min-height: 400px;
+      text-align: center; padding: 40px 20px;
+    }
+    .empty-icon { font-size: 3rem; color: var(--border); margin-bottom: 16px; }
+    .empty-title {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1.4rem; font-weight: 500;
+      color: var(--text); margin-bottom: 8px;
+    }
+    .empty-desc {
+      font-size: 0.85rem; color: var(--muted);
+      max-width: 420px; line-height: 1.6; margin-bottom: 24px;
+    }
+    .empty-actions { display: flex; gap: 10px; }
+    .empty-actions .btn { padding: 10px 20px; font-size: 0.78rem; }
+
+    .act-heading {
+      font-size: 0.7rem; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 12px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .act-heading::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 14px; margin-bottom: 28px;
+    }
+
+    .panel-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden;
+      cursor: pointer; transition: all 0.15s;
+      animation: fadeUp 0.35s ease both;
+      position: relative;
+    }
+    .panel-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.07); transform: translateY(-2px); }
+    .panel-card.selected { border-color: var(--teal); box-shadow: 0 0 0 2px rgba(74,140,140,0.18); }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .panel-scene { width: 100%; height: 160px; background: #EDECEA; position: relative; overflow: hidden; }
+    .panel-scene svg { width: 100%; height: 100%; }
+    .panel-badge {
+      position: absolute; top: 8px; left: 8px;
+      background: rgba(255,255,255,0.88);
+      color: var(--muted); font-size: 0.58rem;
+      font-weight: 600; letter-spacing: 0.08em;
+      padding: 2px 7px; border-radius: 4px;
+      border: 1px solid var(--border); z-index: 5;
+    }
+    .panel-dur {
+      position: absolute; top: 8px; right: 8px;
+      background: rgba(255,255,255,0.88);
+      color: var(--muted); font-size: 0.58rem;
+      padding: 2px 7px; border-radius: 4px;
+      border: 1px solid var(--border); z-index: 5;
+    }
+    .panel-mode {
+      position: absolute; bottom: 8px; right: 8px;
+      font-size: 0.58rem; font-weight: 500;
+      padding: 2px 7px; border-radius: 4px; z-index: 5;
+    }
+    .m-card { background: rgba(74,140,140,0.12); color: var(--teal); }
+    .m-template { background: rgba(107,143,113,0.12); color: var(--sage); }
+    .m-text { background: rgba(123,123,168,0.12); color: var(--lavender); }
+    .m-sketch { background: rgba(160,113,79,0.12); color: var(--clay); }
+
+
+    .panel-body { padding: 12px 14px; }
+    .panel-title { font-size: 0.82rem; font-weight: 600; color: var(--text); margin-bottom: 7px; }
+    .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+    .tag {
+      font-size: 0.6rem; font-weight: 500;
+      padding: 2px 8px; border-radius: 20px;
+    }
+    .t-shot { background: rgba(74,140,140,0.1); color: var(--teal); }
+    .t-move { background: rgba(107,143,113,0.1); color: var(--sage); }
+    .t-emotion { background: rgba(123,123,168,0.1); color: var(--lavender); }
+    .t-light { background: rgba(160,113,79,0.1); color: var(--clay); }
+    .panel-desc { font-size: 0.68rem; color: var(--muted); line-height: 1.6; margin-bottom: 10px; }
+    .panel-actions {
+      display: flex; gap: 6px; justify-content: flex-end;
+      padding-top: 8px; border-top: 1px solid var(--border);
+    }
+    .panel-btn {
+      font-family: 'Inter', sans-serif; font-size: 0.65rem; font-weight: 500;
+      padding: 4px 10px; border-radius: 6px; cursor: pointer;
+      border: 1px solid var(--border); background: var(--bg); color: var(--muted);
+    }
+    .panel-btn:hover { border-color: var(--teal); color: var(--teal); background: var(--surface); }
+    .panel-btn.del:hover { border-color: var(--red-soft); color: var(--red-soft); }
+
+    .add-card {
+      background: transparent; border: 1.5px dashed var(--border);
+      border-radius: 10px; min-height: 240px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 8px;
+      cursor: pointer; color: var(--muted);
+    }
+    .add-card:hover { border-color: var(--teal); color: var(--teal); background: rgba(74,140,140,0.04); }
+    .add-card-icon { font-size: 1.6rem; }
+    .add-card-label { font-size: 0.68rem; font-weight: 500; }
+
+    /* Outline view */
+    .outline-list { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px; }
+    .outline-row { display: flex; gap: 14px; padding: 12px 14px; border-radius: 7px; cursor: pointer; transition: background 0.13s; }
+    .outline-row:hover { background: var(--bg); }
+    .outline-num { font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--muted); width: 28px; }
+    .outline-body { flex: 1; }
+    .outline-title { font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .outline-dur { font-family: 'Inter', sans-serif; font-size: 0.65rem; font-weight: 400; color: var(--muted); margin-left: 6px; }
+    .outline-vo { font-size: 0.7rem; color: var(--muted); line-height: 1.5; font-style: italic; }
+    .outline-meta { font-size: 0.65rem; color: var(--muted); align-self: center; }
+
+    /* Templates */
+    .template-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; cursor: pointer; transition: all 0.13s; min-height: 80px; display: flex; flex-direction: column; justify-content: center; }
+    .template-card:hover { border-color: var(--teal); box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+    .template-name { font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .template-meta { font-size: 0.65rem; color: var(--muted); text-transform: capitalize; }
+
+    /* Editor drawer */
+    .editor-drawer {
+      height: 240px; background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex; flex-direction: column;
+    }
+    .drawer-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 20px; border-bottom: 1px solid var(--border);
+    }
+    .drawer-title { font-size: 0.78rem; font-weight: 600; color: var(--text); }
+    .drawer-subtitle { font-size: 0.65rem; color: var(--muted); margin-top: 1px; }
+    .drawer-body {
+      flex: 1; padding: 12px 20px;
+      display: grid; grid-template-columns: repeat(5, 1fr) 2fr;
+      gap: 12px; overflow-y: auto; align-items: start;
+    }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field-label { font-size: 0.6rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+    .field-select, .field-input {
+      font-family: 'Inter', sans-serif; font-size: 0.72rem;
+      background: var(--bg); border: 1px solid var(--border);
+      color: var(--text); padding: 5px 8px; border-radius: 6px;
+      outline: none; width: 100%;
+    }
+    .field-select:focus, .field-input:focus { border-color: var(--teal); }
+    .field-textarea {
+      font-family: 'Inter', sans-serif; font-size: 0.7rem;
+      background: var(--bg); border: 1px solid var(--border);
+      color: var(--text); padding: 6px 8px; border-radius: 6px;
+      outline: none; resize: none; width: 100%; height: 56px; line-height: 1.5;
+    }
+    .field-textarea:focus { border-color: var(--teal); }
+    .char-checks { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 2px; }
+    .char-ck {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 0.65rem; padding: 3px 8px; border-radius: 20px;
+      border: 1px solid var(--border); cursor: pointer;
+      color: var(--muted); background: var(--bg);
+    }
+    .char-ck.on { background: rgba(74,140,140,0.08); }
+
+    /* Status bar */
+    .status-bar {
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      padding: 6px 20px;
+      display: flex; gap: 20px;
+      font-size: 0.62rem; color: var(--muted);
+      align-items: center;
+    }
+    .status-bar b { color: var(--text); font-weight: 500; }
+    .status-bar-right { margin-left: auto; transition: color 0.3s; }
+
+    /* Print styles */
+    @media print {
+      .app-header, .sidebar, .timeline-bar, .view-toggle-row, .editor-drawer, .status-bar, .panel-actions, .add-card { display: none !important; }
+      body { background: white; }
+      .main-canvas { display: block; height: auto; }
+      .app-body { height: auto; display: block; }
+      .panel-grid { padding: 0; overflow: visible; }
+      .panel-card { break-inside: avoid; page-break-inside: avoid; box-shadow: none; }
+      .grid { grid-template-columns: repeat(2, 1fr) !important; gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="app-logo">
+    <div class="app-logo-dot"></div>
+    Shot Builder Studio
+  </div>
+  <div class="header-right">
+    <div class="project-label">Project: <span id="project-name">Untitled</span></div>
+    <button class="btn btn-ghost" id="btn-undo">Undo</button>
+    <button class="btn btn-primary" id="btn-save">Save</button>
+  </div>
+</header>
+
+<div class="app-body">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-canvas">
+    <div class="timeline-bar" id="timeline-bar"></div>
+    <div class="view-toggle-row" id="view-toggle-row"></div>
+    <div class="panel-grid" id="panel-grid"></div>
+    <div class="editor-drawer" id="editor-drawer" style="display:none"></div>
+    <div class="status-bar" id="status-bar"></div>
+  </div>
+</div>
+
+<script>
+
+'use strict';
+
+// ====== STATE ======
+const STORAGE_KEY = 'shotBuilderStudio.project.v1';
+
+const App = {
+  project: {
+    name: 'Untitled',
+    aspectRatio: '16:9',
+    characters: [],
+    panels: [],
+    acts: ['Act I'],
+  },
+  ui: {
+    view: 'grid',
+    activeMode: 'card',
+    selectedPanelId: null,
+  },
+};
+
+const TEMPLATES = [
+  { id: 't-wide-establish', label: 'Wide Establishing Shot', shotType: 'wide',     cameraMove: 'static',   cameraAngle: 'eye',  background: 'street', lighting: 'sunset',    emotion: 'neutral', duration: 8 },
+  { id: 't-talking-head',   label: 'Talking Head',           shotType: 'medium',   cameraMove: 'static',   cameraAngle: 'eye',  background: 'studio', lighting: 'spotlight', emotion: 'neutral', duration: 10 },
+  { id: 't-product-reveal', label: 'Product Reveal',         shotType: 'close-up', cameraMove: 'zoom',     cameraAngle: 'low',  background: 'studio', lighting: 'spotlight', emotion: 'excited', duration: 5 },
+  { id: 't-hook-opener',    label: 'Hook Opener',            shotType: 'close-up', cameraMove: 'zoom',     cameraAngle: 'eye',  background: 'studio', lighting: 'bright',    emotion: 'tense',   duration: 3 },
+  { id: 't-cta-closer',     label: 'CTA Closer',             shotType: 'medium',   cameraMove: 'static',   cameraAngle: 'eye',  background: 'studio', lighting: 'bright',    emotion: 'happy',   duration: 4 },
+  { id: 't-step-callout',   label: 'Tutorial Step',          shotType: 'medium',   cameraMove: 'static',   cameraAngle: 'high', background: 'studio', lighting: 'bright',    emotion: 'neutral', duration: 6 },
+];
+
+const CHARACTER_COLORS = ['#4A8C8C', '#6B8F71', '#A0714F', '#7B7BA8', '#C0524A', '#9A9590'];
+
+const SCENE_BG_BY_MODE = {
+  card: '#EDECEA', template: '#EAE9F0', text: '#E8F0E9', sketch: '#F5EFE9',
+};
+const BG_TINT_BY_LIGHTING = {
+  dark: '#D9D5CF', bright: '#FFFFFF', neon: '#DFF0EF', sunset: '#F5E2D0', spotlight: '#FFFDE7', silhouette: '#C9C5BF',
+};
+
+// ====== HELPERS ======
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function capitalize(s) { return String(s || '').charAt(0).toUpperCase() + String(s || '').slice(1); }
+function totalDuration() { return App.project.panels.reduce((sum, p) => sum + (Number(p.duration) || 0), 0); }
+function formatDuration(s) { if (s < 60) return s + 's'; return Math.floor(s / 60) + 'm ' + (s % 60) + 's'; }
+function totalVoiceoverWords() {
+  return App.project.panels.reduce((sum, p) => {
+    const w = (p.voiceover || '').trim();
+    return sum + (w ? w.split(/\s+/).length : 0);
+  }, 0);
+}
+function aspectFor(ratio) {
+  if (ratio === '9:16') return { w: 90, h: 160 };
+  if (ratio === '1:1')  return { w: 160, h: 160 };
+  return { w: 400, h: 160 };
+}
+function selectOptions(opts, selected) {
+  return opts.map(o => '<option value="' + o + '"' + (o === selected ? ' selected' : '') + '>' + capitalize(o) + '</option>').join('');
+}
+
+// ====== PERSISTENCE ======
+function saveToStorage() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(App.project)); }
+  catch (e) { console.warn('Save failed:', e); }
+}
+function loadFromStorage() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return false;
+  try {
+    const proj = JSON.parse(raw);
+    // Basic shape validation
+    if (proj && Array.isArray(proj.panels) && Array.isArray(proj.acts)) {
+      App.project = proj;
+      // Backfill new fields for older saves
+      App.project.characters = App.project.characters || [];
+      App.project.aspectRatio = App.project.aspectRatio || '16:9';
+      return true;
+    }
+  } catch (e) { console.warn('Load failed:', e); }
+  return false;
+}
+setInterval(saveToStorage, 30000);
+
+
+// ====== SVG SCENE GENERATOR ======
+function renderPanelScene(p) {
+  const { w, h } = aspectFor(App.project.aspectRatio);
+  const tint = BG_TINT_BY_LIGHTING[p.lighting] || SCENE_BG_BY_MODE[p.creationMode] || '#EDECEA';
+  const chars = (p.characters || []).map(id => App.project.characters.find(c => c.id === id)).filter(Boolean);
+  let silhouettes = '';
+  chars.slice(0, 2).forEach((c, i) => {
+    const cx = chars.length === 1 ? w / 2 : (i === 0 ? w * 0.3 : w * 0.7);
+    const cy = h * 0.55;
+    silhouettes += `
+      <ellipse cx="${cx}" cy="${cy - 18}" rx="9" ry="10" fill="#FFFFFF" stroke="${c.color}" stroke-width="1.2"/>
+      <rect x="${cx - 9}" y="${cy - 6}" width="18" height="32" rx="4" fill="#FFFFFF" stroke="${c.color}" stroke-width="1"/>
+      <line x1="${cx - 9}" y1="${cy + 2}" x2="${cx - 22}" y2="${cy + 20}" stroke="${c.color}" stroke-width="1.4"/>
+      <line x1="${cx + 9}" y1="${cy + 2}" x2="${cx + 22}" y2="${cy + 20}" stroke="${c.color}" stroke-width="1.4"/>
+      <line x1="${cx - 4}" y1="${cy + 26}" x2="${cx - 7}" y2="${cy + 38}" stroke="${c.color}" stroke-width="1.4"/>
+      <line x1="${cx + 4}" y1="${cy + 26}" x2="${cx + 7}" y2="${cy + 38}" stroke="${c.color}" stroke-width="1.4"/>`;
+  });
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+    <rect width="${w}" height="${h}" fill="${tint}"/>
+    <rect x="0" y="${h - 22}" width="${w}" height="22" fill="rgba(0,0,0,0.05)"/>
+    ${silhouettes}
+  </svg>`;
+}
+
+// ====== PANEL CRUD ======
+function addPanel(actIdx) {
+  const lastPanel = App.project.panels[App.project.panels.length - 1];
+  const targetAct = (actIdx != null) ? actIdx : (lastPanel ? lastPanel.act : 0);
+  const newPanel = {
+    id: uid(),
+    act: targetAct,
+    order: App.project.panels.length,
+    creationMode: App.ui.activeMode,
+    label: 'Untitled Panel',
+    shotType: 'medium', cameraAngle: 'eye', cameraMove: 'static',
+    duration: 5,
+    background: 'studio', lighting: 'bright', emotion: 'neutral',
+    characters: [],
+    visualStyle: 'animated-realism', videoStyle: 'youtube',
+    description: '', voiceover: '', motionNotes: '', audioNotes: '',
+    sketchDataUrl: null, templateId: null, textPrompt: null,
+  };
+  App.project.panels.push(newPanel);
+  App.ui.selectedPanelId = newPanel.id;
+  saveToStorage();
+  render();
+}
+
+function duplicatePanel(id) {
+  const p = App.project.panels.find(x => x.id === id);
+  if (!p) return;
+  const copy = Object.assign({}, p, { id: uid(), order: App.project.panels.length, label: p.label + ' (copy)' });
+  App.project.panels.push(copy);
+  saveToStorage();
+  render();
+}
+
+function deletePanel(id) {
+  if (!confirm('Delete this panel?')) return;
+  App.project.panels = App.project.panels.filter(p => p.id !== id);
+  if (App.ui.selectedPanelId === id) App.ui.selectedPanelId = null;
+  saveToStorage();
+  render();
+}
+
+function addCharacter() {
+  if (App.project.characters.length >= 6) {
+    alert('Maximum of 6 characters per project.');
+    return;
+  }
+  const name = prompt('Character name:', 'Hero');
+  if (!name) return;
+  const role = prompt('Role (hero / villain / narrator / host / product / extra):', 'hero');
+  if (!role) return;
+  const used = new Set(App.project.characters.map(c => c.color));
+  const color = CHARACTER_COLORS.find(c => !used.has(c)) || '#9A9590';
+  App.project.characters.push({ id: uid(), name, role, color });
+  saveToStorage();
+  render();
+}
+
+
+// ====== SAMPLE LOADER ======
+function loadSample() {
+  if (App.project.panels.length > 0) {
+    if (!confirm('Loading the sample will replace your current project. Continue?')) return;
+  }
+  const heroId = uid();
+  const hostId = uid();
+  App.project = {
+    name: 'Sample Storyboard',
+    aspectRatio: '16:9',
+    acts: ['Act I — The Hook', 'Act II — The Action'],
+    characters: [
+      { id: heroId, name: 'Hero', role: 'hero', color: '#4A8C8C' },
+      { id: hostId, name: 'Host', role: 'host', color: '#7B7BA8' },
+    ],
+    panels: [
+      { id: uid(), act: 0, order: 0, creationMode: 'card',     label: 'Wide Establishing — Alley', shotType: 'wide',     cameraAngle: 'eye', cameraMove: 'static',   duration: 18, background: 'alley',  lighting: 'neon',      emotion: 'tense',   characters: [heroId, hostId], visualStyle: 'animated-realism', videoStyle: 'cinematic', description: 'Two figures face each other in a rain-soaked alley.', voiceover: 'The night was cold. Two figures stood, separated by silence and rain.', motionNotes: 'Slow dolly push', audioNotes: 'Rain · low drone', sketchDataUrl: null, templateId: null, textPrompt: null },
+      { id: uid(), act: 0, order: 1, creationMode: 'template', label: 'ECU Face — Host Close-Up',   shotType: 'close-up', cameraAngle: 'low', cameraMove: 'static',   duration: 7,  background: 'studio', lighting: 'spotlight', emotion: 'excited', characters: [hostId],         visualStyle: 'animated-realism', videoStyle: 'youtube',   description: 'Host extreme close-up, low angle.',                voiceover: "Today, we're talking about something that changed everything.", motionNotes: 'Locked',          audioNotes: 'Heartbeat',     sketchDataUrl: null, templateId: 't-talking-head', textPrompt: null },
+      { id: uid(), act: 1, order: 2, creationMode: 'text',     label: 'Punch Impact',               shotType: 'medium',   cameraAngle: 'eye', cameraMove: 'handheld', duration: 13, background: 'street', lighting: 'dark',      emotion: 'angry',   characters: [heroId, hostId], visualStyle: 'animated-realism', videoStyle: 'cinematic', description: 'Hero right cross connects.',                       voiceover: 'And then it happened in a single moment.',                       motionNotes: 'Camera shake',    audioNotes: 'Bone crack',    sketchDataUrl: null, templateId: null, textPrompt: 'punch impact slow motion' },
+      { id: uid(), act: 1, order: 3, creationMode: 'sketch',   label: 'Outro — CTA Sketch',         shotType: 'medium',   cameraAngle: 'eye', cameraMove: 'zoom',     duration: 9,  background: 'studio', lighting: 'bright',    emotion: 'happy',   characters: [hostId],         visualStyle: 'sketch',           videoStyle: 'youtube',   description: 'Hand-sketched CTA frame.',                         voiceover: 'If this helped you, smash that subscribe button.',               motionNotes: 'Zoom in slight',  audioNotes: 'Upbeat sting',  sketchDataUrl: null, templateId: null, textPrompt: null },
+    ],
+  };
+  App.ui.selectedPanelId = null;
+  saveToStorage();
+  render();
+  flashStatus('Sample loaded');
+}
+
+// ====== EXPORT ======
+function exportProject(kind) {
+  if (App.project.panels.length === 0) {
+    alert('Add at least one panel before exporting.');
+    return;
+  }
+  if (kind === 'json') return exportJson();
+  if (kind === 'html') return exportHtml();
+  if (kind === 'pdf')  return exportPdf();
+}
+
+function downloadBlob(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function safeName() {
+  return (App.project.name || 'storyboard').replace(/[^a-z0-9]/gi, '-').toLowerCase();
+}
+
+function exportJson() {
+  downloadBlob(JSON.stringify(App.project, null, 2), safeName() + '.json', 'application/json');
+  flashStatus('JSON exported');
+}
+
+function exportHtml() {
+  const styles = document.querySelector('style').innerHTML;
+  const panelHtml = App.project.acts.map((name, idx) => {
+    const cards = App.project.panels.filter(p => p.act === idx).map(renderPanelCard).join('');
+    if (!cards) return '';
+    return '<div class="act-heading">' + escapeHtml(name) + '</div><div class="grid">' + cards + '</div>';
+  }).join('');
+  const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + escapeHtml(App.project.name) +
+    ' — Storyboard</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"><style>' + styles +
+    '</style></head><body style="background:var(--bg);padding:30px"><h1 style="font-family:\'DM Sans\',sans-serif;color:var(--text);margin-bottom:24px;font-weight:500">' +
+    escapeHtml(App.project.name) + '</h1>' + panelHtml + '</body></html>';
+  downloadBlob(html, safeName() + '.html', 'text/html');
+  flashStatus('HTML exported');
+}
+
+function exportPdf() {
+  const original = document.title;
+  document.title = App.project.name + ' — Storyboard';
+  window.print();
+  setTimeout(() => { document.title = original; }, 500);
+}
+
+
+// ====== RENDER ======
+function render() {
+  document.getElementById('project-name').textContent = App.project.name;
+  renderSidebar();
+  renderTimeline();
+  renderViewToggle();
+  renderMain();
+  renderEditor();
+  renderStatusBar();
+}
+
+function renderSidebar() {
+  const modes = [
+    { id: 'card',     icon: '📋', label: 'Card' },
+    { id: 'template', icon: '🎬', label: 'Templates' },
+    { id: 'text',     icon: '✨', label: 'Text to Panel' },
+    { id: 'sketch',   icon: '✏️', label: 'Sketch' },
+  ];
+  const modesHtml = modes.map(m =>
+    '<div class="mode-tab ' + (App.ui.activeMode === m.id ? 'active' : '') + '" data-mode="' + m.id + '">' +
+    '<span class="mode-icon">' + m.icon + '</span> ' + m.label + '</div>'
+  ).join('');
+
+  const charsHtml = App.project.characters.length === 0
+    ? '<div style="color:var(--muted);font-size:0.7rem;margin-bottom:8px">No characters yet</div>'
+    : App.project.characters.map(c =>
+        '<span class="char-chip"><span class="char-dot" style="background:' + c.color + '"></span>' + escapeHtml(c.name) + '</span>'
+      ).join('');
+
+  document.getElementById('sidebar').innerHTML = `
+    <div class="sidebar-section">
+      <div class="sidebar-label">Mode</div>
+      ${modesHtml}
+      <div class="sample-divider"></div>
+      <div class="sample-tab" id="btn-load-sample"><span class="mode-icon">📖</span><span>Load Sample</span></div>
+      <div class="sample-hint">See a pre-filled example storyboard with all 4 modes in action.</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Characters</div>
+      <div>${charsHtml}</div>
+      <button class="btn btn-ghost" id="btn-add-character" style="margin-top:10px;width:100%;font-size:0.65rem">+ Add Character</button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Export</div>
+      <div class="export-item" data-export="html"><span class="export-icon">🌐</span> Shareable HTML</div>
+      <div class="export-item" data-export="pdf"><span class="export-icon">📄</span> PDF</div>
+      <div class="export-item" data-export="json"><span class="export-icon">💾</span> JSON Backup</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Project Info</div>
+      <div class="project-stat">Panels <span>${App.project.panels.length}</span></div>
+      <div class="project-stat">Duration <span>${formatDuration(totalDuration())}</span></div>
+      <div class="project-stat">Acts <span>${App.project.acts.length}</span></div>
+      <div class="project-stat">Format
+        <select class="ratio-select" id="ratio-select">
+          <option value="16:9" ${App.project.aspectRatio === '16:9' ? 'selected' : ''}>16:9 — YouTube</option>
+          <option value="9:16" ${App.project.aspectRatio === '9:16' ? 'selected' : ''}>9:16 — TikTok / Shorts</option>
+          <option value="1:1"  ${App.project.aspectRatio === '1:1'  ? 'selected' : ''}>1:1 — Instagram</option>
+        </select>
+      </div>
+    </div>`;
+
+  // Wire up
+  document.querySelectorAll('.mode-tab').forEach(el => {
+    el.onclick = () => { App.ui.activeMode = el.dataset.mode; render(); };
+  });
+  document.getElementById('btn-load-sample').onclick = loadSample;
+  document.getElementById('btn-add-character').onclick = addCharacter;
+  document.querySelectorAll('.export-item').forEach(el => {
+    el.onclick = () => exportProject(el.dataset.export);
+  });
+  document.getElementById('ratio-select').onchange = (e) => {
+    App.project.aspectRatio = e.target.value;
+    saveToStorage();
+    render();
+  };
+}
+
+function renderTimeline() {
+  const bar = document.getElementById('timeline-bar');
+  if (App.project.panels.length === 0) {
+    bar.innerHTML = '<span class="timeline-bar-empty">Timeline · empty</span>';
+    return;
+  }
+  const actColors = ['var(--teal)', 'var(--sage)', 'var(--lavender)', 'var(--clay)'];
+  let html = '';
+  App.project.acts.forEach((name, actIdx) => {
+    const panels = App.project.panels.filter(p => p.act === actIdx);
+    if (panels.length === 0 && actIdx > 0) return;
+    const pillClass = (actIdx % 2) === 0 ? 'tl-act-1' : 'tl-act-2';
+    html += '<span class="tl-act-pill ' + pillClass + '">' + escapeHtml(name) + '</span>';
+    html += '<div class="tl-dot" style="background:' + actColors[actIdx % 4] + '"></div>';
+    panels.forEach(p => {
+      html += '<div class="tl-line"></div>';
+      html += '<div class="tl-thumb' + (App.ui.selectedPanelId === p.id ? ' active' : '') + '" data-panel-id="' + p.id + '">' + renderPanelScene(p) + '</div>';
+    });
+    html += '<div class="tl-line"></div><div class="tl-add" data-act="' + actIdx + '">+</div><div style="width:16px"></div>';
+  });
+  bar.innerHTML = html;
+  bar.onclick = (e) => {
+    const thumb = e.target.closest('.tl-thumb');
+    if (thumb) { App.ui.selectedPanelId = thumb.dataset.panelId; render(); return; }
+    const add = e.target.closest('.tl-add');
+    if (add) { addPanel(Number(add.dataset.act)); }
+  };
+}
+
+function renderViewToggle() {
+  const row = document.getElementById('view-toggle-row');
+  if (App.project.panels.length === 0) { row.innerHTML = ''; return; }
+  const totalWords = totalVoiceoverWords();
+  const totalRead = Math.ceil(totalWords / 150 * 60);
+  row.innerHTML = `
+    <div class="view-toggle">
+      <button class="view-tab ${App.ui.view === 'grid' ? 'active' : ''}" data-view="grid">
+        <span class="view-tab-icon">▦</span> Grid
+      </button>
+      <button class="view-tab ${App.ui.view === 'outline' ? 'active' : ''}" data-view="outline">
+        <span class="view-tab-icon">☰</span> Outline
+      </button>
+    </div>
+    <div class="view-meta">
+      Voiceover total: <strong>${totalWords} words</strong> · ~<strong>${totalRead}s</strong> read time
+    </div>`;
+  row.querySelectorAll('.view-tab').forEach(el => {
+    el.onclick = () => { App.ui.view = el.dataset.view; render(); };
+  });
+}
+
+
+function renderMain() {
+  const main = document.getElementById('panel-grid');
+  if (App.project.panels.length === 0) {
+    main.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">◇</div>
+        <div class="empty-title">Your storyboard is empty</div>
+        <div class="empty-desc">
+          Add your first panel to begin, or load the sample storyboard
+          to see a working example with voiceover scripts and all four creation modes.
+        </div>
+        <div class="empty-actions">
+          <button class="btn btn-primary" id="btn-add-first">+ Add First Panel</button>
+          <button class="btn btn-ghost" id="btn-load-sample-empty">📖 Load Sample</button>
+        </div>
+      </div>`;
+    document.getElementById('btn-add-first').onclick = () => addPanel();
+    document.getElementById('btn-load-sample-empty').onclick = loadSample;
+    return;
+  }
+
+  let html = '';
+  if (App.ui.activeMode === 'template') {
+    html += renderTemplateGallery();
+  }
+  html += App.ui.view === 'outline' ? renderOutlineView() : renderPanelGrid();
+  main.innerHTML = html;
+
+  if (App.ui.activeMode === 'template') wireTemplateGallery(main);
+  wirePanelActions(main);
+}
+
+function renderPanelGrid() {
+  let html = '';
+  App.project.acts.forEach((name, actIdx) => {
+    const panels = App.project.panels.filter(p => p.act === actIdx);
+    if (panels.length === 0) return;
+    html += '<div class="act-heading">' + escapeHtml(name) + '</div>';
+    html += '<div class="grid">';
+    panels.forEach(p => { html += renderPanelCard(p); });
+    html += '<div class="add-card" data-act="' + actIdx + '">';
+    html += '<div class="add-card-icon">＋</div><div class="add-card-label">Add Panel</div>';
+    html += '</div>';
+    html += '</div>';
+  });
+  return html;
+}
+
+function renderPanelCard(p) {
+  const idx = App.project.panels.indexOf(p) + 1;
+  const num = String(idx).padStart(2, '0');
+  const selected = App.ui.selectedPanelId === p.id ? ' selected' : '';
+  const desc = p.description ? escapeHtml(p.description) : '<em style="color:var(--muted)">No description yet</em>';
+  return `
+    <div class="panel-card${selected}" data-panel-id="${p.id}">
+      <span class="panel-badge">${num}</span>
+      <span class="panel-dur">${p.duration}s</span>
+      <span class="panel-mode m-${p.creationMode}">${capitalize(p.creationMode)}</span>
+      <div class="panel-scene">${renderPanelScene(p)}</div>
+      <div class="panel-body">
+        <div class="panel-title">${escapeHtml(p.label)}</div>
+        <div class="tags">
+          <span class="tag t-shot">${escapeHtml(p.shotType)}</span>
+          <span class="tag t-move">${escapeHtml(p.cameraMove)}</span>
+          <span class="tag t-emotion">${escapeHtml(p.emotion)}</span>
+          <span class="tag t-light">${escapeHtml(p.lighting)}</span>
+        </div>
+        <div class="panel-desc">${desc}</div>
+        <div class="panel-actions">
+          <button class="panel-btn" data-action="edit" data-id="${p.id}">Edit</button>
+          <button class="panel-btn" data-action="dupe" data-id="${p.id}">Duplicate</button>
+          <button class="panel-btn del" data-action="delete" data-id="${p.id}">Delete</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderOutlineView() {
+  const rows = App.project.panels.map((p, i) => {
+    const num = String(i + 1).padStart(2, '0');
+    const wc = (p.voiceover || '').trim().split(/\s+/).filter(Boolean).length;
+    const vo = p.voiceover
+      ? '"' + escapeHtml(p.voiceover.slice(0, 120)) + (p.voiceover.length > 120 ? '…' : '') + '"'
+      : '<em>No voiceover yet</em>';
+    return `
+      <div class="outline-row" data-panel-id="${p.id}">
+        <div class="outline-num">${num}</div>
+        <div class="outline-body">
+          <div class="outline-title">${escapeHtml(p.label)} <span class="outline-dur">${p.duration}s · ${escapeHtml(p.creationMode)}</span></div>
+          <div class="outline-vo">${vo}</div>
+        </div>
+        <div class="outline-meta">${wc} words</div>
+      </div>`;
+  }).join('');
+  return '<div class="outline-list">' + rows + '</div>';
+}
+
+function renderTemplateGallery() {
+  return `
+    <div class="act-heading">Templates — click to add</div>
+    <div class="grid" style="margin-bottom:32px">
+      ${TEMPLATES.map(t => `
+        <div class="template-card" data-tpl-id="${t.id}">
+          <div class="template-name">${escapeHtml(t.label)}</div>
+          <div class="template-meta">${t.shotType} · ${t.cameraMove} · ${t.duration}s</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function wireTemplateGallery(root) {
+  root.querySelectorAll('.template-card').forEach(el => {
+    el.onclick = () => {
+      const tpl = TEMPLATES.find(t => t.id === el.dataset.tplId);
+      if (!tpl) return;
+      addPanel();
+      const newPanel = App.project.panels[App.project.panels.length - 1];
+      Object.assign(newPanel, tpl, { creationMode: 'template', templateId: tpl.id });
+      saveToStorage();
+      render();
+    };
+  });
+}
+
+function wirePanelActions(root) {
+  root.onclick = (e) => {
+    const action = e.target.dataset.action;
+    const id = e.target.dataset.id;
+    if (action === 'edit')   { App.ui.selectedPanelId = id; render(); return; }
+    if (action === 'dupe')   { duplicatePanel(id); return; }
+    if (action === 'delete') { deletePanel(id); return; }
+    const addCard = e.target.closest('.add-card');
+    if (addCard) { addPanel(Number(addCard.dataset.act)); return; }
+    const outlineRow = e.target.closest('.outline-row');
+    if (outlineRow) { App.ui.selectedPanelId = outlineRow.dataset.panelId; render(); return; }
+    const card = e.target.closest('.panel-card');
+    if (card && !e.target.closest('button')) { App.ui.selectedPanelId = card.dataset.panelId; render(); return; }
+  };
+}
+
+
+function renderEditor() {
+  const drawer = document.getElementById('editor-drawer');
+  const p = App.project.panels.find(x => x.id === App.ui.selectedPanelId);
+  if (!p) { drawer.style.display = 'none'; drawer.innerHTML = ''; return; }
+  drawer.style.display = 'flex';
+
+  const wc = (p.voiceover || '').trim().split(/\s+/).filter(Boolean).length;
+  const readTime = Math.ceil(wc / 150 * 60);
+  const overrun = readTime > p.duration;
+  const voMetaStyle = overrun ? 'color:var(--red-soft);font-weight:500' : 'color:var(--muted)';
+  const voMetaText = wc + ' words · ~' + readTime + 's read time' + (overrun ? ' · exceeds duration' : '');
+
+  const charChecks = App.project.characters.length === 0
+    ? '<span style="color:var(--muted);font-size:0.65rem">Add characters in sidebar</span>'
+    : App.project.characters.map(c => {
+        const on = (p.characters || []).includes(c.id);
+        const style = on ? 'color:' + c.color + ';border-color:' + c.color + '66;background:' + c.color + '14' : '';
+        return '<div class="char-ck ' + (on ? 'on' : '') + '" data-char-id="' + c.id + '" style="' + style + '">' +
+          '<span style="width:6px;height:6px;border-radius:50%;background:' + c.color + ';display:inline-block"></span>' +
+          escapeHtml(c.name) + '</div>';
+      }).join('');
+
+  drawer.innerHTML = `
+    <div class="drawer-header">
+      <div>
+        <div class="drawer-title">Editing Panel ${App.project.panels.indexOf(p) + 1}</div>
+        <div class="drawer-subtitle">${escapeHtml(p.label)} · ${capitalize(p.creationMode)} mode</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" id="drawer-close">Close</button>
+        <button class="btn btn-primary" id="drawer-apply">Save</button>
+      </div>
+    </div>
+    <div class="drawer-body">
+
+      <div class="field">
+        <div class="field-label">Label</div>
+        <input class="field-input" data-field="label" value="${escapeHtml(p.label)}"/>
+        <div class="field-label" style="margin-top:8px">Duration (s)</div>
+        <input class="field-input" type="number" min="1" data-field="duration" value="${p.duration}"/>
+      </div>
+
+      <div class="field">
+        <div class="field-label">Shot Type</div>
+        <select class="field-select" data-field="shotType">${selectOptions(['wide','medium','close-up','aerial','POV'], p.shotType)}</select>
+        <div class="field-label" style="margin-top:8px">Camera Angle</div>
+        <select class="field-select" data-field="cameraAngle">${selectOptions(['low','eye','high','dutch'], p.cameraAngle)}</select>
+      </div>
+
+      <div class="field">
+        <div class="field-label">Camera Move</div>
+        <select class="field-select" data-field="cameraMove">${selectOptions(['static','pan','dolly','handheld','zoom'], p.cameraMove)}</select>
+        <div class="field-label" style="margin-top:8px">Background</div>
+        <select class="field-select" data-field="background">${selectOptions(['alley','office','street','rooftop','studio','room','forest'], p.background)}</select>
+      </div>
+
+      <div class="field">
+        <div class="field-label">Lighting</div>
+        <select class="field-select" data-field="lighting">${selectOptions(['dark','bright','neon','sunset','spotlight','silhouette'], p.lighting)}</select>
+        <div class="field-label" style="margin-top:8px">Emotion</div>
+        <select class="field-select" data-field="emotion">${selectOptions(['neutral','tense','excited','sad','mysterious','happy','angry','suspenseful'], p.emotion)}</select>
+      </div>
+
+      <div class="field">
+        <div class="field-label">Characters</div>
+        <div class="char-checks">${charChecks}</div>
+        <div class="field-label" style="margin-top:8px">Visual Style</div>
+        <select class="field-select" data-field="visualStyle">${selectOptions(['animated-realism','minimal','sketch','comic','cinematic','flat'], p.visualStyle)}</select>
+      </div>
+
+      <div class="field" style="grid-column: span 2">
+        <div class="field-label">Description</div>
+        <textarea class="field-textarea" data-field="description">${escapeHtml(p.description)}</textarea>
+        <div class="field-label" style="margin-top:6px">Voiceover Script</div>
+        <textarea class="field-textarea" data-field="voiceover">${escapeHtml(p.voiceover)}</textarea>
+        <div style="font-size:0.6rem;letter-spacing:0.04em;${voMetaStyle};margin-top:4px">${voMetaText}</div>
+      </div>
+
+    </div>`;
+
+  drawer.querySelector('#drawer-close').onclick = () => { App.ui.selectedPanelId = null; render(); };
+  drawer.querySelector('#drawer-apply').onclick = () => { saveToStorage(); flashStatus('Saved'); };
+
+  drawer.querySelectorAll('[data-field]').forEach(el => {
+    el.oninput = () => {
+      const key = el.dataset.field;
+      const val = el.type === 'number' ? Number(el.value) : el.value;
+      p[key] = val;
+      // Live update other regions without losing focus
+      renderTimeline();
+      renderViewToggle();
+      renderStatusBar();
+      // Re-render the live voiceover meter
+      const wc2 = (p.voiceover || '').trim().split(/\s+/).filter(Boolean).length;
+      const rt2 = Math.ceil(wc2 / 150 * 60);
+      const meter = drawer.querySelector('[data-field="voiceover"]').nextElementSibling;
+      if (meter) {
+        const over = rt2 > p.duration;
+        meter.style.color = over ? 'var(--red-soft)' : 'var(--muted)';
+        meter.style.fontWeight = over ? '500' : 'normal';
+        meter.textContent = wc2 + ' words · ~' + rt2 + 's read time' + (over ? ' · exceeds duration' : '');
+      }
+      // If visible-on-card field changed, update only the card grid (preserve drawer focus)
+      if (['label','duration','shotType','cameraMove','emotion','lighting','description','background'].includes(key)) {
+        const main = document.getElementById('panel-grid');
+        main.innerHTML = App.ui.view === 'outline' ? renderOutlineView() : renderPanelGrid();
+        wirePanelActions(main);
+      }
+      // Update header subtitle
+      const sub = drawer.querySelector('.drawer-subtitle');
+      if (sub) sub.textContent = p.label + ' · ' + capitalize(p.creationMode) + ' mode';
+    };
+  });
+
+  drawer.querySelectorAll('[data-char-id]').forEach(el => {
+    el.onclick = () => {
+      const id = el.dataset.charId;
+      p.characters = p.characters || [];
+      if (p.characters.includes(id)) {
+        p.characters = p.characters.filter(x => x !== id);
+      } else {
+        p.characters.push(id);
+      }
+      saveToStorage();
+      render();
+    };
+  });
+}
+
+function renderStatusBar() {
+  const total = App.project.panels.length;
+  const dur = formatDuration(totalDuration());
+  const acts = App.project.acts.length;
+  const ratio = App.project.aspectRatio;
+  const words = totalVoiceoverWords();
+  document.getElementById('status-bar').innerHTML = `
+    <span><b>${total}</b> panels</span>
+    <span><b>${dur}</b> total</span>
+    <span><b>${acts}</b> acts</span>
+    <span><b>${ratio}</b></span>
+    <span><b>${words}</b> words voiceover</span>
+    <span class="status-bar-right" id="status-msg">Shot Builder Studio</span>`;
+}
+
+function flashStatus(msg) {
+  const el = document.getElementById('status-msg');
+  if (!el) return;
+  const prev = el.textContent;
+  el.textContent = msg;
+  el.style.color = 'var(--sage)';
+  setTimeout(() => { el.textContent = prev; el.style.color = ''; }, 1500);
+}
+
+// ====== INIT ======
+document.addEventListener('DOMContentLoaded', () => {
+  loadFromStorage();
+  render();
+});
+
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    saveToStorage();
+    flashStatus('Saved');
+  }
+});
+
+document.getElementById('btn-save').onclick = () => { saveToStorage(); flashStatus('Saved'); };
+document.getElementById('btn-undo').onclick = () => {
+  if (confirm('Reload from last saved version? Unsaved changes will be lost.')) {
+    if (loadFromStorage()) { render(); flashStatus('Restored'); }
+  }
+};
+</script>
+
+</body>
+</html>
