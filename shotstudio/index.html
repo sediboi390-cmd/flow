@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Shot Builder Studio v1.0 (Phase 1) — 2026-05-27 -->
+<!-- Shot Builder Studio v1.1 (Reference Images + Storyboard Sheet Export) — 2026-05-27 -->
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
@@ -392,6 +392,50 @@
     }
     .char-ck.on { background: rgba(74,140,140,0.08); }
 
+    /* Reference image upload (in editor drawer) */
+    .img-upload {
+      display: flex; align-items: center; justify-content: center;
+      width: 100%; aspect-ratio: 16 / 9;
+      background: var(--bg);
+      border: 1.5px dashed var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      overflow: hidden;
+      position: relative;
+      transition: border-color 0.15s;
+    }
+    .img-upload:hover { border-color: var(--teal); }
+    .img-upload.has-img { border-style: solid; border-color: var(--border); }
+    .img-upload img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .img-upload-hint {
+      font-size: 0.65rem; color: var(--muted);
+      letter-spacing: 0.05em; text-align: center; padding: 6px;
+    }
+    .img-upload-overlay {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.45); color: #fff;
+      font-size: 0.65rem; letter-spacing: 0.06em;
+      opacity: 0; transition: opacity 0.13s;
+    }
+    .img-upload:hover .img-upload-overlay { opacity: 1; }
+    .img-clear {
+      font-family: 'Inter', sans-serif; font-size: 0.6rem;
+      color: var(--red-soft); background: transparent;
+      border: none; cursor: pointer; padding: 4px 0;
+      margin-top: 4px; text-align: left;
+      letter-spacing: 0.04em;
+    }
+    .img-clear:hover { text-decoration: underline; }
+
+    /* Sheet export highlight */
+    .export-item.featured {
+      background: rgba(74,140,140,0.06);
+      border: 1px solid rgba(74,140,140,0.18);
+      color: var(--teal); font-weight: 500;
+    }
+    .export-item.featured:hover { background: rgba(74,140,140,0.12); }
+
     /* Status bar */
     .status-bar {
       background: var(--bg);
@@ -520,6 +564,9 @@ function loadFromStorage() {
       // Backfill new fields for older saves
       App.project.characters = App.project.characters || [];
       App.project.aspectRatio = App.project.aspectRatio || '16:9';
+      App.project.panels.forEach(p => {
+        if (!('referenceImage' in p)) p.referenceImage = null;
+      });
       return true;
     }
   } catch (e) { console.warn('Load failed:', e); }
@@ -531,6 +578,14 @@ setInterval(saveToStorage, 30000);
 // ====== SVG SCENE GENERATOR ======
 function renderPanelScene(p) {
   const { w, h } = aspectFor(App.project.aspectRatio);
+
+  // If a reference image was uploaded, use it as the panel scene.
+  if (p.referenceImage) {
+    return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <image href="${escapeHtml(p.referenceImage)}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="xMidYMid slice"/>
+    </svg>`;
+  }
+
   const tint = BG_TINT_BY_LIGHTING[p.lighting] || SCENE_BG_BY_MODE[p.creationMode] || '#EDECEA';
   const chars = (p.characters || []).map(id => App.project.characters.find(c => c.id === id)).filter(Boolean);
   let silhouettes = '';
@@ -569,6 +624,7 @@ function addPanel(actIdx) {
     visualStyle: 'animated-realism', videoStyle: 'youtube',
     description: '', voiceover: '', motionNotes: '', audioNotes: '',
     sketchDataUrl: null, templateId: null, textPrompt: null,
+    referenceImage: null,
   };
   App.project.panels.push(newPanel);
   App.ui.selectedPanelId = newPanel.id;
@@ -644,9 +700,10 @@ function exportProject(kind) {
     alert('Add at least one panel before exporting.');
     return;
   }
-  if (kind === 'json') return exportJson();
-  if (kind === 'html') return exportHtml();
-  if (kind === 'pdf')  return exportPdf();
+  if (kind === 'json')  return exportJson();
+  if (kind === 'html')  return exportHtml();
+  if (kind === 'pdf')   return exportPdf();
+  if (kind === 'sheet') return exportStoryboardSheet();
 }
 
 function downloadBlob(content, filename, mime) {
@@ -688,6 +745,207 @@ function exportPdf() {
   document.title = App.project.name + ' — Storyboard';
   window.print();
   setTimeout(() => { document.title = original; }, 500);
+}
+
+// ====== STORYBOARD SHEET (single composite PNG) ======
+async function exportStoryboardSheet() {
+  if (App.project.panels.length === 0) {
+    alert('Add at least one panel before exporting.');
+    return;
+  }
+
+  flashStatus('Compositing sheet...');
+
+  const panels = App.project.panels;
+  const n = panels.length;
+
+  // Auto-pick column count based on panel count (overridable in future via UI)
+  const cols = n <= 4 ? 2 : (n <= 9 ? 3 : 4);
+  const rows = Math.ceil(n / cols);
+
+  // Cell dimensions follow project aspect ratio
+  const ratio = App.project.aspectRatio;
+  const baseCellW = 480;
+  let cellW, cellH;
+  if (ratio === '9:16') {
+    cellH = 540;
+    cellW = Math.round(cellH * 9 / 16);
+  } else if (ratio === '1:1') {
+    cellW = baseCellW;
+    cellH = baseCellW;
+  } else {
+    cellW = baseCellW;
+    cellH = Math.round(cellW * 9 / 16);
+  }
+
+  const padding = 36;
+  const gap = 18;
+  const headerH = 96;
+  const cellLabelH = 56; // space below image for scene number + label
+
+  const canvasW = padding * 2 + cols * cellW + (cols - 1) * gap;
+  const canvasH = padding * 2 + headerH + rows * (cellH + cellLabelH) + (rows - 1) * gap;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = canvasW;
+  canvas.height = canvasH;
+  const ctx = canvas.getContext('2d');
+
+  // Background (matches app theme)
+  ctx.fillStyle = '#F7F6F3';
+  ctx.fillRect(0, 0, canvasW, canvasH);
+
+  // Header
+  ctx.fillStyle = '#2D2D2D';
+  ctx.font = '600 28px "DM Sans", "Inter", sans-serif';
+  ctx.textBaseline = 'top';
+  ctx.fillText(App.project.name || 'Storyboard', padding, padding);
+
+  ctx.fillStyle = '#9A9590';
+  ctx.font = '13px "Inter", sans-serif';
+  const subtitle = `${n} panel${n === 1 ? '' : 's'}  ·  ${formatDuration(totalDuration())}  ·  ${ratio}`;
+  ctx.fillText(subtitle, padding, padding + 40);
+
+  // Date stamp on the right
+  ctx.textAlign = 'right';
+  ctx.fillText(new Date().toLocaleDateString(), canvasW - padding, padding + 40);
+  ctx.textAlign = 'left';
+
+  // Header divider
+  ctx.strokeStyle = '#E8E5DF';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padding, padding + headerH - 12);
+  ctx.lineTo(canvasW - padding, padding + headerH - 12);
+  ctx.stroke();
+
+  // Helper: load an image and resolve null on error (graceful fallback)
+  const loadImage = (src) => new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+
+  // Pre-load all panel images (or render their SVG fallback to an image)
+  const images = await Promise.all(panels.map(p => {
+    if (p.referenceImage) return loadImage(p.referenceImage);
+    const svg = renderPanelScene(p);
+    const svg64 = btoa(unescape(encodeURIComponent(svg)));
+    return loadImage('data:image/svg+xml;base64,' + svg64);
+  }));
+
+  // Draw each panel cell
+  for (let i = 0; i < n; i++) {
+    const r = Math.floor(i / cols);
+    const c = i % cols;
+    const x = padding + c * (cellW + gap);
+    const y = padding + headerH + r * (cellH + cellLabelH + gap);
+
+    // Cell background
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(x, y, cellW, cellH);
+    ctx.strokeStyle = '#E8E5DF';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 0.5, y + 0.5, cellW - 1, cellH - 1);
+
+    const img = images[i];
+    if (img) {
+      // object-fit: cover
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x, y, cellW, cellH);
+      ctx.clip();
+      const imgRatio = img.width / img.height;
+      const cellRatio = cellW / cellH;
+      let dw, dh, dx, dy;
+      if (imgRatio > cellRatio) {
+        dh = cellH;
+        dw = dh * imgRatio;
+        dx = x + (cellW - dw) / 2;
+        dy = y;
+      } else {
+        dw = cellW;
+        dh = dw / imgRatio;
+        dx = x;
+        dy = y + (cellH - dh) / 2;
+      }
+      ctx.drawImage(img, dx, dy, dw, dh);
+      ctx.restore();
+    } else {
+      // Empty placeholder
+      ctx.fillStyle = '#EDECEA';
+      ctx.fillRect(x, y, cellW, cellH);
+      ctx.fillStyle = '#9A9590';
+      ctx.font = '13px "Inter", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('No image', x + cellW / 2, y + cellH / 2);
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+    }
+
+    // Scene number badge (top-left)
+    const sceneText = String(i + 1).padStart(2, '0');
+    ctx.fillStyle = 'rgba(255,255,255,0.94)';
+    ctx.fillRect(x + 8, y + 8, 38, 22);
+    ctx.strokeStyle = '#E8E5DF';
+    ctx.strokeRect(x + 8.5, y + 8.5, 37, 21);
+    ctx.fillStyle = '#4A8C8C';
+    ctx.font = '600 12px "Inter", sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(sceneText, x + 14, y + 19);
+
+    // Duration badge (top-right)
+    const durText = (panels[i].duration || 0) + 's';
+    ctx.font = '11px "Inter", sans-serif';
+    const durW = Math.ceil(ctx.measureText(durText).width) + 14;
+    ctx.fillStyle = 'rgba(255,255,255,0.94)';
+    ctx.fillRect(x + cellW - durW - 8, y + 8, durW, 22);
+    ctx.strokeStyle = '#E8E5DF';
+    ctx.strokeRect(x + cellW - durW - 7.5, y + 8.5, durW - 1, 21);
+    ctx.fillStyle = '#9A9590';
+    ctx.fillText(durText, x + cellW - durW - 1, y + 19);
+
+    ctx.textBaseline = 'top';
+
+    // Label below image
+    ctx.fillStyle = '#2D2D2D';
+    ctx.font = '600 14px "Inter", sans-serif';
+    const label = (panels[i].label || 'Untitled').length > 52
+      ? (panels[i].label || 'Untitled').slice(0, 49) + '...'
+      : (panels[i].label || 'Untitled');
+    ctx.fillText(label, x, y + cellH + 10);
+
+    // Sub-meta: shot · move · emotion
+    ctx.fillStyle = '#9A9590';
+    ctx.font = '11px "Inter", sans-serif';
+    const meta = [panels[i].shotType, panels[i].cameraMove, panels[i].emotion]
+      .filter(Boolean).map(capitalize).join(' · ');
+    ctx.fillText(meta, x, y + cellH + 32);
+  }
+
+  // Footer (faint watermark)
+  ctx.fillStyle = '#C0BCB6';
+  ctx.font = '10px "Inter", sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText('Shot Builder Studio', canvasW - padding, canvasH - padding + 8);
+  ctx.textAlign = 'left';
+
+  // Convert and download
+  canvas.toBlob((blob) => {
+    if (!blob) { alert('Sheet export failed.'); return; }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = safeName() + '-sheet.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    flashStatus('Sheet exported');
+  }, 'image/png');
 }
 
 
@@ -737,6 +995,7 @@ function renderSidebar() {
 
     <div class="sidebar-section">
       <div class="sidebar-label">Export</div>
+      <div class="export-item featured" data-export="sheet"><span class="export-icon">🖼️</span> Storyboard Sheet (PNG)</div>
       <div class="export-item" data-export="html"><span class="export-icon">🌐</span> Shareable HTML</div>
       <div class="export-item" data-export="pdf"><span class="export-icon">📄</span> PDF</div>
       <div class="export-item" data-export="json"><span class="export-icon">💾</span> JSON Backup</div>
@@ -1000,6 +1259,17 @@ function renderEditor() {
     <div class="drawer-body">
 
       <div class="field">
+        <div class="field-label">Reference Image</div>
+        <label class="img-upload ${p.referenceImage ? 'has-img' : ''}">
+          ${p.referenceImage
+            ? `<img src="${escapeHtml(p.referenceImage)}" alt=""/><span class="img-upload-overlay">Replace</span>`
+            : '<span class="img-upload-hint">+ Upload<br/>image</span>'}
+          <input type="file" accept="image/*" data-img-upload hidden/>
+        </label>
+        ${p.referenceImage ? '<button class="img-clear" data-clear-img>Clear image</button>' : ''}
+      </div>
+
+      <div class="field">
         <div class="field-label">Label</div>
         <input class="field-input" data-field="label" value="${escapeHtml(p.label)}"/>
         <div class="field-label" style="margin-top:8px">Duration (s)</div>
@@ -1091,6 +1361,41 @@ function renderEditor() {
       render();
     };
   });
+
+  // Reference image upload
+  const imgInput = drawer.querySelector('[data-img-upload]');
+  if (imgInput) {
+    imgInput.addEventListener('change', (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) return;
+      if (!f.type.startsWith('image/')) { alert('Please choose an image file.'); return; }
+      // Soft warning if file is huge — localStorage is ~5MB, base64 inflates by ~33%
+      if (f.size > 1.5 * 1024 * 1024) {
+        if (!confirm('This image is over 1.5MB. Storing several large images may exceed browser storage. Continue?')) {
+          e.target.value = '';
+          return;
+        }
+      }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        p.referenceImage = ev.target.result;
+        saveToStorage();
+        render();
+        flashStatus('Image attached');
+      };
+      reader.onerror = () => alert('Could not read this image.');
+      reader.readAsDataURL(f);
+    });
+  }
+  const clearBtn = drawer.querySelector('[data-clear-img]');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      p.referenceImage = null;
+      saveToStorage();
+      render();
+      flashStatus('Image cleared');
+    });
+  }
 }
 
 function renderStatusBar() {
