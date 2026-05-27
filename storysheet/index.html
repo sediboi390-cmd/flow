@@ -697,25 +697,37 @@ html.dark .modal-veil { background: rgba(0,0,0,0.7); }
 /* ━━━━━━━━ Keyboard nav hint ━━━━━━━━ */
 .kb-hint {
   position: fixed;
-  bottom: 80px;
-  right: 16px;
-  font-size: 0.65rem;
-  color: var(--dim);
+  bottom: 24px;
+  right: 24px;
+  font-size: 0.62rem;
+  color: var(--muted);
   background: var(--surface);
   border: 1px solid var(--border);
-  padding: 6px 10px;
-  border-radius: var(--r);
-  opacity: 0.7;
-  z-index: 40;
-  line-height: 1.5;
+  padding: 7px 12px;
+  border-radius: 999px;
+  opacity: 0.85;
+  z-index: 49;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
 }
 .kb-hint kbd {
   background: var(--bg-soft);
   border: 1px solid var(--border);
-  padding: 1px 5px;
-  border-radius: 4px;
+  padding: 1px 6px;
+  border-radius: 5px;
   font-family: inherit;
-  font-size: 0.62rem;
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.kb-hint .kb-sep {
+  width: 1px;
+  height: 12px;
+  background: var(--border);
+  flex-shrink: 0;
 }
 
 /* ━━━━━━━━ Responsive ━━━━━━━━ */
@@ -740,9 +752,12 @@ html.dark .modal-veil { background: rgba(0,0,0,0.7); }
 
 <!-- Keyboard navigation hint -->
 <div class="kb-hint">
-  <kbd>←</kbd><kbd>→</kbd> navigate &nbsp;
-  <kbd>D</kbd> duplicate &nbsp;
-  <kbd>Del</kbd> remove &nbsp;
+  <kbd>←</kbd><kbd>→</kbd> navigate
+  <span class="kb-sep"></span>
+  <kbd>D</kbd> duplicate
+  <span class="kb-sep"></span>
+  <kbd>Del</kbd> remove
+  <span class="kb-sep"></span>
   <kbd>Ctrl+Enter</kbd> compose
 </div>
 
