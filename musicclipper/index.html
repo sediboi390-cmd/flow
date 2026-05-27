@@ -1,102 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Music Clipper</title>
-  <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
-  <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
-  <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
-  <!-- FFmpeg loaded dynamically as blob to bypass GitHub Pages CORS worker restriction -->
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #f8f9fa;
-      --surface: #ffffff;
-      --border: #dee2e6;
-      --accent: #4361ee;
-      --accent-hover: #3a56d4;
-      --danger: #e63946;
-      --success: #2a9d8f;
-      --text: #212529;
-      --text-muted: #6c757d;
-      --radius: 10px;
-      --shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-    .hidden { display: none !important; }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Music Clipper</title>
+<script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
+<script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#f8f9fa; --surface:#fff; --border:#dee2e6;
+  --accent:#4361ee; --accent-hover:#3a56d4;
+  --danger:#e63946; --success:#2a9d8f;
+  --text:#212529; --text-muted:#6c757d;
+  --radius:10px; --shadow:0 2px 8px rgba(0,0,0,0.08);
+}
+body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+.hidden { display:none !important; }
 
-    /* Header */
-    header { text-align: center; padding: 2rem 1rem 0.5rem; }
-    header h1 { font-size: 2rem; font-weight: 700; }
-    header p { color: var(--text-muted); margin-top: 0.25rem; font-size: 0.95rem; }
+header { text-align:center; padding:2rem 1rem 0.5rem; }
+header h1 { font-size:2rem; font-weight:700; }
+header p { color:var(--text-muted); margin-top:0.25rem; font-size:0.95rem; }
 
-    /* Layout */
-    main { max-width: 800px; margin: 0 auto; padding: 1.5rem 1rem 3rem; display: flex; flex-direction: column; gap: 1.5rem; }
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; box-shadow: var(--shadow); }
-    .card h2 { font-size: 0.8rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; }
+main { max-width:800px; margin:0 auto; padding:1.5rem 1rem 3rem; display:flex; flex-direction:column; gap:1.5rem; }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; box-shadow:var(--shadow); }
+.card h2 { font-size:0.8rem; font-weight:600; margin-bottom:1rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.07em; }
 
-    /* Buttons */
-    .btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1.1rem; border-radius: 6px; border: none; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: background 0.15s, opacity 0.15s; }
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-primary:hover { background: var(--accent-hover); }
-    .btn-danger { background: var(--danger); color: #fff; }
-    .btn-danger:hover { background: #c1121f; }
-    .btn-success { background: var(--success); color: #fff; }
-    .btn-success:hover { background: #21867a; }
-    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
-    .btn-outline:hover { background: var(--bg); }
-    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn { display:inline-flex; align-items:center; gap:0.4rem; padding:0.5rem 1.1rem; border-radius:6px; border:none; font-size:0.9rem; font-weight:500; cursor:pointer; transition:background 0.15s,opacity 0.15s; }
+.btn-primary { background:var(--accent); color:#fff; }
+.btn-primary:hover { background:var(--accent-hover); }
+.btn-danger { background:var(--danger); color:#fff; }
+.btn-success { background:var(--success); color:#fff; }
+.btn-outline { background:transparent; border:1px solid var(--border); color:var(--text); }
+.btn-outline:hover { background:var(--bg); }
+.btn:disabled { opacity:0.45; cursor:not-allowed; }
 
-    /* Drop zone */
-    #drop-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 2rem 1rem; text-align: center; color: var(--text-muted); transition: border-color 0.2s, background 0.2s; cursor: pointer; }
-    #drop-zone.dragover { border-color: var(--accent); background: #eef0fd; }
-    #drop-zone p { margin: 0.2rem 0; }
-    #drop-zone .small { font-size: 0.8rem; }
-    #file-list { margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
-    .file-item { display: flex; align-items: center; justify-content: space-between; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem 0.75rem; font-size: 0.9rem; }
-    .file-item .file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 85%; }
-    .file-item button { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1rem; flex-shrink: 0; }
+#drop-zone, #video-drop-zone { border:2px dashed var(--border); border-radius:var(--radius); padding:2rem 1rem; text-align:center; color:var(--text-muted); transition:all 0.2s; cursor:pointer; }
+#drop-zone.dragover { border-color:var(--accent); background:#eef0fd; }
+#video-drop-zone { border-color:#f4a261; }
+#video-drop-zone.dragover { border-color:#e76f51; background:#fff3ee; }
+#drop-zone p, #video-drop-zone p { margin:0.2rem 0; }
+.small { font-size:0.8rem; }
+#file-list { margin-top:1rem; display:flex; flex-direction:column; gap:0.5rem; }
+.file-item { display:flex; align-items:center; justify-content:space-between; background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:0.5rem 0.75rem; font-size:0.9rem; }
+.file-item .file-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:85%; }
+.file-item button { background:none; border:none; color:var(--danger); cursor:pointer; font-size:1rem; flex-shrink:0; }
 
-    /* Waveform */
-    #waveform { margin: 0.75rem 0; border-radius: 6px; overflow: hidden; background: var(--bg); min-height: 100px; }
-    #playback-controls { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.75rem; }
-    #time-display { font-size: 0.9rem; color: var(--text-muted); font-variant-numeric: tabular-nums; margin-left: auto; }
+#waveform { margin:0.75rem 0; border-radius:6px; overflow:hidden; background:var(--bg); min-height:100px; }
+#playback-controls { display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; margin-top:0.75rem; }
+#time-display { font-size:0.9rem; color:var(--text-muted); font-variant-numeric:tabular-nums; margin-left:auto; }
 
-    /* Selection controls */
-    #time-inputs { display: flex; align-items: flex-end; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
-    #time-inputs label { display: flex; flex-direction: column; font-size: 0.8rem; color: var(--text-muted); gap: 0.25rem; font-weight: 500; }
-    #time-inputs input { padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; width: 110px; font-family: monospace; }
-    #time-inputs input:focus { outline: 2px solid var(--accent); border-color: transparent; }
-    #action-buttons { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+#time-inputs { display:flex; align-items:flex-end; gap:1rem; flex-wrap:wrap; margin-bottom:1rem; }
+#time-inputs label { display:flex; flex-direction:column; font-size:0.8rem; color:var(--text-muted); gap:0.25rem; font-weight:500; }
+#time-inputs input { padding:0.4rem 0.6rem; border:1px solid var(--border); border-radius:6px; font-size:0.9rem; width:110px; font-family:monospace; }
+#action-buttons { display:flex; gap:0.75rem; flex-wrap:wrap; }
 
-    /* Video extractor */
-    #video-drop-zone { border: 2px dashed #f4a261; border-radius: var(--radius); padding: 2rem 1rem; text-align: center; color: var(--text-muted); transition: border-color 0.2s, background 0.2s; cursor: pointer; }
-    #video-drop-zone.dragover { border-color: #e76f51; background: #fff3ee; }
-    #video-drop-zone p { margin: 0.2rem 0; }
-    #video-drop-zone .small { font-size: 0.8rem; }
-    #video-status { margin-top: 1rem; font-size: 0.9rem; color: var(--text-muted); min-height: 1.4em; }
-    #video-extract-progress { margin-top: 0.75rem; }
-    #video-progress-bar { background: var(--bg); border-radius: 999px; overflow: hidden; height: 8px; border: 1px solid var(--border); }
-    #video-progress-fill { height: 100%; background: #f4a261; width: 0%; transition: width 0.3s; }
-    #video-progress-label { font-size: 0.8rem; color: var(--text-muted); display: block; margin-top: 0.4rem; }
+#video-status { margin-top:1rem; font-size:0.9rem; color:var(--text-muted); min-height:1.4em; }
+#video-extract-progress, #progress-wrap { margin-top:1rem; }
+.progress-bar { background:var(--bg); border-radius:999px; overflow:hidden; height:8px; border:1px solid var(--border); }
+.progress-fill { height:100%; background:var(--accent); width:0%; transition:width 0.3s; }
+#video-progress-fill { background:#f4a261; }
+.progress-label { font-size:0.8rem; color:var(--text-muted); display:block; margin-top:0.4rem; }
 
-    /* Merge */
-    #merge-section p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; }
+#export-controls { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
+#export-controls label { display:flex; flex-direction:column; font-size:0.8rem; color:var(--text-muted); gap:0.25rem; font-weight:500; }
+#export-controls select { padding:0.4rem 0.6rem; border:1px solid var(--border); border-radius:6px; font-size:0.9rem; background:var(--surface); }
 
-    /* Export */
-    #export-controls { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-    #export-controls label { display: flex; flex-direction: column; font-size: 0.8rem; color: var(--text-muted); gap: 0.25rem; font-weight: 500; }
-    #export-controls select { padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; background: var(--surface); }
-    #progress-wrap { margin-top: 1rem; }
-    #progress-bar { background: var(--bg); border-radius: 999px; overflow: hidden; height: 8px; border: 1px solid var(--border); }
-    #progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; }
-    #progress-label { font-size: 0.8rem; color: var(--text-muted); display: block; margin-top: 0.4rem; }
-
-    /* Toast */
-    #toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 0.65rem 1.4rem; border-radius: 999px; font-size: 0.9rem; z-index: 9999; white-space: nowrap; animation: fadeInUp 0.2s ease; }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
-  </style>
+#toast { position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%); background:#333; color:#fff; padding:0.65rem 1.4rem; border-radius:999px; font-size:0.9rem; z-index:9999; max-width:90vw; text-align:center; }
+</style>
 </head>
 <body>
 
@@ -107,7 +79,6 @@
 
 <main>
 
-  <!-- File Loader -->
   <section id="loader-section" class="card">
     <h2>📂 Load Audio</h2>
     <div id="drop-zone">
@@ -119,7 +90,6 @@
     <div id="file-list"></div>
   </section>
 
-  <!-- Waveform -->
   <section id="waveform-section" class="card hidden">
     <h2>🎛 Waveform</h2>
     <div id="waveform"></div>
@@ -130,7 +100,6 @@
     </div>
   </section>
 
-  <!-- Selection Controls -->
   <section id="controls-section" class="card hidden">
     <h2>✂️ Selection</h2>
     <div id="time-inputs">
@@ -144,45 +113,41 @@
     </div>
   </section>
 
-  <!-- Video to Audio -->
   <section id="video-section" class="card">
     <h2>🎬 Extract Audio from Video</h2>
     <div id="video-drop-zone">
       <p>Drag &amp; drop a video file here</p>
-      <p class="small">Supports MP4, MOV, AVI, MKV, WebM and more</p>
+      <p class="small">Supports MP4, WebM, MOV (browser-decodable formats)</p>
       <label class="btn" style="margin-top:0.75rem;background:#f4a261;color:#fff" for="video-input">Choose Video File</label>
       <input type="file" id="video-input" accept="video/*" hidden/>
     </div>
     <div id="video-status"></div>
     <div id="video-extract-progress" class="hidden">
-      <div id="video-progress-bar"><div id="video-progress-fill"></div></div>
-      <span id="video-progress-label">Extracting audio…</span>
+      <div class="progress-bar"><div class="progress-fill" id="video-progress-fill"></div></div>
+      <span class="progress-label" id="video-progress-label">Extracting audio…</span>
     </div>
   </section>
 
-  <!-- Merge -->
   <section id="merge-section" class="card">
     <h2>🔗 Merge Clips</h2>
-    <p>Load 2 or more files above, then merge them in order.</p>
+    <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1rem">Load 2 or more files above, then merge them in order.</p>
     <button class="btn btn-primary" id="btn-merge">🔗 Merge All Files</button>
   </section>
 
-  <!-- Export -->
   <section id="export-section" class="card hidden">
     <h2>💾 Export</h2>
     <div id="export-controls">
       <label>Format
         <select id="format-select">
-          <option value="mp3">MP3</option>
           <option value="wav">WAV</option>
-          <option value="ogg">OGG</option>
+          <option value="mp3">MP3</option>
         </select>
       </label>
       <button class="btn btn-success" id="btn-export">⬇️ Export &amp; Download</button>
     </div>
     <div id="progress-wrap" class="hidden">
-      <div id="progress-bar"><div id="progress-fill"></div></div>
-      <span id="progress-label">Processing…</span>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      <span class="progress-label" id="progress-label">Processing…</span>
     </div>
   </section>
 
@@ -191,7 +156,7 @@
 <div id="toast" class="hidden"></div>
 
 <script>
-// ─── Toast ───────────────────────────────────────────────
+// ─── Toast & helpers ─────────────────────────────────────
 function showToast(msg, duration = 3500) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -199,8 +164,6 @@ function showToast(msg, duration = 3500) {
   clearTimeout(t._timer);
   t._timer = setTimeout(() => t.classList.add('hidden'), duration);
 }
-
-// ─── Time helpers ─────────────────────────────────────────
 function formatTime(s) {
   s = Math.max(0, s);
   const m = Math.floor(s / 60);
@@ -213,29 +176,50 @@ function parseTime(str) {
   return parseFloat(parts[0]) * 60 + parseFloat(parts[1] || 0);
 }
 
+// ─── Audio Context (lazy init for browser autoplay rules) ──
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+// ─── File model ───────────────────────────────────────────
+// Each loaded file: { name, audioBuffer }
+let loadedFiles = [];
+let lastOutput  = null; // AudioBuffer to export
+
 // ─── File Loader ──────────────────────────────────────────
 const fileInput  = document.getElementById('file-input');
 const dropZone   = document.getElementById('drop-zone');
 const fileListEl = document.getElementById('file-list');
-let loadedFiles  = []; // [{ name, buffer }]
 
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
 dropZone.addEventListener('drop', e => {
   e.preventDefault();
   dropZone.classList.remove('dragover');
-  handleFiles(e.dataTransfer.files);
+  handleAudioFiles(e.dataTransfer.files);
 });
-fileInput.addEventListener('change', () => { handleFiles(fileInput.files); fileInput.value = ''; });
+fileInput.addEventListener('change', () => { handleAudioFiles(fileInput.files); fileInput.value = ''; });
 
-async function handleFiles(files) {
+async function handleAudioFiles(files) {
   for (const file of files) {
-    if (!file.type.startsWith('audio/')) { showToast('⚠ Not an audio file: ' + file.name); continue; }
-    const buffer = await file.arrayBuffer();
-    loadedFiles.push({ name: file.name, buffer, type: file.type });
-    renderFileList();
+    if (!file.type.startsWith('audio/') && !file.name.match(/\.(mp3|wav|ogg|m4a|flac|aac)$/i)) {
+      showToast('⚠ Not an audio file: ' + file.name);
+      continue;
+    }
+    try {
+      showToast('⏳ Decoding ' + file.name + '…');
+      const arrayBuf = await file.arrayBuffer();
+      const audioBuffer = await getAudioCtx().decodeAudioData(arrayBuf.slice(0));
+      loadedFiles.push({ name: file.name, audioBuffer });
+      renderFileList();
+    } catch (e) {
+      showToast('❌ Could not decode: ' + file.name);
+      console.error(e);
+    }
   }
-  if (loadedFiles.length >= 1) loadFileIntoWaveform(loadedFiles[0]);
+  if (loadedFiles.length >= 1) loadFileIntoWaveform(loadedFiles[loadedFiles.length - 1]);
 }
 
 function renderFileList() {
@@ -249,14 +233,14 @@ function renderFileList() {
 function removeFile(i) {
   loadedFiles.splice(i, 1);
   renderFileList();
-  if (loadedFiles.length === 0) hideWaveform();
-  else loadFileIntoWaveform(loadedFiles[0]);
+  if (loadedFiles.length === 0) {
+    ['waveform-section','controls-section','export-section'].forEach(id =>
+      document.getElementById(id).classList.add('hidden'));
+  } else {
+    loadFileIntoWaveform(loadedFiles[0]);
+  }
 }
-
-function hideWaveform() {
-  ['waveform-section','controls-section','export-section'].forEach(id =>
-    document.getElementById(id).classList.add('hidden'));
-}
+window.removeFile = removeFile;
 
 // ─── WaveSurfer ───────────────────────────────────────────
 let wavesurfer, regionsPlugin, activeRegion;
@@ -274,45 +258,42 @@ function loadFileIntoWaveform(file) {
     normalize: true,
     plugins: [regionsPlugin]
   });
-  const blob = new Blob([file.buffer], { type: file.type || 'audio/*' });
-  wavesurfer.loadBlob(blob);
+  // Convert AudioBuffer -> WAV blob just to feed wavesurfer
+  const wavBlob = audioBufferToWav(file.audioBuffer);
+  wavesurfer.loadBlob(wavBlob);
   wavesurfer.on('ready', () => {
     ['waveform-section','controls-section','export-section'].forEach(id =>
       document.getElementById(id).classList.remove('hidden'));
     document.getElementById('total-time').textContent = formatTime(wavesurfer.getDuration());
     addDefaultRegion();
   });
-  wavesurfer.on('timeupdate', t =>
-    document.getElementById('current-time').textContent = formatTime(t));
+  wavesurfer.on('timeupdate', t => document.getElementById('current-time').textContent = formatTime(t));
   wavesurfer.on('play',  () => document.getElementById('btn-play').textContent = '⏸ Pause');
   wavesurfer.on('pause', () => document.getElementById('btn-play').textContent = '▶ Play');
   wavesurfer.on('finish',() => document.getElementById('btn-play').textContent = '▶ Play');
+  // Track which file is currently in the waveform
+  wavesurfer._sourceFile = file;
 }
 
 document.getElementById('btn-play').addEventListener('click', () => wavesurfer?.playPause());
-document.getElementById('btn-stop').addEventListener('click', () => { wavesurfer?.stop(); });
+document.getElementById('btn-stop').addEventListener('click', () => wavesurfer?.stop());
 
-// ─── Region & Time Inputs ─────────────────────────────────
 function addDefaultRegion() {
   regionsPlugin.clearRegions();
   const dur = wavesurfer.getDuration();
   activeRegion = regionsPlugin.addRegion({
-    start: 0,
-    end: dur,
+    start: 0, end: dur,
     color: 'rgba(67,97,238,0.15)',
-    drag: true,
-    resize: true
+    drag: true, resize: true
   });
   syncInputsFromRegion();
   activeRegion.on('update', syncInputsFromRegion);
   activeRegion.on('update-end', syncInputsFromRegion);
 }
-
 function syncInputsFromRegion() {
   document.getElementById('input-start').value = formatTime(activeRegion.start);
   document.getElementById('input-end').value   = formatTime(activeRegion.end);
 }
-
 document.getElementById('input-start').addEventListener('change', e => {
   if (!activeRegion) return;
   const t = Math.min(parseTime(e.target.value), activeRegion.end - 0.01);
@@ -330,161 +311,69 @@ document.getElementById('btn-select-all').addEventListener('click', () => {
   syncInputsFromRegion();
 });
 
-// ─── FFmpeg ───────────────────────────────────────────────
-// Load FFmpeg library itself as a blob so its internal worker URL
-// is rewritten to same-origin, bypassing GitHub Pages CORS block.
-const FFMPEG_CDN  = 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js';
-const CORE_CDN    = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd';
-
-let ffmpeg        = null;
-let fetchFile     = null;
-let ffmpegReady   = false;
-let lastOutput    = null;
-
-const toBlobURL = async (url, mime) => {
-  const r = await fetch(url);
-  const t = await r.text();
-  return URL.createObjectURL(new Blob([t], { type: mime }));
-};
-
-async function loadFFmpeg() {
-  if (ffmpegReady) return;
-  showToast('⏳ Loading FFmpeg (first time only)…', 15000);
-
-  // 1. Load the ffmpeg.js library as a blob — this makes its
-  //    internal dynamic import() of 814.ffmpeg.js also same-origin.
-  const ffmpegBlobURL = await toBlobURL(FFMPEG_CDN, 'text/javascript');
-  const mod = await import(ffmpegBlobURL);
-  const FFmpeg = mod.FFmpeg;
-  fetchFile = (await import('https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/esm/index.js')).fetchFile;
-
-  ffmpeg = new FFmpeg();
-  ffmpeg.on('log', ({ message }) => console.log('[ffmpeg]', message));
-
-  // 2. Load core/wasm/worker all as blobs too
-  await ffmpeg.load({
-    coreURL:   await toBlobURL(`${CORE_CDN}/ffmpeg-core.js`,       'text/javascript'),
-    wasmURL:   await toBlobURL(`${CORE_CDN}/ffmpeg-core.wasm`,      'application/wasm'),
-    workerURL: await toBlobURL(`${CORE_CDN}/ffmpeg-core.worker.js`, 'text/javascript'),
-  });
-
-  ffmpegReady = true;
-  showToast('✅ FFmpeg ready!');
+// ─── AudioBuffer operations (pure Web Audio API) ──────────
+function sliceAudioBuffer(audioBuffer, startSec, endSec) {
+  const ctx = getAudioCtx();
+  const sampleRate = audioBuffer.sampleRate;
+  const startSample = Math.floor(startSec * sampleRate);
+  const endSample   = Math.floor(endSec * sampleRate);
+  const length = endSample - startSample;
+  const out = ctx.createBuffer(audioBuffer.numberOfChannels, length, sampleRate);
+  for (let ch = 0; ch < audioBuffer.numberOfChannels; ch++) {
+    const src = audioBuffer.getChannelData(ch);
+    out.getChannelData(ch).set(src.subarray(startSample, endSample));
+  }
+  return out;
 }
 
-// ─── Trim ─────────────────────────────────────────────────
-document.getElementById('btn-trim').addEventListener('click', async () => {
-  if (!activeRegion) return showToast('⚠ No region selected');
-  if (!loadedFiles.length) return showToast('⚠ No file loaded');
-  try {
-    await loadFFmpeg();
-    const { start, end } = activeRegion;
-    const file = loadedFiles[0];
-    const ext = file.name.split('.').pop();
-    await ffmpeg.writeFile('input.' + ext, await fetchFile(new Blob([file.buffer], { type: file.type })));
-    await ffmpeg.exec(['-i', 'input.' + ext, '-ss', String(start), '-to', String(end), '-c', 'copy', 'output_trim.' + ext]);
-    const data = await ffmpeg.readFile('output_trim.' + ext);
-    lastOutput = { data, name: 'trimmed_' + file.name };
-    showToast('✅ Trimmed! Choose format and export.');
-    document.getElementById('export-section').classList.remove('hidden');
-  } catch(e) { showToast('❌ Trim failed: ' + e.message); console.error(e); }
+function concatAudioBuffers(buffers) {
+  if (!buffers.length) return null;
+  const ctx = getAudioCtx();
+  const sampleRate = buffers[0].sampleRate;
+  const numChannels = Math.max(...buffers.map(b => b.numberOfChannels));
+  const totalLength = buffers.reduce((s, b) => s + b.length, 0);
+  const out = ctx.createBuffer(numChannels, totalLength, sampleRate);
+  let offset = 0;
+  for (const b of buffers) {
+    for (let ch = 0; ch < numChannels; ch++) {
+      const srcCh = ch < b.numberOfChannels ? b.getChannelData(ch) : b.getChannelData(0);
+      out.getChannelData(ch).set(srcCh, offset);
+    }
+    offset += b.length;
+  }
+  return out;
+}
+
+// ─── Trim / Cut / Merge ───────────────────────────────────
+document.getElementById('btn-trim').addEventListener('click', () => {
+  if (!activeRegion || !wavesurfer?._sourceFile) return showToast('⚠ Nothing to trim');
+  const file = wavesurfer._sourceFile;
+  lastOutput = sliceAudioBuffer(file.audioBuffer, activeRegion.start, activeRegion.end);
+  showToast('✅ Trimmed! Choose format and export below.');
+  document.getElementById('export-section').classList.remove('hidden');
 });
 
-// ─── Cut ──────────────────────────────────────────────────
-document.getElementById('btn-cut').addEventListener('click', async () => {
-  if (!activeRegion) return showToast('⚠ No region selected');
-  if (!loadedFiles.length) return showToast('⚠ No file loaded');
-  try {
-    await loadFFmpeg();
-    const { start, end } = activeRegion;
-    const file = loadedFiles[0];
-    const dur  = wavesurfer.getDuration();
-    const ext  = file.name.split('.').pop();
-    const src  = new Blob([file.buffer], { type: file.type });
-    await ffmpeg.writeFile('input.' + ext, await fetchFile(src));
-    const parts = [];
-    if (start > 0.01) {
-      await ffmpeg.exec(['-i','input.'+ext,'-ss','0','-to',String(start),'-c','copy','part1.'+ext]);
-      parts.push("file 'part1." + ext + "'");
-    }
-    if (end < dur - 0.01) {
-      await ffmpeg.exec(['-i','input.'+ext,'-ss',String(end),'-to',String(dur),'-c','copy','part2.'+ext]);
-      parts.push("file 'part2." + ext + "'");
-    }
-    if (!parts.length) return showToast('⚠ Nothing left after cut');
-    await ffmpeg.writeFile('list.txt', new TextEncoder().encode(parts.join('\n')));
-    await ffmpeg.exec(['-f','concat','-safe','0','-i','list.txt','-c','copy','output_cut.'+ext]);
-    const data = await ffmpeg.readFile('output_cut.' + ext);
-    lastOutput = { data, name: 'cut_' + file.name };
-    showToast('✅ Cut! Choose format and export.');
-    document.getElementById('export-section').classList.remove('hidden');
-  } catch(e) { showToast('❌ Cut failed: ' + e.message); console.error(e); }
+document.getElementById('btn-cut').addEventListener('click', () => {
+  if (!activeRegion || !wavesurfer?._sourceFile) return showToast('⚠ Nothing to cut');
+  const file = wavesurfer._sourceFile;
+  const dur = file.audioBuffer.duration;
+  const parts = [];
+  if (activeRegion.start > 0.01)   parts.push(sliceAudioBuffer(file.audioBuffer, 0, activeRegion.start));
+  if (activeRegion.end < dur - 0.01) parts.push(sliceAudioBuffer(file.audioBuffer, activeRegion.end, dur));
+  if (!parts.length) return showToast('⚠ Nothing left after cut');
+  lastOutput = parts.length === 1 ? parts[0] : concatAudioBuffers(parts);
+  showToast('✅ Cut! Choose format and export below.');
+  document.getElementById('export-section').classList.remove('hidden');
 });
 
-// ─── Merge ────────────────────────────────────────────────
-document.getElementById('btn-merge').addEventListener('click', async () => {
+document.getElementById('btn-merge').addEventListener('click', () => {
   if (loadedFiles.length < 2) return showToast('⚠ Load at least 2 files to merge');
-  try {
-    await loadFFmpeg();
-    let listContent = '';
-    for (let i = 0; i < loadedFiles.length; i++) {
-      const f = loadedFiles[i];
-      const ext = f.name.split('.').pop();
-      const fname = `merge${i}.${ext}`;
-      await ffmpeg.writeFile(fname, await fetchFile(new Blob([f.buffer], { type: f.type })));
-      listContent += `file '${fname}'\n`;
-    }
-    await ffmpeg.writeFile('mergelist.txt', new TextEncoder().encode(listContent));
-    await ffmpeg.exec(['-f','concat','-safe','0','-i','mergelist.txt','-c','copy','output_merge.mp3']);
-    const data = await ffmpeg.readFile('output_merge.mp3');
-    lastOutput = { data, name: 'merged.mp3' };
-    showToast('✅ Merged! Choose format and export.');
-    document.getElementById('export-section').classList.remove('hidden');
-  } catch(e) { showToast('❌ Merge failed: ' + e.message); console.error(e); }
+  lastOutput = concatAudioBuffers(loadedFiles.map(f => f.audioBuffer));
+  showToast('✅ Merged! Choose format and export below.');
+  document.getElementById('export-section').classList.remove('hidden');
 });
 
-// ─── Export & Download ────────────────────────────────────
-document.getElementById('btn-export').addEventListener('click', async () => {
-  if (!lastOutput) return showToast('⚠ Nothing to export — trim, cut or merge first');
-  try {
-    await loadFFmpeg();
-    const format  = document.getElementById('format-select').value;
-    const mimeMap = { mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg' };
-    const progressWrap = document.getElementById('progress-wrap');
-    const progressFill = document.getElementById('progress-fill');
-    const progressLabel= document.getElementById('progress-label');
-
-    progressWrap.classList.remove('hidden');
-    progressFill.style.width = '0%';
-    progressLabel.textContent = 'Processing…';
-
-    ffmpeg.on('progress', ({ progress }) => {
-      const pct = Math.round(Math.min(progress, 1) * 100);
-      progressFill.style.width = pct + '%';
-      progressLabel.textContent = `Processing… ${pct}%`;
-    });
-
-    await ffmpeg.writeFile('export_in', lastOutput.data);
-    await ffmpeg.exec(['-i', 'export_in', `export_out.${format}`]);
-    const outData = await ffmpeg.readFile(`export_out.${format}`);
-    const blob = new Blob([outData.buffer], { type: mimeMap[format] });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = lastOutput.name.replace(/\.[^.]+$/, '') + '.' + format;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    progressFill.style.width = '100%';
-    progressLabel.textContent = 'Done!';
-    setTimeout(() => progressWrap.classList.add('hidden'), 2000);
-    showToast('✅ Downloaded as ' + format.toUpperCase() + '!');
-  } catch(e) { showToast('❌ Export failed: ' + e.message); console.error(e); }
-});
-
-// ─── Video to Audio Extractor ─────────────────────────────
+// ─── Video → Audio (using browser's native decoder) ────────
 const videoInput    = document.getElementById('video-input');
 const videoDropZone = document.getElementById('video-drop-zone');
 const videoStatus   = document.getElementById('video-status');
@@ -494,8 +383,7 @@ videoDropZone.addEventListener('dragleave', () => videoDropZone.classList.remove
 videoDropZone.addEventListener('drop', e => {
   e.preventDefault();
   videoDropZone.classList.remove('dragover');
-  const file = e.dataTransfer.files[0];
-  if (file) extractAudioFromVideo(file);
+  if (e.dataTransfer.files[0]) extractAudioFromVideo(e.dataTransfer.files[0]);
 });
 videoInput.addEventListener('change', () => {
   if (videoInput.files[0]) extractAudioFromVideo(videoInput.files[0]);
@@ -510,54 +398,149 @@ async function extractAudioFromVideo(file) {
   const progressWrap  = document.getElementById('video-extract-progress');
   const progressFill  = document.getElementById('video-progress-fill');
   const progressLabel = document.getElementById('video-progress-label');
-
   videoStatus.textContent = '⏳ Loading…';
   progressWrap.classList.remove('hidden');
-  progressFill.style.width = '0%';
-  progressLabel.textContent = 'Extracting audio…';
+  progressFill.style.width = '40%';
+  progressLabel.textContent = 'Decoding video audio track…';
 
   try {
-    await loadFFmpeg();
-    const onProgress = ({ progress }) => {
-      const pct = Math.round(Math.min(progress, 1) * 100);
-      progressFill.style.width = pct + '%';
-      progressLabel.textContent = `Extracting… ${pct}%`;
-    };
-    ffmpeg.on('progress', onProgress);
-    const videoExt = file.name.split('.').pop().toLowerCase();
-    const outName  = file.name.replace(/\.[^.]+$/, '') + '_audio.mp3';
-    videoStatus.textContent = `🎬 Extracting audio from "${file.name}"…`;
-    await ffmpeg.writeFile('video_in.' + videoExt, await fetchFile(new Blob([await file.arrayBuffer()], { type: file.type })));
-    await ffmpeg.exec(['-i', 'video_in.' + videoExt, '-vn', '-acodec', 'libmp3lame', '-q:a', '2', 'extracted_audio.mp3']);
-    const data = await ffmpeg.readFile('extracted_audio.mp3');
-    ffmpeg.off('progress', onProgress);
-    const audioFile = { name: outName, buffer: data.buffer, type: 'audio/mpeg' };
+    const arrayBuf = await file.arrayBuffer();
+    progressFill.style.width = '70%';
+    // Browser's decodeAudioData can extract audio from MP4/WebM/MOV directly
+    const audioBuffer = await getAudioCtx().decodeAudioData(arrayBuf.slice(0));
+    const outName = file.name.replace(/\.[^.]+$/, '') + '_audio';
+    const audioFile = { name: outName + '.wav', audioBuffer };
     loadedFiles.push(audioFile);
     renderFileList();
     loadFileIntoWaveform(audioFile);
     progressFill.style.width = '100%';
     progressLabel.textContent = 'Done!';
-    videoStatus.textContent = `✅ Extracted: "${outName}" — loaded into waveform & file list`;
+    videoStatus.textContent = `✅ Extracted: "${audioFile.name}" — loaded into waveform & file list`;
     setTimeout(() => progressWrap.classList.add('hidden'), 2500);
     showToast('✅ Audio extracted from video!');
-  } catch(e) {
+  } catch (e) {
     progressWrap.classList.add('hidden');
-    videoStatus.textContent = '❌ Extraction failed: ' + e.message;
-    showToast('❌ Extraction failed: ' + e.message);
+    videoStatus.textContent = '❌ Could not decode this video. Browser may not support its audio codec. Try MP4 or WebM.';
+    showToast('❌ Video decoding failed');
     console.error(e);
   }
 }
 
-// ─── COOP/COEP Service Worker ─────────────────────────────
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./coop-sw.js').then(reg => {
-    if (reg.installing) {
-      reg.installing.addEventListener('statechange', e => {
-        if (e.target.state === 'activated') window.location.reload();
-      });
+// ─── Export (WAV native, MP3 via lamejs) ─────────────────
+function audioBufferToWav(audioBuffer) {
+  const numCh = audioBuffer.numberOfChannels;
+  const sampleRate = audioBuffer.sampleRate;
+  const len = audioBuffer.length * numCh * 2 + 44;
+  const ab = new ArrayBuffer(len);
+  const view = new DataView(ab);
+  let p = 0;
+  const writeStr = s => { for (let i = 0; i < s.length; i++) view.setUint8(p++, s.charCodeAt(i)); };
+  writeStr('RIFF');
+  view.setUint32(p, len - 8, true); p += 4;
+  writeStr('WAVE');
+  writeStr('fmt ');
+  view.setUint32(p, 16, true); p += 4;
+  view.setUint16(p, 1, true); p += 2;
+  view.setUint16(p, numCh, true); p += 2;
+  view.setUint32(p, sampleRate, true); p += 4;
+  view.setUint32(p, sampleRate * numCh * 2, true); p += 4;
+  view.setUint16(p, numCh * 2, true); p += 2;
+  view.setUint16(p, 16, true); p += 2;
+  writeStr('data');
+  view.setUint32(p, audioBuffer.length * numCh * 2, true); p += 4;
+  // interleave
+  const channels = [];
+  for (let c = 0; c < numCh; c++) channels.push(audioBuffer.getChannelData(c));
+  for (let i = 0; i < audioBuffer.length; i++) {
+    for (let c = 0; c < numCh; c++) {
+      let s = Math.max(-1, Math.min(1, channels[c][i]));
+      view.setInt16(p, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+      p += 2;
     }
-  }).catch(err => console.warn('SW registration failed:', err));
+  }
+  return new Blob([ab], { type: 'audio/wav' });
 }
+
+function audioBufferToMp3(audioBuffer) {
+  if (typeof lamejs === 'undefined') {
+    throw new Error('MP3 encoder failed to load');
+  }
+  const numCh = Math.min(audioBuffer.numberOfChannels, 2);
+  const sampleRate = audioBuffer.sampleRate;
+  const encoder = new lamejs.Mp3Encoder(numCh, sampleRate, 128);
+  const left  = audioBuffer.getChannelData(0);
+  const right = numCh > 1 ? audioBuffer.getChannelData(1) : null;
+  // Convert Float32 → Int16
+  const toInt16 = (f32) => {
+    const i16 = new Int16Array(f32.length);
+    for (let i = 0; i < f32.length; i++) {
+      let s = Math.max(-1, Math.min(1, f32[i]));
+      i16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+    }
+    return i16;
+  };
+  const leftI16  = toInt16(left);
+  const rightI16 = right ? toInt16(right) : null;
+  const blockSize = 1152;
+  const chunks = [];
+  for (let i = 0; i < leftI16.length; i += blockSize) {
+    const lChunk = leftI16.subarray(i, i + blockSize);
+    let mp3buf;
+    if (rightI16) {
+      const rChunk = rightI16.subarray(i, i + blockSize);
+      mp3buf = encoder.encodeBuffer(lChunk, rChunk);
+    } else {
+      mp3buf = encoder.encodeBuffer(lChunk);
+    }
+    if (mp3buf.length > 0) chunks.push(mp3buf);
+  }
+  const end = encoder.flush();
+  if (end.length > 0) chunks.push(end);
+  return new Blob(chunks, { type: 'audio/mpeg' });
+}
+
+document.getElementById('btn-export').addEventListener('click', () => {
+  if (!lastOutput) return showToast('⚠ Nothing to export — trim, cut or merge first');
+  const format = document.getElementById('format-select').value;
+  const progressWrap = document.getElementById('progress-wrap');
+  const progressFill = document.getElementById('progress-fill');
+  const progressLabel = document.getElementById('progress-label');
+  progressWrap.classList.remove('hidden');
+  progressFill.style.width = '20%';
+  progressLabel.textContent = 'Encoding…';
+
+  // Defer to next tick so progress bar renders
+  setTimeout(() => {
+    try {
+      let blob, ext;
+      if (format === 'mp3') {
+        blob = audioBufferToMp3(lastOutput);
+        ext  = 'mp3';
+      } else {
+        blob = audioBufferToWav(lastOutput);
+        ext  = 'wav';
+      }
+      progressFill.style.width = '90%';
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const baseName = (wavesurfer?._sourceFile?.name || 'output').replace(/\.[^.]+$/, '');
+      a.download = baseName + '_clip.' + ext;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      progressFill.style.width = '100%';
+      progressLabel.textContent = 'Done!';
+      setTimeout(() => progressWrap.classList.add('hidden'), 1500);
+      showToast('✅ Downloaded as ' + ext.toUpperCase() + '!');
+    } catch (e) {
+      progressWrap.classList.add('hidden');
+      showToast('❌ Export failed: ' + e.message);
+      console.error(e);
+    }
+  }, 50);
+});
 </script>
 </body>
 </html>
