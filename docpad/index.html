@@ -323,6 +323,18 @@ body {
 #editor ul, #editor ol { margin: 0.5em 0 0.7em 1.5em; }
 #editor li { margin-bottom: 0.3em; }
 #editor a { color: var(--accent); text-decoration: underline; }
+#editor img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0.6em 0;
+  border-radius: 4px;
+  cursor: default;
+}
+#editor img.selected {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 #editor blockquote {
   border-left: 3px solid var(--border-strong);
   padding-left: 1em;
@@ -492,6 +504,8 @@ body {
     <button class="tool-btn" data-cmd="formatBlock" data-arg="blockquote" title="Quote">”</button>
     <div class="tool-divider"></div>
     <button class="tool-btn" id="link-btn"   title="Insert link (Ctrl+K)">🔗</button>
+    <button class="tool-btn" id="image-btn"  title="Insert image (Ctrl+Shift+I)">🖼️</button>
+    <input type="file" id="image-input" accept="image/*" hidden multiple/>
     <div class="tool-divider"></div>
     <button class="tool-btn" data-cmd="undo" title="Undo (Ctrl+Z)">↶</button>
     <button class="tool-btn" data-cmd="redo" title="Redo (Ctrl+Y)">↷</button>
@@ -763,14 +777,90 @@ editor.addEventListener('keydown', e => {
     e.preventDefault();
     persistCurrent();
     showToast('Saved');
+  } else if (e.shiftKey && k === 'i') {
+    e.preventDefault();
+    document.getElementById('image-btn').click();
   }
 });
 
-// Paste as plain text by default to avoid weird styles from Word/Google Docs
+// Paste handler: text → plain text (avoid Word/Google-Docs styling),
+// image (screenshot or copied image) → embed inline as a data URL
 editor.addEventListener('paste', e => {
+  const items = e.clipboardData && e.clipboardData.items;
+  if (items) {
+    for (const item of items) {
+      if (item.kind === 'file' && item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) insertImageFile(file);
+        return;
+      }
+    }
+  }
+  // No image — paste as plain text
   e.preventDefault();
   const text = (e.clipboardData || window.clipboardData).getData('text/plain');
-  document.execCommand('insertText', false, text);
+  if (text) document.execCommand('insertText', false, text);
+});
+
+// Drag & drop image directly into the editor
+editor.addEventListener('dragover', e => {
+  if (e.dataTransfer && Array.from(e.dataTransfer.items || []).some(i => i.kind === 'file' && i.type.startsWith('image/'))) {
+    e.preventDefault();
+  }
+});
+editor.addEventListener('drop', e => {
+  const files = e.dataTransfer && e.dataTransfer.files;
+  if (!files || !files.length) return;
+  const images = Array.from(files).filter(f => f.type.startsWith('image/'));
+  if (!images.length) return;
+  e.preventDefault();
+  // Place caret where the user dropped before inserting
+  if (document.caretRangeFromPoint) {
+    const r = document.caretRangeFromPoint(e.clientX, e.clientY);
+    if (r) {
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(r);
+    }
+  }
+  images.forEach(insertImageFile);
+});
+
+// Toolbar image button → file picker
+const imageInput = document.getElementById('image-input');
+document.getElementById('image-btn').addEventListener('click', () => imageInput.click());
+imageInput.addEventListener('change', () => {
+  Array.from(imageInput.files || []).forEach(insertImageFile);
+  imageInput.value = '';
+});
+
+// Read a File as a data URL and insert into the editor at the current caret
+function insertImageFile(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  // ~10 MB safety cap — large images blow up localStorage
+  const MAX = 10 * 1024 * 1024;
+  if (file.size > MAX) {
+    showToast('⚠ Image too large (max 10 MB)', 3500);
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    editor.focus();
+    document.execCommand('insertHTML', false, `<img src="${reader.result}" alt="${escapeHtml(file.name || '')}"/><br/>`);
+    scheduleSave();
+    updateWordCount();
+  };
+  reader.onerror = () => showToast('❌ Could not read image', 3500);
+  reader.readAsDataURL(file);
+}
+
+// Click an image to "select" it (so Backspace deletes the right thing)
+editor.addEventListener('click', e => {
+  document.querySelectorAll('#editor img.selected').forEach(img => img.classList.remove('selected'));
+  if (e.target.tagName === 'IMG') {
+    e.target.classList.add('selected');
+  }
 });
 
 // ─── Navigation ──────────────────────────────────────────
