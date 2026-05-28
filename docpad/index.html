@@ -1161,7 +1161,6 @@ function persistCurrent() {
   } catch(e) {
     // localStorage quota exceeded (common with large embedded images)
     setSaveStatus('Saved');
-    showToast('⚠ Document saved (images may be large — consider resizing them)', 4000);
   }
 }
 
