@@ -138,7 +138,7 @@ footer{text-align:center;padding:16px 0 40px;font-size:.75rem;color:var(--muted)
   <a href="../" class="back-btn">← Back to Hub</a>
   <div class="header-brand">
     <div class="header-icon">🎞️</div>
-    <div><h1>Video Converter</h1><p>Convert, resize, trim &amp; enhance via Cloudinary</p></div>
+    <div><h1>Video Converter</h1><p>Convert, resize, trim &amp; enhance your videos</p></div>
   </div>
   <button class="dark-toggle" id="darkToggle">🌙</button>
 </header>
@@ -369,7 +369,7 @@ footer{text-align:center;padding:16px 0 40px;font-size:.75rem;color:var(--muted)
       <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
       <div class="progress-status" id="progressStatus">Starting…</div>
       <div class="progress-steps">
-        <div class="step" id="step1"><span class="step-dot"></span> Uploading to Cloudinary</div>
+        <div class="step" id="step1"><span class="step-dot"></span> Uploading</div>
         <div class="step" id="step2"><span class="step-dot"></span> Applying transformations</div>
         <div class="step" id="step3"><span class="step-dot"></span> Processing video</div>
         <div class="step" id="step4"><span class="step-dot"></span> Ready to download</div>
@@ -395,7 +395,7 @@ footer{text-align:center;padding:16px 0 40px;font-size:.75rem;color:var(--muted)
     <div class="history-list" id="historyList"></div>
   </div>
 </main>
-<footer>Flow Video Converter · powered by Cloudinary</footer>
+<footer>Flow Video Converter</footer>
 
 <script>
 const CLOUD_NAME    = 'duotlkdau';
@@ -533,7 +533,7 @@ convertBtn.addEventListener('click',async()=>{
   convertBtn.disabled=true;
   progressCard.classList.remove('hidden');
   resultCard.classList.add('hidden');
-  setStep(1);setProgress(5,'Uploading video…');
+  setStep(1);setProgress(5,'Uploading…');
 
   try{
     // Upload
@@ -545,6 +545,7 @@ convertBtn.addEventListener('click',async()=>{
     xhr.upload.onprogress=e=>{
       if(e.lengthComputable){const p=Math.round((e.loaded/e.total)*40);setProgress(5+p,`Uploading… ${Math.round(e.loaded/e.total*100)}%`)}
     };
+
     const uploadResult=await new Promise((res,rej)=>{
       xhr.onload=()=>xhr.status===200?res(JSON.parse(xhr.responseText)):rej(new Error(JSON.parse(xhr.responseText).error?.message||'Upload failed'));
       xhr.onerror=()=>rej(new Error('Network error during upload'));
