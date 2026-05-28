@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Currency Converter — Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f6f3;--surface:#fff;--border:#e5e2da;
+  --accent:#f59e0b;--accent-hover:#d97706;
+  --text:#1e1e1e;--muted:#888580;
+  --radius:14px;--shadow:0 2px 12px rgba(0,0,0,.06);
+}
+html.dark{--bg:#111113;--surface:#1c1c1f;--border:#2a2a2e;--text:#ececef;--muted:#7a7a82}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+.hidden{display:none!important}
+header{max-width:820px;margin:0 auto;padding:40px 24px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;color:var(--muted);text-decoration:none;padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);transition:all .15s}
+.back-btn:hover{color:var(--accent);border-color:var(--accent)}
+.header-brand{display:flex;align-items:center;gap:10px}
+.header-icon{width:40px;height:40px;background:linear-gradient(135deg,#f59e0b,#fbbf24);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+.header-brand h1{font-size:1.3rem;font-weight:700;letter-spacing:-.02em}
+.header-brand p{font-size:.78rem;color:var(--muted)}
+.dark-toggle{width:34px;height:34px;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:.95rem;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.dark-toggle:hover{border-color:var(--accent);color:var(--accent)}
+main{max-width:820px;margin:28px auto 80px;padding:0 24px;display:flex;flex-direction:column;gap:18px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow)}
+.card-label{font-size:.68rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:9px;font:inherit;font-size:.88rem;font-weight:600;cursor:pointer;transition:all .15s;text-decoration:none;border:none}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-hover)}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-sm{padding:5px 12px;font-size:.78rem}
+footer{text-align:center;padding:16px 0 40px;font-size:.75rem;color:var(--muted)}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:#1e1e1e;color:#fff;padding:10px 20px;border-radius:999px;font-size:.82rem;font-weight:500;opacity:0;transition:all .3s;pointer-events:none;z-index:999}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<header>
+  <a href="../" class="back-btn">← Back to Hub</a>
+  <div class="header-brand">
+    <div class="header-icon">💱</div>
+    <div><h1>Currency Converter</h1><p>Live exchange rates for 160+ currencies</p></div>
+  </div>
+  <button class="dark-toggle" id="darkToggle">🌙</button>
+</header>
+<main>
+
+  <!-- Converter Card -->
+  <div class="card">
+    <div class="card-label" style="display:flex;justify-content:space-between;align-items:center">
+      <span>Convert</span>
+      <span id="rateUpdated" style="font-size:.7rem;color:var(--muted)"></span>
+    </div>
+
+    <div class="converter-wrap">
+      <!-- From -->
+      <div class="convert-box">
+        <label class="convert-label">Amount</label>
+        <div class="input-row">
+          <input type="number" id="fromAmount" value="1" min="0" step="any" oninput="convert('from')"/>
+          <select id="fromCurrency" onchange="convert('from')"></select>
+        </div>
+        <div class="currency-name" id="fromName"></div>
+      </div>
+
+      <!-- Swap -->
+      <button class="swap-btn" onclick="swapCurrencies()" title="Swap currencies">⇄</button>
+
+      <!-- To -->
+      <div class="convert-box">
+        <label class="convert-label">Result</label>
+        <div class="input-row">
+          <input type="number" id="toAmount" placeholder="0.00" step="any" oninput="convert('to')"/>
+          <select id="toCurrency" onchange="convert('from')"></select>
+        </div>
+        <div class="currency-name" id="toName"></div>
+      </div>
+    </div>
+
+    <!-- Rate display -->
+    <div class="rate-display hidden" id="rateDisplay"></div>
+
+    <!-- Actions -->
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="convert('from')">🔄 Convert</button>
+      <button class="btn btn-outline" onclick="copyResult()">📋 Copy Result</button>
+      <button class="btn btn-outline" onclick="addToFavorites()">⭐ Save Pair</button>
+    </div>
+  </div>
+
+  <!-- Multi-currency comparison -->
+  <div class="card hidden" id="comparisonCard">
+    <div class="card-label">📊 Compare Against Multiple Currencies</div>
+    <div id="comparisonGrid"></div>
+  </div>
+
+  <!-- Favorites -->
+  <div class="card hidden" id="favoritesCard">
+    <div class="card-label" style="display:flex;justify-content:space-between;align-items:center">
+      <span>⭐ Saved Pairs</span>
+      <button class="btn btn-outline btn-sm" onclick="clearFavorites()">Clear</button>
+    </div>
+    <div id="favoritesList"></div>
+  </div>
+
+  <!-- History -->
+  <div class="card hidden" id="historyCard">
+    <div class="card-label" style="display:flex;justify-content:space-between;align-items:center">
+      <span>🕓 Recent Conversions</span>
+      <button class="btn btn-outline btn-sm" onclick="clearHistory()">Clear</button>
+    </div>
+    <div id="historyList"></div>
+  </div>
+
+</main>
+<footer>Flow Currency Converter · rates by ExchangeRate-API</footer>
+<div class="toast" id="toast"></div>
+
+
+<style>
+.converter-wrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.convert-box{flex:1;min-width:200px;display:flex;flex-direction:column;gap:6px}
+.convert-label{font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.input-row{display:flex;gap:0;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .15s}
+.input-row:focus-within{border-color:var(--accent)}
+.input-row input{flex:1;padding:13px 14px;border:none;background:var(--bg);color:var(--text);font:inherit;font-size:1.1rem;font-weight:600;outline:none;min-width:0}
+.input-row select{padding:10px 10px 10px 12px;border:none;border-left:1.5px solid var(--border);background:var(--bg);color:var(--text);font:inherit;font-size:.86rem;font-weight:600;outline:none;cursor:pointer;min-width:110px;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%23888' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+.currency-name{font-size:.74rem;color:var(--muted);padding-left:2px;min-height:18px}
+.swap-btn{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;margin-top:18px}
+.swap-btn:hover{border-color:var(--accent);color:var(--accent);transform:rotate(180deg)}
+.rate-display{margin-top:14px;padding:12px 16px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:10px;font-size:.88rem;font-weight:600;color:var(--accent)}
+.comparison-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.comparison-item{padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:border-color .15s}
+.comparison-item:hover{border-color:var(--accent)}
+.comparison-item .ci-flag{font-size:1.1rem;margin-bottom:4px}
+.comparison-item .ci-code{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase}
+.comparison-item .ci-amount{font-size:1rem;font-weight:700;color:var(--text);margin-top:2px}
+.comparison-item .ci-name{font-size:.7rem;color:var(--muted)}
+.fav-item,.hist-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:border-color .15s}
+.fav-item:hover,.hist-item:hover{border-color:var(--accent)}
+.fav-item:last-child,.hist-item:last-child{margin-bottom:0}
+.fav-pair{font-size:.88rem;font-weight:600}
+.fav-rate{font-size:.78rem;color:var(--muted);margin-top:2px}
+.hist-detail{font-size:.82rem;font-weight:500}
+.hist-time{font-size:.7rem;color:var(--muted);margin-top:2px}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error-banner{padding:10px 14px;background:rgba(220,53,69,.08);border:1px solid rgba(220,53,69,.2);border-radius:10px;font-size:.84rem;color:#dc3545;margin-bottom:12px}
+</style>
+
+
+<script>
+// ── Dark mode ──
+const html=document.documentElement,darkBtn=document.getElementById('darkToggle');
+const sv=localStorage.getItem('flow.darkMode');
+if(sv==='true'||(!sv&&window.matchMedia('(prefers-color-scheme:dark)').matches)){html.classList.add('dark');darkBtn.textContent='☀️'}
+darkBtn.addEventListener('click',()=>{const d=html.classList.toggle('dark');darkBtn.textContent=d?'☀️':'🌙';localStorage.setItem('flow.darkMode',d)});
+
+// ── Currency data ──
+const CURRENCIES = {
+  USD:{name:'US Dollar',flag:'🇺🇸'},PHP:{name:'Philippine Peso',flag:'🇵🇭'},
+  EUR:{name:'Euro',flag:'🇪🇺'},GBP:{name:'British Pound',flag:'🇬🇧'},
+  JPY:{name:'Japanese Yen',flag:'🇯🇵'},AUD:{name:'Australian Dollar',flag:'🇦🇺'},
+  CAD:{name:'Canadian Dollar',flag:'🇨🇦'},CHF:{name:'Swiss Franc',flag:'🇨🇭'},
+  CNY:{name:'Chinese Yuan',flag:'🇨🇳'},HKD:{name:'Hong Kong Dollar',flag:'🇭🇰'},
+  SGD:{name:'Singapore Dollar',flag:'🇸🇬'},KRW:{name:'South Korean Won',flag:'🇰🇷'},
+  INR:{name:'Indian Rupee',flag:'🇮🇳'},MXN:{name:'Mexican Peso',flag:'🇲🇽'},
+  BRL:{name:'Brazilian Real',flag:'🇧🇷'},ZAR:{name:'South African Rand',flag:'🇿🇦'},
+  NGN:{name:'Nigerian Naira',flag:'🇳🇬'},KES:{name:'Kenyan Shilling',flag:'🇰🇪'},
+  AED:{name:'UAE Dirham',flag:'🇦🇪'},SAR:{name:'Saudi Riyal',flag:'🇸🇦'},
+  TRY:{name:'Turkish Lira',flag:'🇹🇷'},IDR:{name:'Indonesian Rupiah',flag:'🇮🇩'},
+  MYR:{name:'Malaysian Ringgit',flag:'🇲🇾'},THB:{name:'Thai Baht',flag:'🇹🇭'},
+  VND:{name:'Vietnamese Dong',flag:'🇻🇳'},NZD:{name:'New Zealand Dollar',flag:'🇳🇿'},
+  NOK:{name:'Norwegian Krone',flag:'🇳🇴'},SEK:{name:'Swedish Krona',flag:'🇸🇪'},
+  DKK:{name:'Danish Krone',flag:'🇩🇰'},PLN:{name:'Polish Zloty',flag:'🇵🇱'},
+  CZK:{name:'Czech Koruna',flag:'🇨🇿'},HUF:{name:'Hungarian Forint',flag:'🇭🇺'},
+  RUB:{name:'Russian Ruble',flag:'🇷🇺'},ILS:{name:'Israeli Shekel',flag:'🇮🇱'},
+  PKR:{name:'Pakistani Rupee',flag:'🇵🇰'},BDT:{name:'Bangladeshi Taka',flag:'🇧🇩'},
+  EGP:{name:'Egyptian Pound',flag:'🇪🇬'},GHS:{name:'Ghanaian Cedi',flag:'🇬🇭'},
+  CLP:{name:'Chilean Peso',flag:'🇨🇱'},COP:{name:'Colombian Peso',flag:'🇨🇴'},
+  ARS:{name:'Argentine Peso',flag:'🇦🇷'},PEN:{name:'Peruvian Sol',flag:'🇵🇪'},
+  UAH:{name:'Ukrainian Hryvnia',flag:'🇺🇦'},RON:{name:'Romanian Leu',flag:'🇷🇴'},
+};
+
+const COMPARE_CURRENCIES = ['USD','EUR','GBP','JPY','AUD','CAD','CHF','CNY','SGD','INR','PHP','KRW','MXN','BRL','ZAR'];
+let rates = {};
+let favorites = JSON.parse(localStorage.getItem('flow.currency.favorites')||'[]');
+let history  = JSON.parse(localStorage.getItem('flow.currency.history')||'[]');
+
+// ── Populate selects ──
+function populateSelects(){
+  const codes = Object.keys(CURRENCIES);
+  [document.getElementById('fromCurrency'), document.getElementById('toCurrency')].forEach(sel=>{
+    sel.innerHTML = codes.map(c=>`<option value="${c}">${CURRENCIES[c].flag} ${c}</option>`).join('');
+  });
+  document.getElementById('fromCurrency').value = 'USD';
+  document.getElementById('toCurrency').value   = 'PHP';
+  updateCurrencyNames();
+}
+
+function updateCurrencyNames(){
+  const from = document.getElementById('fromCurrency').value;
+  const to   = document.getElementById('toCurrency').value;
+  document.getElementById('fromName').textContent = CURRENCIES[from]?.name||'';
+  document.getElementById('toName').textContent   = CURRENCIES[to]?.name||'';
+}
+
+// ── Fetch rates ──
+async function fetchRates(base='USD'){
+  try {
+    const res = await fetch(`https://open.er-api.com/v6/latest/${base}`);
+    const data = await res.json();
+    if(data.result==='success'){
+      rates = data.rates;
+      const updated = new Date(data.time_last_update_utc).toLocaleString();
+      document.getElementById('rateUpdated').textContent = `Updated: ${updated}`;
+      return true;
+    }
+  } catch(e){}
+  // Fallback to exchangerate.host
+  try {
+    const res = await fetch(`https://api.exchangerate.host/latest?base=${base}`);
+    const data = await res.json();
+    if(data.success){ rates=data.rates; return true; }
+  } catch(e){}
+  return false;
+}
+
+// ── Convert ──
+async function convert(dir='from'){
+  updateCurrencyNames();
+  const from   = document.getElementById('fromCurrency').value;
+  const to     = document.getElementById('toCurrency').value;
+  const fromAmt= parseFloat(document.getElementById('fromAmount').value)||0;
+  const toAmt  = parseFloat(document.getElementById('toAmount').value)||0;
+
+  if(!Object.keys(rates).length || !rates[from] || !rates[to]){
+    const ok = await fetchRates('USD');
+    if(!ok){ showError('Could not fetch rates. Check your connection.'); return; }
+  }
+
+  // Convert via USD base
+  let result;
+  if(dir==='from'){
+    const usd = fromAmt / rates[from];
+    result = usd * rates[to];
+    document.getElementById('toAmount').value = result.toFixed(4);
+  } else {
+    const usd = toAmt / rates[to];
+    result = usd * rates[from];
+    document.getElementById('fromAmount').value = result.toFixed(4);
+  }
+
+  const rate = rates[to] / rates[from];
+  document.getElementById('rateDisplay').classList.remove('hidden');
+  document.getElementById('rateDisplay').innerHTML =
+    `1 ${CURRENCIES[from].flag} ${from} = <strong>${rate.toFixed(6)}</strong> ${CURRENCIES[to].flag} ${to}
+     &nbsp;·&nbsp; 1 ${CURRENCIES[to].flag} ${to} = <strong>${(1/rate).toFixed(6)}</strong> ${CURRENCIES[from].flag} ${from}`;
+
+  updateComparison(dir==='from'?fromAmt:toAmt, from);
+  addHistory(fromAmt, from, dir==='from'?result:toAmt, to);
+}
+
+// ── Swap ──
+function swapCurrencies(){
+  const fromSel = document.getElementById('fromCurrency');
+  const toSel   = document.getElementById('toCurrency');
+  const fromAmt = document.getElementById('fromAmount');
+  const toAmt   = document.getElementById('toAmount');
+  [fromSel.value, toSel.value] = [toSel.value, fromSel.value];
+  [fromAmt.value, toAmt.value] = [toAmt.value, fromAmt.value];
+  convert('from');
+}
+
+// ── Multi comparison ──
+function updateComparison(amount, from){
+  document.getElementById('comparisonCard').classList.remove('hidden');
+  const grid = document.getElementById('comparisonGrid');
+  const currencies = COMPARE_CURRENCIES.filter(c=>c!==from);
+  grid.className = 'comparison-grid';
+  grid.innerHTML = currencies.map(c=>{
+    if(!rates[c]||!rates[from]) return '';
+    const val = amount * (rates[c]/rates[from]);
+    const formatted = val >= 1000 ? val.toLocaleString('en',{maximumFractionDigits:2}) : val.toFixed(4);
+    return `<div class="comparison-item" onclick="setTo('${c}')">
+      <div class="ci-flag">${CURRENCIES[c].flag}</div>
+      <div class="ci-code">${c}</div>
+      <div class="ci-amount">${formatted}</div>
+      <div class="ci-name">${CURRENCIES[c].name}</div>
+    </div>`;
+  }).join('');
+}
+
+function setTo(code){
+  document.getElementById('toCurrency').value = code;
+  convert('from');
+}
+
+// ── Favorites ──
+function addToFavorites(){
+  const from = document.getElementById('fromCurrency').value;
+  const to   = document.getElementById('toCurrency').value;
+  const key  = `${from}_${to}`;
+  if(favorites.find(f=>f.key===key)){ showToast('Already saved!'); return; }
+  const rate = rates[to]/rates[from];
+  favorites.unshift({key, from, to, rate});
+  if(favorites.length>10) favorites.pop();
+  localStorage.setItem('flow.currency.favorites', JSON.stringify(favorites));
+  renderFavorites();
+  showToast('Pair saved ⭐');
+}
+
+function renderFavorites(){
+  const card = document.getElementById('favoritesCard');
+  const list = document.getElementById('favoritesList');
+  if(!favorites.length){ card.classList.add('hidden'); return; }
+  card.classList.remove('hidden');
+  list.innerHTML = favorites.map((f,i)=>`
+    <div class="fav-item" onclick="loadFavorite(${i})">
+      <div>
+        <div class="fav-pair">${CURRENCIES[f.from].flag} ${f.from} → ${CURRENCIES[f.to].flag} ${f.to}</div>
+        <div class="fav-rate">1 ${f.from} = ${f.rate.toFixed(6)} ${f.to}</div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();removeFavorite(${i})" style="color:#dc3545;border-color:#dc354533">✕</button>
+    </div>`).join('');
+}
+
+function loadFavorite(i){
+  const f = favorites[i];
+  document.getElementById('fromCurrency').value = f.from;
+  document.getElementById('toCurrency').value   = f.to;
+  convert('from');
+}
+function removeFavorite(i){ favorites.splice(i,1); localStorage.setItem('flow.currency.favorites',JSON.stringify(favorites)); renderFavorites(); }
+function clearFavorites(){ favorites=[]; localStorage.removeItem('flow.currency.favorites'); renderFavorites(); }
+
+// ── History ──
+function addHistory(fromAmt, from, toAmt, to){
+  const entry = {
+    fromAmt: parseFloat(fromAmt).toFixed(2), from,
+    toAmt: parseFloat(toAmt).toFixed(4), to,
+    time: new Date().toLocaleTimeString()
+  };
+  history.unshift(entry);
+  if(history.length>20) history.pop();
+  localStorage.setItem('flow.currency.history', JSON.stringify(history));
+  renderHistory();
+}
+
+function renderHistory(){
+  const card = document.getElementById('historyCard');
+  const list = document.getElementById('historyList');
+  if(!history.length){ card.classList.add('hidden'); return; }
+  card.classList.remove('hidden');
+  list.innerHTML = history.map((h,i)=>`
+    <div class="hist-item" onclick="loadHistory(${i})">
+      <div>
+        <div class="hist-detail">${CURRENCIES[h.from].flag} ${h.fromAmt} ${h.from} = ${CURRENCIES[h.to].flag} ${h.toAmt} ${h.to}</div>
+        <div class="hist-time">${h.time}</div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();removeHistory(${i})" style="color:#dc3545;border-color:#dc354533">✕</button>
+    </div>`).join('');
+}
+
+function loadHistory(i){
+  const h = history[i];
+  document.getElementById('fromCurrency').value = h.from;
+  document.getElementById('toCurrency').value   = h.to;
+  document.getElementById('fromAmount').value   = h.fromAmt;
+  convert('from');
+}
+function removeHistory(i){ history.splice(i,1); localStorage.setItem('flow.currency.history',JSON.stringify(history)); renderHistory(); }
+function clearHistory(){ history=[]; localStorage.removeItem('flow.currency.history'); renderHistory(); }
+
+// ── Copy ──
+function copyResult(){
+  const to  = document.getElementById('toCurrency').value;
+  const amt = document.getElementById('toAmount').value;
+  if(!amt){ showToast('Convert first!'); return; }
+  navigator.clipboard.writeText(`${amt} ${to}`).then(()=>showToast('Copied! 📋'));
+}
+
+// ── Error ──
+function showError(msg){
+  const el = document.createElement('div');
+  el.className = 'error-banner';
+  el.textContent = '⚠️ ' + msg;
+  document.querySelector('main').prepend(el);
+  setTimeout(()=>el.remove(), 4000);
+}
+
+// ── Toast ──
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ── Init ──
+populateSelects();
+renderFavorites();
+renderHistory();
+fetchRates('USD').then(()=>convert('from'));
+</script>
+</body>
+</html>
