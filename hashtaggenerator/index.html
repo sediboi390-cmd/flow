@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Hashtag Generator — Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f6f3;--surface:#fff;--border:#e5e2da;
+  --accent:#e91e8c;--accent-hover:#c9187a;
+  --text:#1e1e1e;--muted:#888580;
+  --radius:14px;--shadow:0 2px 12px rgba(0,0,0,.06);
+}
+html.dark{--bg:#111113;--surface:#1c1c1f;--border:#2a2a2e;--text:#ececef;--muted:#7a7a82}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+.hidden{display:none!important}
+header{max-width:860px;margin:0 auto;padding:40px 24px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;color:var(--muted);text-decoration:none;padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);transition:all .15s}
+.back-btn:hover{color:var(--accent);border-color:var(--accent)}
+.header-brand{display:flex;align-items:center;gap:10px}
+.header-icon{width:40px;height:40px;background:linear-gradient(135deg,#e91e8c,#f06292);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+.header-brand h1{font-size:1.3rem;font-weight:700;letter-spacing:-.02em}
+.header-brand p{font-size:.78rem;color:var(--muted)}
+.dark-toggle{width:34px;height:34px;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:.95rem;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.dark-toggle:hover{border-color:var(--accent);color:var(--accent)}
+main{max-width:860px;margin:28px auto 80px;padding:0 24px;display:flex;flex-direction:column;gap:18px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow)}
+.card-label{font-size:.68rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:9px;font:inherit;font-size:.84rem;font-weight:600;cursor:pointer;transition:all .15s;text-decoration:none;border:none}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-hover)}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-sm{padding:5px 10px;font-size:.75rem}
+footer{text-align:center;padding:16px 0 40px;font-size:.75rem;color:var(--muted)}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:#1e1e1e;color:#fff;padding:10px 20px;border-radius:999px;font-size:.82rem;font-weight:500;opacity:0;transition:all .3s;pointer-events:none;z-index:999}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<header>
+  <a href="../" class="back-btn">← Back to Hub</a>
+  <div class="header-brand">
+    <div class="header-icon">#️⃣</div>
+    <div><h1>Hashtag Generator</h1><p>Generate the best hashtags for your content</p></div>
+  </div>
+  <button class="dark-toggle" id="darkToggle">🌙</button>
+</header>
+<main>
+
+  <!-- Input Card -->
+  <div class="card">
+    <div class="card-label">1 — Your Content</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <label style="font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Keyword / Topic</label>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="keywordInput" placeholder="e.g. sunset photography, vegan food, gym workout…"
+            style="flex:1;padding:11px 14px;border:1px solid var(--border);border-radius:9px;background:var(--bg);color:var(--text);font:inherit;font-size:.9rem;outline:none;transition:border-color .15s"
+            onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
+            onkeydown="if(event.key==='Enter')generate()"/>
+          <button class="btn btn-primary" onclick="generate()" id="generateBtn">✨ Generate</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+        <div>
+          <label style="font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Niche</label>
+          <select id="nicheSelect" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:9px;background:var(--bg);color:var(--text);font:inherit;font-size:.85rem;outline:none;appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23888' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center">
+            <option value="general">🌐 General</option>
+            <option value="food">🍔 Food & Cooking</option>
+            <option value="travel">✈️ Travel</option>
+            <option value="fashion">👗 Fashion & Style</option>
+            <option value="fitness">💪 Fitness & Health</option>
+            <option value="beauty">💄 Beauty & Makeup</option>
+            <option value="tech">💻 Tech & Gaming</option>
+            <option value="business">💼 Business & Finance</option>
+            <option value="music">🎵 Music</option>
+            <option value="photography">📸 Photography</option>
+            <option value="art">🎨 Art & Design</option>
+            <option value="nature">🌿 Nature & Environment</option>
+            <option value="sports">⚽ Sports</option>
+            <option value="education">📚 Education</option>
+            <option value="motivation">🔥 Motivation</option>
+            <option value="family">👨‍👩‍👧 Family & Parenting</option>
+            <option value="pets">🐾 Pets & Animals</option>
+            <option value="film">🎬 Film & Content Creation</option>
+            <option value="gaming">🎮 Gaming</option>
+            <option value="realestate">🏠 Real Estate</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Platform</label>
+          <select id="platformSelect" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:9px;background:var(--bg);color:var(--text);font:inherit;font-size:.85rem;outline:none;appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23888' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center" onchange="updatePlatformInfo()">
+            <option value="instagram">📸 Instagram (5 tags)</option>
+            <option value="tiktok">🎵 TikTok (5 tags)</option>
+            <option value="twitter">𝕏 Twitter (3 tags)</option>
+            <option value="youtube">▶️ YouTube (15 tags)</option>
+            <option value="linkedin">💼 LinkedIn (5 tags)</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Count</label>
+          <select id="countSelect" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:9px;background:var(--bg);color:var(--text);font:inherit;font-size:.85rem;outline:none;appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23888' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center">
+            <option value="5">5 hashtags</option>
+            <option value="10">10 hashtags</option>
+            <option value="15" selected>15 hashtags</option>
+            <option value="20">20 hashtags</option>
+            <option value="30">30 hashtags</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Platform tip -->
+      <div id="platformTip" style="font-size:.78rem;color:var(--muted);padding:8px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
+        💡 <strong>Instagram tip:</strong> Use 3–5 highly relevant hashtags for best reach in 2026.
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="card hidden" id="resultsCard">
+    <div class="card-label" style="display:flex;justify-content:space-between;align-items:center">
+      <span>Generated Hashtags</span>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-outline btn-sm" id="regenerateBtn" onclick="generate()">🔄 Regenerate</button>
+        <button class="btn btn-primary btn-sm" onclick="copyAll()">📋 Copy All</button>
+      </div>
+    </div>
+
+    <!-- Tier tabs -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <button class="tier-btn active" data-tier="all" onclick="filterTier('all',this)">All</button>
+      <button class="tier-btn" data-tier="popular" onclick="filterTier('popular',this)">🔥 Popular</button>
+      <button class="tier-btn" data-tier="medium" onclick="filterTier('medium',this)">📈 Medium</button>
+      <button class="tier-btn" data-tier="niche" onclick="filterTier('niche',this)">🎯 Niche</button>
+    </div>
+
+    <!-- Tags output -->
+    <div id="tagsContainer" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px"></div>
+
+    <!-- Copy as text box -->
+    <div>
+      <label style="font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Ready to paste</label>
+      <div style="display:flex;gap:8px">
+        <textarea id="copyBox" readonly style="flex:1;padding:12px;border:1px solid var(--border);border-radius:9px;background:var(--bg);color:var(--text);font:inherit;font-size:.84rem;resize:none;height:72px;outline:none;line-height:1.6"></textarea>
+        <button class="btn btn-primary" style="align-self:stretch" onclick="copyAll()">📋<br>Copy</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div id="statsRow" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"></div>
+  </div>
+
+  <!-- Saved Sets -->
+  <div class="card hidden" id="savedCard">
+    <div class="card-label" style="display:flex;justify-content:space-between;align-items:center">
+      <span>💾 Saved Sets</span>
+      <button class="btn btn-outline btn-sm" onclick="clearSaved()">Clear All</button>
+    </div>
+    <div id="savedList"></div>
+  </div>
+
+</main>
+<footer>Flow Hashtag Generator</footer>
+<div class="toast" id="toast"></div>
+
+
+<style>
+.tier-btn{padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--muted);font:inherit;font-size:.78rem;font-weight:500;cursor:pointer;transition:all .15s}
+.tier-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tag-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-size:.8rem;font-weight:500;cursor:pointer;transition:all .15s;border:1.5px solid transparent;user-select:none}
+.tag-chip.popular{background:rgba(233,30,140,.08);color:#e91e8c;border-color:rgba(233,30,140,.2)}
+.tag-chip.medium{background:rgba(108,71,255,.08);color:#6c47ff;border-color:rgba(108,71,255,.2)}
+.tag-chip.niche{background:rgba(42,157,107,.08);color:#2a9d6b;border-color:rgba(42,157,107,.2)}
+.tag-chip:hover{transform:translateY(-1px);box-shadow:0 3px 8px rgba(0,0,0,.1)}
+.tag-chip.selected{opacity:.4}
+.stat-pill{font-size:.72rem;padding:4px 10px;border-radius:999px;background:rgba(233,30,140,.08);color:var(--accent);font-weight:500}
+.saved-item{padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;margin-bottom:8px}
+.saved-item-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.saved-item-name{font-size:.84rem;font-weight:600}
+.saved-tags{font-size:.76rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
+
+<script>
+// ── Dark mode ──
+const html=document.documentElement,darkBtn=document.getElementById('darkToggle');
+const saved=localStorage.getItem('flow.darkMode');
+if(saved==='true'||(!saved&&window.matchMedia('(prefers-color-scheme:dark)').matches)){html.classList.add('dark');darkBtn.textContent='☀️'}
+darkBtn.addEventListener('click',()=>{const d=html.classList.toggle('dark');darkBtn.textContent=d?'☀️':'🌙';localStorage.setItem('flow.darkMode',d)});
+
+// ── Hashtag Database ──
+const DB = {
+  general:  {
+    popular:['#trending','#viral','#explore','#instagood','#love','#photooftheday','#picoftheday','#follow','#like','#instadaily','#beautiful','#happy','#instagram','#photography','#amazing','#art','#nature','#style','#life','#inspiration'],
+    medium: ['#explorepage','#content','#creative','#dailypost','#goodvibes','#positivevibes','#lifestyle','#motivational','#aesthetic','#vibes','#mindset','#growth','#community','#share','#daily'],
+    niche:  ['#contentcreator','#smallcreator','#creativelife','#authenticself','#slowliving','#intentionalliving','#mindfulliving','#createeveryday','#creatoreconomy','#digitalcreator']
+  },
+  food:     {
+    popular:['#food','#foodie','#foodporn','#instafood','#foodphotography','#yummy','#delicious','#eat','#cooking','#recipe','#homemade','#foodlover','#foodblogger','#tasty','#healthy','#dinner','#lunch','#breakfast','#chef','#baking'],
+    medium: ['#foodstagram','#foodiegram','#mealprep','#cleaneating','#homecooking','#kitchenlife','#cookingathome','#foodart','#eatwell','#plantbased','#veganfood','#glutenfree','#foodstyling','#foodflicks','#streetfood'],
+    niche:  ['#foodcontentcreator','#recipedeveloper','#homechef','#foodreels','#cookingvideo','#foodtok','#recipeshare','#weeknightdinner','#mealideas','#foodinspo']
+  },
+  travel:   {
+    popular:['#travel','#wanderlust','#travelgram','#explore','#adventure','#vacation','#trip','#holiday','#travelphotography','#travelblogger','#instatravel','#nature','#beautiful','#world','#traveltheworld','#landscape','#sunset','#beach','#mountains','#sky'],
+    medium: ['#travellife','#travelholic','#traveler','#backpacker','#roadtrip','#seetheworld','#travelinspiration','#exploremore','#traveladdict','#neverstopexploring','#solotravel','#luxurytravel','#budgettravel','#travelcouple','#digitalnomad'],
+    niche:  ['#hiddengem','#offthebeatenpath','#travelcontentcreator','#travelreels','#traveltok','#tripplanning','#travelitinerary','#passportready','#travelersofinstagram','#explorepage']
+  },
+  fashion:  {
+    popular:['#fashion','#style','#ootd','#outfit','#fashionblogger','#streetstyle','#clothing','#instafashion','#fashionista','#model','#outfitoftheday','#stylish','#fashionphotography','#trend','#beauty','#shopping','#designer','#luxury','#vintage','#streetwear'],
+    medium: ['#fashionstyle','#outfitinspo','#styleblogger','#womensfashion','#mensfashion','#fashionweek','#lookbook','#fashionpost','#currentlywearing','#stylegram','#casualstyle','#summerfashion','#winterfashion','#sustainablefashion','#thrifted'],
+    niche:  ['#fashioncontentcreator','#styleinspo','#outfitcheck','#fashiontok','#wiwt','#dailylook','#fashionreels','#wardrobeessentials','#capsulewardrobe','#slowfashion']
+  },
+  fitness:  {
+    popular:['#fitness','#gym','#workout','#fitnessmotivation','#fit','#health','#training','#bodybuilding','#exercise','#healthy','#lifestyle','#motivation','#sport','#muscle','#gains','#fitfam','#weightloss','#cardio','#nutrition','#personaltrainer'],
+    medium: ['#fitnessjourney','#gymlife','#workoutmotivation','#fitlife','#getfit','#strongnotskinny','#fitnessgoals','#gymrat','#homeworkout','#crossfit','#yoga','#running','#weighttraining','#fitnessblogger','#healthylifestyle'],
+    niche:  ['#fitnesscontentcreator','#workoutvideo','#gymtok','#fitnesstok','#workoutreels','#transformationtuesday','#progressnotperfection','#fitnesscoach','#onlinecoach','#strengthtraining']
+  },
+  beauty:   {
+    popular:['#beauty','#makeup','#skincare','#beautyblogger','#cosmetics','#makeuptutorial','#makeuplover','#glam','#lips','#eyes','#hair','#nails','#beautytips','#selfcare','#glow','#makeupartist','#mua','#beautycare','#skincareroutine','#naturalbeauty'],
+    medium: ['#beautyreels','#makeupinspo','#skincareobsessed','#beautyhacks','#makeupoftheday','#grwm','#getreadywithme','#cleanbeauty','#crueltyfree','#veganskincare','#antiaging','#acneskincare','#glowingskin','#hairstyle','#nailart'],
+    niche:  ['#beautycontentcreator','#makeupreels','#beautytok','#skincaretok','#grwmreels','#makeuptransformation','#drugstoremakeup','#makeupreview','#skincarediary','#beautyfinds']
+  },
+  tech:     {
+    popular:['#tech','#technology','#innovation','#programming','#coding','#developer','#software','#gadgets','#ai','#artificialintelligence','#startup','#digital','#cyber','#data','#cloud','#machinelearning','#python','#javascript','#webdev','#iot'],
+    medium: ['#techlife','#techlover','#techblogger','#codinglife','#devlife','#buildinpublic','#saas','#nocode','#lowcode','#techstartup','#techtrends','#futuretech','#robotics','#blockchain','#cybersecurity'],
+    niche:  ['#techcontentcreator','#techtok','#techreels','#codingtutorial','#devtips','#100daysofcode','#learntocode','#opensourcedeveloper','#indiedeveloper','#techreview']
+  },
+  business: {
+    popular:['#business','#entrepreneur','#success','#motivation','#mindset','#hustle','#marketing','#money','#leadership','#startup','#goals','#growth','#finance','#investment','#rich','#wealth','#passive income','#smallbusiness','#businessowner','#ceo'],
+    medium: ['#businesstips','#entrepreneurship','#businessmindset','#digitalmarketing','#onlinebusiness','#contentmarketing','#socialmediamarketing','#branding','#businesscoach','#sidehustle','#makemoneyonline','#financialfreedom','#investing','#personalfinance','#budgeting'],
+    niche:  ['#businesscontentcreator','#entrepreneurtok','#businessreels','#startuptips','#growthhacking','#b2bmarketing','#ecommerce','#dropshipping','#affiliatemarketing','#passiveincomeideas']
+  },
+  music:    {
+    popular:['#music','#musician','#song','#newmusic','#hiphop','#rap','#rnb','#pop','#rock','#singer','#producer','#beat','#studio','#recording','#musicvideo','#artist','#guitar','#piano','#live','#concert'],
+    medium: ['#musicproducer','#indieartist','#unsigned','#musiclover','#musiclife','#beatmaker','#soundcloud','#spotify','#newartist','#musicblogger','#musicreview','#albumreview','#playlist','#musicproduction','#songwriting'],
+    niche:  ['#musiccontentcreator','#musictok','#musicreels','#originalmusic','#independentartist','#undergroundmusic','#beatsforleasing','#producerlife','#studiolife','#musicbusiness']
+  },
+  photography:{
+    popular:['#photography','#photo','#photographer','#photooftheday','#picoftheday','#landscape','#portrait','#streetphotography','#nature','#travel','#sunset','#golden hour','#lightroom','#canon','#nikon','#sony','#blackandwhite','#filmphotography','#analog','#camera'],
+    medium: ['#photographylovers','#photoblog','#photostory','#shootfilm','#35mm','#mediumformat','#weddingphotography','#foodphotography','#fashionphotography','#wildlifephotography','#astrophotography','#architecturephotography','#documentaryphotography','#photographytips','#editingtutorial'],
+    niche:  ['#photographycontentcreator','#photographytok','#photographyreels','#behindthelens','#photographyinspo','#lightroompresets','#photographybusiness','#photographyworkshop','#portraitphotographer','#weddingphotographer']
+  },
+  art:      {
+    popular:['#art','#artist','#artwork','#drawing','#painting','#illustration','#design','#creative','#digitalart','#sketch','#watercolor','#acrylic','#oilpainting','#abstractart','#contemporaryart','#modernart','#artoftheday','#instaart','#artgallery','#fineart'],
+    medium: ['#artlife','#artblogger','#artprocess','#artistsoninstagram','#artcommunity','#supportartists','#commissionsopen','#procreate','#digitalillustration','#characterdesign','#conceptart','#fanart','#manga','#anime','#graffiti'],
+    niche:  ['#artcontentcreator','#arttok','#artreels','#studiovlog','#artjournal','#sketchbook','#artiststudio','#artsales','#printmaking','#handmade']
+  },
+  nature:   {
+    popular:['#nature','#naturephotography','#landscape','#wildlife','#outdoor','#hiking','#forest','#mountain','#ocean','#beach','#sunset','#sunrise','#sky','#flowers','#plants','#green','#earth','#environment','#conservation','#animals'],
+    medium: ['#naturelovers','#naturelover','#getoutside','#adventureseeker','#wildernessculture','#earthpix','#ig_nature','#natgeo','#nationalpark','#camping','#backpacking','#trailrunning','#ecotourism','#sustainability','#climateaction'],
+    niche:  ['#naturecontentcreator','#naturetok','#naturereels','#birding','#birdwatching','#botanicalgarden','#wildflowers','#macrophotography','#timelapse','#natureguide']
+  },
+  sports:   {
+    popular:['#sports','#football','#basketball','#soccer','#tennis','#golf','#baseball','#volleyball','#swimming','#athletics','#athlete','#training','#fitness','#performance','#game','#champion','#team','#match','#competition','#winner'],
+    medium: ['#sportslife','#sportsphoto','#sportsphotography','#gameday','#teamwork','#sportscoach','#sportsnutrition','#sportsmotivation','#eliteathletes','#proathlete','#sportsrecovery','#sportstechnology','#esports','#fantasy sports','#sportsbetting'],
+    niche:  ['#sportscontentcreator','#sportstok','#sportsreels','#athletelife','#sportscoaching','#youthsports','#grassrootssports','#sportsbusiness','#sportsmedia','#sportsanalysis']
+  },
+  education:{
+    popular:['#education','#learning','#school','#student','#teacher','#study','#knowledge','#college','#university','#books','#reading','#science','#math','#history','#language','#english','#skills','#course','#training','#certification'],
+    medium: ['#elearning','#onlinelearning','#studytips','#studygram','#studywithme','#learneveryday','#edtech','#teaching','#homeschool','#tutoring','#scholarship','#studymotivation','#examprep','#lifeskills','#personaldevelopment'],
+    niche:  ['#educationcontentcreator','#edutok','#educationreels','#teachertok','#studytok','#studyaesthetic','#studyblr','#studyinspiration','#learningsomethingeveryday','#microlearning']
+  },
+  motivation:{
+    popular:['#motivation','#inspiration','#success','#mindset','#goals','#positivity','#believe','#hustle','#grind','#growth','#selflove','#confidence','#happiness','#life','#dream','#achieve','#winner','#focus','#discipline','#hardwork'],
+    medium: ['#motivationalquotes','#inspirationalquotes','#dailymotivation','#dailyinspiration','#morningmotivation','#successmindset','#growthmindset','#selfimprovement','#personaldevelopment','#mentalhealth','#selfcare','#mindfulness','#gratitude','#abundance','#lawofattraction'],
+    niche:  ['#motivationcontentcreator','#motivationtok','#motivationreels','#lifecoach','#mindsetcoach','#manifestation','#affirmations','#journaling','#journalingprompts','#intentionalsetting']
+  },
+  family:   {
+    popular:['#family','#mom','#dad','#kids','#children','#baby','#parenting','#love','#home','#happy','#blessed','#familytime','#toddler','#newborn','#pregnancy','#motherhood','#fatherhood','#siblings','#grandparents','#familyfirst'],
+    medium: ['#familyblog','#momlife','#dadlife','#parentinglife','#kidsofinstagram','#babiesofinstagram','#toddlerlife','#newmom','#newdad','#firsttimemom','#sahm','#workingmom','#gentleparenting','#positiveparenting','#raisingkids'],
+    niche:  ['#familycontentcreator','#familytok','#familyreels','#parentingtips','#momtok','#dadtok','#babytok','#kidsactivities','#familyvlog','#homeschoolmom']
+  },
+  pets:     {
+    popular:['#pets','#dog','#cat','#puppy','#kitten','#dogs','#cats','#doglife','#catlife','#animals','#cute','#adorable','#petstagram','#dogsofinstagram','#catsofinstagram','#petlover','#petphotography','#petsofinstagram','#instapet','#animallover'],
+    medium: ['#petblogger','#petparent','#dogmom','#dogdad','#catmom','#catdad','#rescuedog','#rescuecat','#adoptdontshop','#petcare','#pettraining','#dogtraining','#petgrooming','#vetlife','#petfood'],
+    niche:  ['#petcontentcreator','#pettok','#petreels','#dogtok','#cattok','#petinfluencer','#pettips','#dogbehavior','#catbehavior','#animalrescue']
+  },
+  film:     {
+    popular:['#film','#filmmaking','#cinema','#movie','#director','#cinematography','#video','#shortfilm','#youtube','#content','#creator','#videography','#bts','#production','#filming','#editing','#camera','#lens','#cinematic','#reels'],
+    medium: ['#filmlife','#filmmaker','#indiefilm','#contentcreator','#videocreator','#youtuber','#vlogger','#videoediting','#colorgrading','#davinciresolve','#premiere','#finalcut','#filmtips','#contentcreation','#storytelling'],
+    niche:  ['#filmcontentcreator','#filmtok','#filmreels','#filmschool','#aspiring filmmaker','#shortfilmmaker','#documentaryfilmmaker','#cinematographer','#filmeditor','#filmcommunity']
+  },
+  gaming:   {
+    popular:['#gaming','#gamer','#game','#videogames','#ps5','#xbox','#nintendo','#pc','#fortnite','#minecraft','#cod','#fps','#rpg','#mmo','#esports','#twitch','#youtube','#streamer','#gameplay','#gaming community'],
+    medium: ['#gaminglife','#gamerlife','#pcgaming','#consolegaming','#mobilegaming','#gamingsetup','#gamingroom','#retrogaming','#indiegames','#gamedev','#gamedevelopment','#levelup','#gamersunite','#onlinegaming','#multiplayer'],
+    niche:  ['#gamingcontentcreator','#gamingtok','#gamingreels','#gamestreamer','#twitchstreamer','#newstreamer','#smallstreamer','#gamingcommunity','#gamingclips','#gamingmemes']
+  },
+  realestate:{
+    popular:['#realestate','#property','#home','#house','#housing','#investment','#realtor','#homebuying','#homeselling','#mortgage','#forsale','#newhome','#luxury','#luxuryhomes','#interiordesign','#architecture','#construction','#renovation','#dreamhome','#homedesign'],
+    medium: ['#realestatelife','#realestateinvestor','#realestateagent','#realestateblogger','#propertyinvestment','#firsttimehomebuyer','#homeowner','#rentalincome','#passiveincome','#flippinghouses','#realestatetips','#homeimprovement','#homerenovation','#interiordecorating','#staging'],
+    niche:  ['#realestatecontentcreator','#realestatetok','#realestatereels','#realestatecoach','#realestatementor','#realestateeducation','#propertymanagement','#commercialrealestate','#wholesalingrealestate','#realestatemarketing']
+  }
+};
+</script>
+
+
+<script>
+const platformTips = {
+  instagram: '💡 <strong>Instagram tip:</strong> Use 3–5 highly relevant hashtags for best reach in 2026.',
+  tiktok:    '💡 <strong>TikTok tip:</strong> Use 3–5 focused hashtags. Mix trending + niche for best discovery.',
+  twitter:   '💡 <strong>Twitter/X tip:</strong> 1–3 hashtags max. More than that hurts engagement.',
+  youtube:   '💡 <strong>YouTube tip:</strong> Use up to 15 tags. First 3 matter most for search.',
+  linkedin:  '💡 <strong>LinkedIn tip:</strong> 3–5 industry-specific hashtags work best for reach.'
+};
+function updatePlatformInfo(){
+  const p = document.getElementById('platformSelect').value;
+  document.getElementById('platformTip').innerHTML = platformTips[p];
+}
+
+let currentTags = [];
+let currentFilter = 'all';
+
+function shuffle(arr){ return arr.sort(()=>Math.random()-.5) }
+
+function generate(){
+  const keyword  = document.getElementById('keywordInput').value.trim();
+  const niche    = document.getElementById('nicheSelect').value;
+  const platform = document.getElementById('platformSelect').value;
+  const count    = parseInt(document.getElementById('countSelect').value);
+
+  const data = DB[niche] || DB.general;
+
+  // Build keyword-based tags
+  const kw = keyword.toLowerCase().replace(/\s+/g,'');
+  const kwTags = keyword ? [
+    {tag:`#${kw}`, tier:'popular'},
+    {tag:`#${kw}lifestyle`, tier:'medium'},
+    {tag:`#${kw}content`, tier:'niche'},
+    {tag:`#${kw}creator`, tier:'niche'},
+    {tag:`#${kw}community`, tier:'medium'},
+    {tag:`#${kw}tips`, tier:'niche'},
+    {tag:`#${kw}reels`, tier:'medium'},
+    {tag:`#${kw}tok`, tier:'niche'},
+  ] : [];
+
+  // Mix popular/medium/niche
+  const popularCount = Math.ceil(count * 0.35);
+  const mediumCount  = Math.ceil(count * 0.35);
+  const nicheCount   = count - popularCount - mediumCount;
+
+  const popularTags = shuffle([...data.popular]).slice(0, popularCount).map(t=>({tag:t,tier:'popular'}));
+  const mediumTags  = shuffle([...data.medium]).slice(0, mediumCount).map(t=>({tag:t,tier:'medium'}));
+  const nicheTags   = shuffle([...data.niche]).slice(0, nicheCount).map(t=>({tag:t,tier:'niche'}));
+
+  // Merge keyword tags in
+  let all = [...kwTags.slice(0,3), ...popularTags, ...mediumTags, ...nicheTags];
+
+  // Deduplicate
+  const seen = new Set();
+  all = all.filter(t=>{ if(seen.has(t.tag))return false; seen.add(t.tag); return true; });
+  all = all.slice(0, count);
+
+  currentTags = all;
+  currentFilter = 'all';
+  document.querySelectorAll('.tier-btn').forEach(b=>b.classList.toggle('active', b.dataset.tier==='all'));
+
+  renderTags(all);
+  updateCopyBox(all);
+  updateStats(all, platform);
+
+  document.getElementById('resultsCard').classList.remove('hidden');
+
+  // Auto-save
+  if(keyword){
+    saveSet(keyword, all);
+  }
+}
+
+function renderTags(tags){
+  const filtered = currentFilter==='all' ? tags : tags.filter(t=>t.tier===currentFilter);
+  document.getElementById('tagsContainer').innerHTML = filtered.map(t=>`
+    <span class="tag-chip ${t.tier}" onclick="toggleTag(this,'${t.tag}')" title="Click to remove">
+      ${t.tag}
+      <span style="font-size:.65rem;opacity:.6">×</span>
+    </span>`).join('');
+}
+
+function toggleTag(el, tag){
+  el.classList.toggle('selected');
+  const removed = el.classList.contains('selected');
+  const active = currentTags.filter(t=>{
+    const chip = document.querySelector(`.tag-chip[onclick*="${t.tag}"]`);
+    return !chip || !chip.classList.contains('selected');
+  });
+  updateCopyBox(active);
+}
+
+function updateCopyBox(tags){
+  const active = tags.filter(t=>{
+    const chip = document.querySelector(`.tag-chip[onclick*="${t.tag}"]`);
+    return !chip || !chip.classList.contains('selected');
+  });
+  document.getElementById('copyBox').value = (active.length ? active : tags).map(t=>t.tag).join(' ');
+}
+
+function updateStats(tags, platform){
+  const counts = {popular:0, medium:0, niche:0};
+  tags.forEach(t=>counts[t.tier]++);
+  document.getElementById('statsRow').innerHTML = `
+    <span class="stat-pill">Total: ${tags.length}</span>
+    <span class="stat-pill" style="background:rgba(233,30,140,.08);color:#e91e8c">🔥 Popular: ${counts.popular}</span>
+    <span class="stat-pill" style="background:rgba(108,71,255,.08);color:#6c47ff">📈 Medium: ${counts.medium}</span>
+    <span class="stat-pill" style="background:rgba(42,157,107,.08);color:#2a9d6b">🎯 Niche: ${counts.niche}</span>`;
+}
+
+function filterTier(tier, btn){
+  currentFilter = tier;
+  document.querySelectorAll('.tier-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTags(currentTags);
+}
+
+function copyAll(){
+  const box = document.getElementById('copyBox');
+  navigator.clipboard.writeText(box.value).then(()=>showToast('Hashtags copied! 🎉'));
+}
+
+// ── Saved sets ──
+let savedSets = JSON.parse(localStorage.getItem('flow.hashtags')||'[]');
+function saveSet(keyword, tags){
+  const existing = savedSets.findIndex(s=>s.keyword===keyword);
+  const entry = { keyword, tags, time: new Date().toLocaleTimeString() };
+  if(existing>=0) savedSets[existing]=entry; else savedSets.unshift(entry);
+  if(savedSets.length>10) savedSets.pop();
+  localStorage.setItem('flow.hashtags', JSON.stringify(savedSets));
+  renderSaved();
+}
+function renderSaved(){
+  if(!savedSets.length){ document.getElementById('savedCard').classList.add('hidden'); return; }
+  document.getElementById('savedCard').classList.remove('hidden');
+  document.getElementById('savedList').innerHTML = savedSets.map((s,i)=>`
+    <div class="saved-item">
+      <div class="saved-item-top">
+        <span class="saved-item-name">#️⃣ ${s.keyword}</span>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-outline btn-sm" onclick="loadSaved(${i})">Load</button>
+          <button class="btn btn-outline btn-sm" onclick="copySaved(${i})">📋 Copy</button>
+          <button class="btn btn-outline btn-sm" onclick="deleteSaved(${i})" style="color:#dc3545;border-color:#dc354533">✕</button>
+        </div>
+      </div>
+      <div class="saved-tags">${s.tags.map(t=>t.tag).join(' ')}</div>
+    </div>`).join('');
+}
+window.loadSaved = i => {
+  currentTags = savedSets[i].tags;
+  renderTags(currentTags);
+  updateCopyBox(currentTags);
+  document.getElementById('resultsCard').classList.remove('hidden');
+  window.scrollTo({top:0,behavior:'smooth'});
+};
+window.copySaved = i => {
+  navigator.clipboard.writeText(savedSets[i].tags.map(t=>t.tag).join(' ')).then(()=>showToast('Copied!'));
+};
+window.deleteSaved = i => {
+  savedSets.splice(i,1);
+  localStorage.setItem('flow.hashtags',JSON.stringify(savedSets));
+  renderSaved();
+};
+function clearSaved(){ savedSets=[]; localStorage.removeItem('flow.hashtags'); renderSaved(); }
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// Init
+renderSaved();
+</script>
+</body>
+</html>
