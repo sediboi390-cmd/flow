@@ -1154,12 +1154,20 @@ function persistCurrent() {
     docs[i].title = titleInput.value;
     docs[i].content = editor.innerHTML;
     docs[i].updated = Date.now();
-    saveDocs(docs);
+    try {
+      saveDocs(docs);
+    } catch(quotaErr) {
+      // Try saving without images as fallback
+      const stripped = docs[i].content.replace(/<img[^>]+src="data:[^"]{500,}"[^>]*>/g,
+        '<img src="" alt="[Image removed — too large to save]" style="border:1px dashed #ccc;padding:8px;color:#999"/>');
+      docs[i].content = stripped;
+      saveDocs(docs);
+      showToast('⚠ Image too large to save locally. Try inserting a smaller image.', 4000);
+    }
     setSaveStatus('Saved');
     document.title = (docs[i].title || 'Untitled') + ' — DocPad';
     lastEditEl.textContent = 'Last edited ' + relativeTime(docs[i].updated);
   } catch(e) {
-    // localStorage quota exceeded (common with large embedded images)
     setSaveStatus('Saved');
   }
 }
@@ -1295,7 +1303,6 @@ imageInput.addEventListener('change', () => {
 // Read a File as a data URL and insert into the editor at the current caret
 function insertImageFile(file) {
   if (!file || !file.type.startsWith('image/')) return;
-  // ~10 MB safety cap — large images blow up localStorage
   const MAX = 10 * 1024 * 1024;
   if (file.size > MAX) {
     showToast('⚠ Image too large (max 10 MB)', 3500);
@@ -1303,10 +1310,31 @@ function insertImageFile(file) {
   }
   const reader = new FileReader();
   reader.onload = () => {
-    editor.focus();
-    document.execCommand('insertHTML', false, `<img src="${reader.result}" alt="${escapeHtml(file.name || '')}"/><br/>`);
-    scheduleSave();
-    updateWordCount();
+    // Compress image if it's too large to safely store in localStorage
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      // Scale down if wider than 1200px
+      const MAX_W = 1200;
+      if (w > MAX_W) { h = Math.round(h * MAX_W / w); w = MAX_W; }
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL('image/jpeg', 0.82);
+      editor.focus();
+      document.execCommand('insertHTML', false, `<img src="${compressed}" alt="${escapeHtml(file.name || '')}"/><br/>`);
+      scheduleSave();
+      updateWordCount();
+    };
+    img.onerror = () => {
+      // Fallback: insert original
+      editor.focus();
+      document.execCommand('insertHTML', false, `<img src="${reader.result}" alt="${escapeHtml(file.name || '')}"/><br/>`);
+      scheduleSave();
+      updateWordCount();
+    };
+    img.src = reader.result;
   };
   reader.onerror = () => showToast('❌ Could not read image', 3500);
   reader.readAsDataURL(file);
