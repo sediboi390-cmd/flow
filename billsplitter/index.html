@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Bill Splitter — Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f6f3;--surface:#fff;--border:#e5e2da;
+  --accent:#2a9d6b;--accent-hover:#228a5c;
+  --text:#1e1e1e;--muted:#888580;
+  --radius:14px;--shadow:0 2px 12px rgba(0,0,0,.06);
+}
+html.dark{--bg:#111113;--surface:#1c1c1f;--border:#2a2a2e;--text:#ececef;--muted:#7a7a82}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+.hidden{display:none!important}
+header{max-width:860px;margin:0 auto;padding:40px 24px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;color:var(--muted);text-decoration:none;padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);transition:all .15s}
+.back-btn:hover{color:var(--accent);border-color:var(--accent)}
+.header-brand{display:flex;align-items:center;gap:10px}
+.header-icon{width:40px;height:40px;background:linear-gradient(135deg,#2a9d6b,#52c99a);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+.header-brand h1{font-size:1.3rem;font-weight:700;letter-spacing:-.02em}
+.header-brand p{font-size:.78rem;color:var(--muted)}
+.dark-toggle{width:34px;height:34px;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:.95rem;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.dark-toggle:hover{border-color:var(--accent);color:var(--accent)}
+main{max-width:860px;margin:28px auto 80px;padding:0 24px;display:flex;flex-direction:column;gap:18px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow)}
+.card-label{font-size:.68rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.field label{display:block;font-size:.75rem;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em}
+.field input,.field select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:9px;background:var(--bg);color:var(--text);font:inherit;font-size:.88rem;outline:none;transition:border-color .15s}
+.field input:focus,.field select:focus{border-color:var(--accent)}
+.field select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23888' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:9px;font:inherit;font-size:.84rem;font-weight:600;cursor:pointer;transition:all .15s;text-decoration:none;border:none}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-hover)}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:transparent;color:#dc3545;border:1px solid #dc354533}
+.btn-danger:hover{background:#dc354511}
+.btn-sm{padding:5px 10px;font-size:.75rem}
+footer{text-align:center;padding:16px 0 40px;font-size:.75rem;color:var(--muted)}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:#1e1e1e;color:#fff;padding:10px 20px;border-radius:999px;font-size:.82rem;font-weight:500;opacity:0;transition:all .3s;pointer-events:none;z-index:999}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<header>
+  <a href="../" class="back-btn">← Back to Hub</a>
+  <div class="header-brand">
+    <div class="header-icon">🧾</div>
+    <div><h1>Bill Splitter</h1><p>Split expenses fairly among your group</p></div>
+  </div>
+  <button class="dark-toggle" id="darkToggle">🌙</button>
+</header>
+<main id="mainContent">
+  <!-- Groups list shown on load -->
+  <div id="groupsView">
+    <div class="card">
+      <div class="card-label" style="display:flex;justify-content:space-between;align-items:center">
+        <span>Your Groups</span>
+        <button class="btn btn-primary btn-sm" id="newGroupBtn">+ New Group</button>
+      </div>
+      <div id="groupsList"><p style="font-size:.84rem;color:var(--muted);text-align:center;padding:24px 0">No groups yet. Create one to get started!</p></div>
+    </div>
+  </div>
+  <!-- Group detail view -->
+  <div id="groupView" class="hidden">
+    <!-- Top bar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <button class="btn btn-outline btn-sm" id="backToGroupsBtn">← All Groups</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" id="shareBtn">📤 Share</button>
+        <button class="btn btn-danger btn-sm" id="deleteGroupBtn">🗑️ Delete Group</button>
+      </div>
+    </div>
+    <!-- Group name & currency -->
+    <div class="card">
+      <div class="card-label">Group Info</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="field"><label>Group Name</label><input type="text" id="groupName" placeholder="e.g. Weekend Trip"/></div>
+        <div class="field">
+          <label>Currency</label>
+          <select id="currency">
+            <option value="PHP">🇵🇭 PHP — Philippine Peso</option>
+            <option value="USD">🇺🇸 USD — US Dollar</option>
+            <option value="EUR">🇪🇺 EUR — Euro</option>
+            <option value="GBP">🇬🇧 GBP — British Pound</option>
+            <option value="ZAR">🇿🇦 ZAR — South African Rand</option>
+            <option value="AUD">🇦🇺 AUD — Australian Dollar</option>
+            <option value="CAD">🇨🇦 CAD — Canadian Dollar</option>
+            <option value="JPY">🇯🇵 JPY — Japanese Yen</option>
+            <option value="INR">🇮🇳 INR — Indian Rupee</option>
+            <option value="NGN">🇳🇬 NGN — Nigerian Naira</option>
+            <option value="KES">🇰🇪 KES — Kenyan Shilling</option>
+            <option value="MXN">🇲🇽 MXN — Mexican Peso</option>
+            <option value="BRL">🇧🇷 BRL — Brazilian Real</option>
+            <option value="SGD">🇸🇬 SGD — Singapore Dollar</option>
+            <option value="AED">🇦🇪 AED — UAE Dirham</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Members -->
+    <div class="card">
+      <div class="card-label">👥 People</div>
+      <div id="membersList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px"></div>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="memberInput" placeholder="Enter name and press Add" style="flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:9px;background:var(--bg);color:var(--text);font:inherit;font-size:.88rem;outline:none" onkeydown="if(event.key==='Enter')addMember()"/>
+        <button class="btn btn-primary" onclick="addMember()">+ Add</button>
+      </div>
+    </div>
+    <!-- Expenses -->
+    <div class="card">
+      <div class="card-label">🧾 Expenses</div>
+      <div id="expensesList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
+      <!-- Add expense form -->
+      <div style="border:1px solid var(--border);border-radius:10px;padding:14px;background:var(--bg)">
+        <div style="font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Add Expense</div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-bottom:10px">
+          <div class="field"><label>Description</label><input type="text" id="expDesc" placeholder="e.g. Hotel, Dinner…"/></div>
+          <div class="field"><label>Amount</label><input type="number" id="expAmount" placeholder="0.00" min="0" step="0.01"/></div>
+          <div class="field"><label>Paid by</label><select id="expPaidBy"><option value="">— select —</option></select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div class="field">
+            <label>Split Type</label>
+            <select id="splitType" onchange="toggleSplitOptions()">
+              <option value="equal">Equal split</option>
+              <option value="percentage">By percentage</option>
+              <option value="custom">Custom amounts</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Split Among</label>
+            <select id="splitAmong">
+              <option value="all">Everyone</option>
+              <option value="select">Select people…</option>
+            </select>
+          </div>
+        </div>
+        <div id="customSplitFields" class="hidden" style="margin-bottom:12px"></div>
+        <div id="selectPeopleFields" class="hidden" style="margin-bottom:12px"></div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="addExpense()">+ Add Expense</button>
+      </div>
+    </div>
+    <!-- Summary -->
+    <div class="card hidden" id="summaryCard">
+      <div class="card-label">📊 Summary</div>
+      <div id="summaryContent"></div>
+    </div>
+    <!-- Settlements -->
+    <div class="card hidden" id="settlementsCard">
+      <div class="card-label">💸 Who Pays Who</div>
+      <div id="settlementsContent"></div>
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+        <button class="btn btn-primary" id="copySettlementsBtn">📋 Copy Summary</button>
+        <button class="btn btn-outline" id="whatsappBtn">💬 Share via WhatsApp</button>
+      </div>
+    </div>
+  </div><!-- end groupView -->
+</main>
+<footer>Flow Bill Splitter</footer>
+<div class="toast" id="toast"></div>
+
+<style>
+.member-tag{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;background:rgba(42,157,107,.1);color:var(--accent);border-radius:999px;font-size:.8rem;font-weight:500}
+.member-tag button{background:none;border:none;cursor:pointer;color:inherit;font-size:.85rem;line-height:1;padding:0;opacity:.6}
+.member-tag button:hover{opacity:1}
+.expense-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;gap:10px}
+.expense-item-info{flex:1}
+.expense-item-desc{font-size:.88rem;font-weight:600}
+.expense-item-meta{font-size:.75rem;color:var(--muted);margin-top:2px}
+.expense-item-amount{font-size:1rem;font-weight:700;color:var(--accent);white-space:nowrap}
+.summary-table{width:100%;border-collapse:collapse;font-size:.84rem}
+.summary-table th{text-align:left;padding:8px 12px;font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)}
+.summary-table td{padding:10px 12px;border-bottom:1px solid var(--border)}
+.summary-table tr:last-child td{border-bottom:none}
+.amount-positive{color:#2a9d6b;font-weight:600}
+.amount-negative{color:#dc3545;font-weight:600}
+.amount-zero{color:var(--muted)}
+.settlement-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;margin-bottom:8px}
+.settlement-arrow{font-size:.82rem;color:var(--muted)}
+.settlement-amount{font-size:.95rem;font-weight:700;color:#dc3545}
+.total-bar{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:rgba(42,157,107,.08);border:1px solid rgba(42,157,107,.2);border-radius:10px;margin-bottom:14px}
+.total-bar span{font-size:.82rem;color:var(--muted)}
+.total-bar strong{font-size:1.1rem;font-weight:700;color:var(--accent)}
+.group-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:border-color .15s}
+.group-item:hover{border-color:var(--accent)}
+.group-item-name{font-size:.9rem;font-weight:600}
+.group-item-meta{font-size:.75rem;color:var(--muted);margin-top:2px}
+.checkbox-grid{display:flex;flex-wrap:wrap;gap:8px}
+.checkbox-label{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:.82rem;transition:all .15s}
+.checkbox-label input{accent-color:var(--accent)}
+.checkbox-label:has(input:checked){border-color:var(--accent);background:rgba(42,157,107,.08);color:var(--accent)}
+</style>
+
+<script>
+// ── Dark mode ──
+const html=document.documentElement,darkBtn=document.getElementById('darkToggle');
+const saved=localStorage.getItem('flow.darkMode');
+if(saved==='true'||(!saved&&window.matchMedia('(prefers-color-scheme:dark)').matches)){html.classList.add('dark');darkBtn.textContent='☀️'}
+darkBtn.addEventListener('click',()=>{const d=html.classList.toggle('dark');darkBtn.textContent=d?'☀️':'🌙';localStorage.setItem('flow.darkMode',d)});
+
+// ── State ──
+let groups=JSON.parse(localStorage.getItem('flow.billsplitter')||'[]');
+let currentGroupId=null;
+
+function saveGroups(){localStorage.setItem('flow.billsplitter',JSON.stringify(groups))}
+function getGroup(){return groups.find(g=>g.id===currentGroupId)}
+function sym(){
+  const g=getGroup();if(!g)return'';
+  const map={PHP:'₱',USD:'$',EUR:'€',GBP:'£',ZAR:'R',AUD:'A$',CAD:'C$',JPY:'¥',INR:'₹',NGN:'₦',KES:'KSh',MXN:'MX$',BRL:'R$',SGD:'S$',AED:'AED '};
+  return map[g.currency]||g.currency+' ';
+}
+
+// ── Groups view ──
+function renderGroupsView(){
+  document.getElementById('groupsView').classList.remove('hidden');
+  document.getElementById('groupView').classList.add('hidden');
+  const el=document.getElementById('groupsList');
+  if(!groups.length){el.innerHTML='<p style="font-size:.84rem;color:var(--muted);text-align:center;padding:24px 0">No groups yet. Create one to get started!</p>';return}
+  el.innerHTML=groups.map(g=>`
+    <div class="group-item" onclick="openGroup('${g.id}')">
+      <div>
+        <div class="group-item-name">🧾 ${g.name}</div>
+        <div class="group-item-meta">${g.members.length} people · ${g.expenses.length} expenses · ${sym2(g)}${g.expenses.reduce((s,e)=>s+e.amount,0).toFixed(2)}</div>
+      </div>
+      <span style="color:var(--muted);font-size:1.1rem">›</span>
+    </div>`).join('');
+}
+function sym2(g){
+  const map={PHP:'₱',USD:'$',EUR:'€',GBP:'£',ZAR:'R',AUD:'A$',CAD:'C$',JPY:'¥',INR:'₹',NGN:'₦',KES:'KSh',MXN:'MX$',BRL:'R$',SGD:'S$',AED:'AED '};
+  return map[g.currency]||g.currency+' ';
+}
+
+document.getElementById('newGroupBtn').addEventListener('click',()=>{
+  const id='g'+Date.now();
+  groups.push({id,name:'New Group',currency:'PHP',members:[],expenses:[]});
+  saveGroups();openGroup(id);
+});
+
+function openGroup(id){
+  currentGroupId=id;
+  const g=getGroup();
+  document.getElementById('groupsView').classList.add('hidden');
+  document.getElementById('groupView').classList.remove('hidden');
+  document.getElementById('groupName').value=g.name;
+  document.getElementById('currency').value=g.currency;
+  renderMembers();renderExpenses();renderSummary();
+}
+
+document.getElementById('backToGroupsBtn').addEventListener('click',()=>{
+  const g=getGroup();
+  g.name=document.getElementById('groupName').value||'New Group';
+  g.currency=document.getElementById('currency').value;
+  saveGroups();renderGroupsView();
+});
+document.getElementById('groupName').addEventListener('input',()=>{getGroup().name=document.getElementById('groupName').value;saveGroups()});
+document.getElementById('currency').addEventListener('change',()=>{getGroup().currency=document.getElementById('currency').value;saveGroups();renderSummary()});
+document.getElementById('deleteGroupBtn').addEventListener('click',()=>{
+  if(!confirm('Delete this group?'))return;
+  groups=groups.filter(g=>g.id!==currentGroupId);
+  saveGroups();renderGroupsView();
+});
+</script>
+
+<script>
+// ── Members ──
+function renderMembers(){
+  const g=getGroup();
+  const el=document.getElementById('membersList');
+  el.innerHTML=g.members.map(m=>`
+    <span class="member-tag">${m} <button onclick="removeMember('${m}')">✕</button></span>`).join('');
+  // Update paidBy dropdown
+  const pb=document.getElementById('expPaidBy');
+  const cur=pb.value;
+  pb.innerHTML='<option value="">— select —</option>'+g.members.map(m=>`<option value="${m}">${m}</option>`).join('');
+  if(cur)pb.value=cur;
+  updateCustomFields();
+}
+function addMember(){
+  const inp=document.getElementById('memberInput');
+  const name=inp.value.trim();
+  if(!name)return;
+  const g=getGroup();
+  if(g.members.includes(name)){showToast('Name already added!');return}
+  g.members.push(name);saveGroups();inp.value='';renderMembers();renderSummary();
+}
+function removeMember(name){
+  const g=getGroup();
+  g.members=g.members.filter(m=>m!==name);
+  g.expenses=g.expenses.filter(e=>e.paidBy!==name);
+  saveGroups();renderMembers();renderExpenses();renderSummary();
+}
+
+// ── Split options ──
+function toggleSplitOptions(){
+  const type=document.getElementById('splitType').value;
+  document.getElementById('customSplitFields').classList.toggle('hidden',type!=='custom'&&type!=='percentage');
+  if(type==='custom'||type==='percentage')updateCustomFields();
+}
+function updateCustomFields(){
+  const g=getGroup();if(!g)return;
+  const type=document.getElementById('splitType').value;
+  const among=document.getElementById('splitAmong').value;
+  const members=among==='all'?g.members:g.members;
+  const el=document.getElementById('customSplitFields');
+  if(type==='percentage'){
+    el.innerHTML=`<div style="font-size:.75rem;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Percentages (must total 100%)</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">${members.map(m=>`
+      <div style="display:flex;align-items:center;gap:6px;font-size:.82rem">
+        <span style="min-width:70px">${m}</span>
+        <input type="number" id="pct_${m}" min="0" max="100" value="${members.length?Math.floor(100/members.length):0}" style="width:64px;padding:6px 8px;border:1px solid var(--border);border-radius:7px;background:var(--bg);color:var(--text);font:inherit;font-size:.82rem;outline:none" oninput="checkPctTotal()"/>
+        <span style="color:var(--muted)">%</span>
+      </div>`).join('')}
+    </div>
+    <div id="pctWarning" style="font-size:.75rem;margin-top:6px"></div>`;
+  } else if(type==='custom'){
+    el.innerHTML=`<div style="font-size:.75rem;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Custom Amounts</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">${members.map(m=>`
+      <div style="display:flex;align-items:center;gap:6px;font-size:.82rem">
+        <span style="min-width:70px">${m}</span>
+        <input type="number" id="cust_${m}" min="0" step="0.01" placeholder="0.00" style="width:80px;padding:6px 8px;border:1px solid var(--border);border-radius:7px;background:var(--bg);color:var(--text);font:inherit;font-size:.82rem;outline:none"/>
+      </div>`).join('')}
+    </div>`;
+  }
+}
+function checkPctTotal(){
+  const g=getGroup();if(!g)return;
+  const total=g.members.reduce((s,m)=>{const el=document.getElementById('pct_'+m);return s+(el?parseFloat(el.value)||0:0)},0);
+  const w=document.getElementById('pctWarning');
+  if(w)w.innerHTML=total===100?'<span style="color:#2a9d6b">✓ Total: 100%</span>':`<span style="color:#dc3545">⚠ Total: ${total}% (must be 100%)</span>`;
+}
+document.getElementById('splitAmong').addEventListener('change',function(){
+  const g=getGroup();if(!g)return;
+  const el=document.getElementById('selectPeopleFields');
+  if(this.value==='select'){
+    el.classList.remove('hidden');
+    el.innerHTML=`<div style="font-size:.75rem;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Select people to split among</div>
+    <div class="checkbox-grid">${g.members.map(m=>`<label class="checkbox-label"><input type="checkbox" value="${m}" checked/>${m}</label>`).join('')}</div>`;
+  } else {el.classList.add('hidden')}
+  updateCustomFields();
+});
+</script>
+
+<script>
+// ── Expenses ──
+function addExpense(){
+  const g=getGroup();
+  const desc=document.getElementById('expDesc').value.trim();
+  const amount=parseFloat(document.getElementById('expAmount').value);
+  const paidBy=document.getElementById('expPaidBy').value;
+  const splitType=document.getElementById('splitType').value;
+  const splitAmong=document.getElementById('splitAmong').value;
+  if(!desc){showToast('Enter a description');return}
+  if(!amount||amount<=0){showToast('Enter a valid amount');return}
+  if(!paidBy){showToast('Select who paid');return}
+  if(!g.members.length){showToast('Add people first');return}
+
+  let among=splitAmong==='all'?[...g.members]:Array.from(document.querySelectorAll('#selectPeopleFields input:checked')).map(i=>i.value);
+  if(!among.length){showToast('Select at least one person');return}
+
+  let splits={};
+  if(splitType==='equal'){
+    const share=amount/among.length;
+    among.forEach(m=>splits[m]=parseFloat(share.toFixed(2)));
+  } else if(splitType==='percentage'){
+    let total=0;
+    among.forEach(m=>{const el=document.getElementById('pct_'+m);const pct=el?parseFloat(el.value)||0:0;splits[m]=parseFloat((amount*pct/100).toFixed(2));total+=pct});
+    if(Math.abs(total-100)>0.01){showToast('Percentages must total 100%');return}
+  } else {
+    let total=0;
+    among.forEach(m=>{const el=document.getElementById('cust_'+m);const v=el?parseFloat(el.value)||0:0;splits[m]=v;total+=v});
+    if(Math.abs(total-amount)>0.01){showToast(`Custom amounts must total ${sym()}${amount.toFixed(2)}`);return}
+  }
+
+  g.expenses.push({id:'e'+Date.now(),desc,amount,paidBy,splits,splitType});
+  saveGroups();
+  document.getElementById('expDesc').value='';
+  document.getElementById('expAmount').value='';
+  document.getElementById('expPaidBy').value='';
+  renderExpenses();renderSummary();
+  showToast('Expense added!');
+}
+
+function renderExpenses(){
+  const g=getGroup();
+  const el=document.getElementById('expensesList');
+  if(!g.expenses.length){el.innerHTML='<p style="font-size:.84rem;color:var(--muted);text-align:center;padding:12px 0">No expenses yet.</p>';return}
+  el.innerHTML=g.expenses.map(e=>`
+    <div class="expense-item">
+      <div class="expense-item-info">
+        <div class="expense-item-desc">${e.desc}</div>
+        <div class="expense-item-meta">Paid by <strong>${e.paidBy}</strong> · ${e.splitType} split among ${Object.keys(e.splits).join(', ')}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="expense-item-amount">${sym()}${e.amount.toFixed(2)}</div>
+        <button class="btn btn-danger btn-sm" onclick="removeExpense('${e.id}')">✕</button>
+      </div>
+    </div>`).join('');
+}
+function removeExpense(id){
+  const g=getGroup();
+  g.expenses=g.expenses.filter(e=>e.id!==id);
+  saveGroups();renderExpenses();renderSummary();
+}
+</script>
+
+<script>
+// ── Summary & Settlements ──
+function renderSummary(){
+  const g=getGroup();
+  const summaryCard=document.getElementById('summaryCard');
+  const settlementsCard=document.getElementById('settlementsCard');
+  if(!g.expenses.length||!g.members.length){summaryCard.classList.add('hidden');settlementsCard.classList.add('hidden');return}
+
+  const s=sym();
+  const total=g.expenses.reduce((sum,e)=>sum+e.amount,0);
+
+  // Calculate balances
+  const balances={};
+  g.members.forEach(m=>balances[m]=0);
+  g.expenses.forEach(e=>{
+    balances[e.paidBy]=(balances[e.paidBy]||0)+e.amount;
+    Object.entries(e.splits).forEach(([m,amt])=>{balances[m]=(balances[m]||0)-amt});
+  });
+
+  // Summary table
+  summaryCard.classList.remove('hidden');
+  document.getElementById('summaryContent').innerHTML=`
+    <div class="total-bar"><span>Total Expenses</span><strong>${s}${total.toFixed(2)}</strong></div>
+    <table class="summary-table">
+      <thead><tr><th>Person</th><th>Paid</th><th>Owes</th><th>Balance</th></tr></thead>
+      <tbody>${g.members.map(m=>{
+        const paid=g.expenses.filter(e=>e.paidBy===m).reduce((s,e)=>s+e.amount,0);
+        const owes=g.expenses.reduce((s,e)=>s+(e.splits[m]||0),0);
+        const bal=balances[m];
+        const cls=bal>0.005?'amount-positive':bal<-0.005?'amount-negative':'amount-zero';
+        const label=bal>0.005?`gets back ${s}${bal.toFixed(2)}`:bal<-0.005?`owes ${s}${Math.abs(bal).toFixed(2)}`:'settled ✓';
+        return`<tr><td><strong>${m}</strong></td><td>${s}${paid.toFixed(2)}</td><td>${s}${owes.toFixed(2)}</td><td class="${cls}">${label}</td></tr>`;
+      }).join('')}</tbody>
+    </table>`;
+
+  // Settlements (minimize transactions)
+  const debtors=[],creditors=[];
+  Object.entries(balances).forEach(([m,b])=>{
+    if(b<-0.005)debtors.push({name:m,amount:-b});
+    else if(b>0.005)creditors.push({name:m,amount:b});
+  });
+  const settlements=[];
+  const d=[...debtors.map(x=>({...x}))],c=[...creditors.map(x=>({...x}))];
+  let i=0,j=0;
+  while(i<d.length&&j<c.length){
+    const amt=Math.min(d[i].amount,c[j].amount);
+    settlements.push({from:d[i].name,to:c[j].name,amount:amt});
+    d[i].amount-=amt;c[j].amount-=amt;
+    if(d[i].amount<0.005)i++;
+    if(c[j].amount<0.005)j++;
+  }
+
+  settlementsCard.classList.remove('hidden');
+  const sc=document.getElementById('settlementsContent');
+  if(!settlements.length){sc.innerHTML='<p style="font-size:.84rem;color:#2a9d6b;font-weight:600">🎉 Everyone is settled up!</p>';return}
+  sc.innerHTML=settlements.map(s=>`
+    <div class="settlement-item">
+      <div style="display:flex;align-items:center;gap:8px;font-size:.88rem">
+        <strong>${s.from}</strong>
+        <span class="settlement-arrow">→ pays →</span>
+        <strong>${s.to}</strong>
+      </div>
+      <div class="settlement-amount">${sym()}${s.amount.toFixed(2)}</div>
+    </div>`).join('');
+
+  // Share buttons
+  document.getElementById('copySettlementsBtn').onclick=()=>{
+    let txt=`💰 ${g.name} — Bill Split Summary\n`;
+    txt+=`Total: ${s}${total.toFixed(2)}\n\n`;
+    txt+=`Settlements:\n`;
+    settlements.forEach(x=>txt+=`• ${x.from} → ${x.to}: ${sym()}${x.amount.toFixed(2)}\n`);
+    navigator.clipboard.writeText(txt).then(()=>showToast('Copied to clipboard!'));
+  };
+  document.getElementById('whatsappBtn').onclick=()=>{
+    let txt=`💰 *${g.name} — Bill Split*\nTotal: ${s}${total.toFixed(2)}\n\n*Settlements:*\n`;
+    settlements.forEach(x=>txt+=`• ${x.from} → ${x.to}: ${sym()}${x.amount.toFixed(2)}\n`);
+    window.open(`https://wa.me/?text=${encodeURIComponent(txt)}`,'_blank');
+  };
+}
+
+// ── Share group ──
+document.getElementById('shareBtn').addEventListener('click',()=>{
+  const g=getGroup();
+  let txt=`🧾 *${g.name}*\n👥 ${g.members.join(', ')}\n\n`;
+  g.expenses.forEach(e=>txt+=`• ${e.desc}: ${sym()}${e.amount.toFixed(2)} (paid by ${e.paidBy})\n`);
+  navigator.clipboard.writeText(txt).then(()=>showToast('Group details copied!'));
+});
+
+// ── Toast ──
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ── Init ──
+renderGroupsView();
+</script>
