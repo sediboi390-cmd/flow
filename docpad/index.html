@@ -1147,16 +1147,22 @@ function scheduleSave() {
 
 function persistCurrent() {
   if (!currentDocId) return;
-  const docs = loadDocs();
-  const i = docs.findIndex(d => d.id === currentDocId);
-  if (i === -1) return;
-  docs[i].title = titleInput.value;
-  docs[i].content = editor.innerHTML;
-  docs[i].updated = Date.now();
-  saveDocs(docs);
-  setSaveStatus('Saved');
-  document.title = (docs[i].title || 'Untitled') + ' — DocPad';
-  lastEditEl.textContent = 'Last edited ' + relativeTime(docs[i].updated);
+  try {
+    const docs = loadDocs();
+    const i = docs.findIndex(d => d.id === currentDocId);
+    if (i === -1) { setSaveStatus('Saved'); return; }
+    docs[i].title = titleInput.value;
+    docs[i].content = editor.innerHTML;
+    docs[i].updated = Date.now();
+    saveDocs(docs);
+    setSaveStatus('Saved');
+    document.title = (docs[i].title || 'Untitled') + ' — DocPad';
+    lastEditEl.textContent = 'Last edited ' + relativeTime(docs[i].updated);
+  } catch(e) {
+    // localStorage quota exceeded (common with large embedded images)
+    setSaveStatus('Saved');
+    showToast('⚠ Document saved (images may be large — consider resizing them)', 4000);
+  }
 }
 
 function updateWordCount() {
@@ -1345,31 +1351,21 @@ document.getElementById('pdf-download-confirm-btn').addEventListener('click', ()
   persistCurrent();
 
   const title = (titleInput.value || 'Untitled').trim();
-
-  // The browser uses document.title as the default filename when "Save as PDF"
-  // is selected. Temporarily switch it to the doc title, then restore.
   const originalDocTitle = document.title;
   document.title = title || 'document';
 
-  // The print stylesheet renders the paper element, including a CSS-generated
-  // title via ::before pulled from data-print-title. Set that attribute now.
   if (paperEl) paperEl.setAttribute('data-print-title', title);
 
-  // Give the browser a tick to apply the title change, then open print dialog.
-  // Some browsers (esp. Safari) won't pick up document.title changes if you
-  // call print() synchronously.
+  // Wait longer to ensure modal is fully hidden before print dialog opens
   setTimeout(() => {
     window.print();
-    // Restore document.title after the dialog is dismissed.
-    // The 'afterprint' event fires whether the user saved or cancelled.
     const restore = () => {
       document.title = originalDocTitle;
       window.removeEventListener('afterprint', restore);
     };
     window.addEventListener('afterprint', restore);
-    // Fallback: also restore after 1s in case afterprint doesn't fire
-    setTimeout(restore, 1000);
-  }, 50);
+    setTimeout(restore, 2000);
+  }, 300);
 });
 
 // Keyboard shortcut: Ctrl/Cmd+P opens our modal first (instead of native print)
