@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Charter&display=swap" rel="stylesheet">
+<!-- PDF.js — renders PDF files entirely in the browser, no server needed -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -527,6 +529,184 @@ body {
   font-size: 0.95rem;
 }
 
+/* ─── PDF READER VIEW ────────────────────────────────────
+   A full-screen PDF reader embedded inside DocPad.
+   Upload any PDF → read page by page with zoom and nav.  */
+#pdf-reader-view {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--bg-soft);
+}
+
+/* Reader top bar */
+.pdf-topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0.6rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.pdf-topbar-left, .pdf-topbar-right {
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.pdf-topbar-center {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+#pdf-filename {
+  font-weight: 600;
+  color: var(--text);
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Page nav controls */
+.pdf-nav-btn {
+  width: 32px; height: 32px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--text);
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: all 0.1s;
+}
+.pdf-nav-btn:hover:not(:disabled) {
+  background: var(--bg-soft);
+  border-color: var(--border-strong);
+}
+.pdf-nav-btn:disabled { opacity: 0.35; cursor: default; }
+
+#pdf-page-input {
+  width: 52px;
+  text-align: center;
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+}
+#pdf-page-input:focus { outline: none; border-color: var(--accent); }
+
+/* Zoom controls */
+.pdf-zoom-select {
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+/* Canvas / scroll area */
+.pdf-canvas-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem 4rem;
+  gap: 1.5rem;
+}
+
+/* Each rendered PDF page */
+.pdf-page-wrapper {
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.08);
+  border-radius: 2px;
+  background: #fff;
+  line-height: 0;
+}
+html[data-theme="dark"] .pdf-page-wrapper {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.4);
+}
+.pdf-page-wrapper canvas { display: block; }
+.pdf-page-label {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-soft);
+  margin-top: 0.4rem;
+  line-height: 1.4;
+}
+
+/* Upload / drop zone (shown before any PDF is loaded) */
+#pdf-drop-zone {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 3rem 2rem;
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  margin: 2rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  text-align: center;
+}
+#pdf-drop-zone:hover, #pdf-drop-zone.drag-over {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+#pdf-drop-zone .drop-icon { font-size: 2.5rem; }
+#pdf-drop-zone .drop-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+#pdf-drop-zone .drop-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Loading indicator */
+#pdf-loading {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 4rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+#pdf-loading.visible { display: flex; }
+.pdf-spinner {
+  width: 32px; height: 32px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+  .pdf-topbar { padding: 0.5rem 0.75rem; gap: 0.4rem; }
+  .pdf-topbar-center { font-size: 0.78rem; gap: 0.35rem; }
+  #pdf-filename { max-width: 120px; }
+  .pdf-canvas-area { padding: 1rem 0.25rem 3rem; gap: 1rem; }
+  #pdf-drop-zone { margin: 1rem; }
+}
+
 @media (max-width: 600px) {
   #home-view { padding: 2rem 1rem; }
   .home-header h1 { font-size: 1.5rem; }
@@ -670,6 +850,11 @@ body {
       <div class="label">Blank document</div>
       <div class="desc">Start from scratch</div>
     </button>
+    <button class="template-card" id="open-pdf-reader-btn">
+      <div class="icon">📖</div>
+      <div class="label">Read a PDF</div>
+      <div class="desc">Upload &amp; read any PDF</div>
+    </button>
   </div>
 
   <div class="section-label">Recent</div>
@@ -742,6 +927,60 @@ body {
     <span id="word-count">0 words</span>
     <span id="last-edit"></span>
   </div>
+</div>
+
+<!-- ─── PDF READER VIEW ──────────────────────────────── -->
+<div id="pdf-reader-view" class="hidden">
+  <!-- Reader top bar -->
+  <div class="pdf-topbar">
+    <div class="pdf-topbar-left">
+      <button class="btn btn-ghost" id="pdf-reader-back-btn" title="Back to home">← Home</button>
+    </div>
+    <div class="pdf-topbar-center" id="pdf-topbar-controls" style="display:none">
+      <!-- page navigation -->
+      <button class="pdf-nav-btn" id="pdf-prev-btn" title="Previous page (←)" disabled>‹</button>
+      <input type="number" id="pdf-page-input" min="1" value="1" aria-label="Current page"/>
+      <span id="pdf-page-count" style="color:var(--text-soft)">/ —</span>
+      <button class="pdf-nav-btn" id="pdf-next-btn" title="Next page (→)" disabled>›</button>
+      <div class="tool-divider" style="height:20px;width:1px;background:var(--border);margin:0 0.3rem;"></div>
+      <!-- zoom -->
+      <button class="pdf-nav-btn" id="pdf-zoom-out-btn" title="Zoom out (-)">−</button>
+      <select id="pdf-zoom-select" class="pdf-zoom-select" title="Zoom level">
+        <option value="0.5">50%</option>
+        <option value="0.75">75%</option>
+        <option value="1" selected>100%</option>
+        <option value="1.25">125%</option>
+        <option value="1.5">150%</option>
+        <option value="2">200%</option>
+        <option value="fit">Fit width</option>
+      </select>
+      <button class="pdf-nav-btn" id="pdf-zoom-in-btn" title="Zoom in (+)">+</button>
+      <div class="tool-divider" style="height:20px;width:1px;background:var(--border);margin:0 0.3rem;"></div>
+      <span id="pdf-filename" title=""></span>
+    </div>
+    <div class="pdf-topbar-right">
+      <button class="btn btn-ghost" id="pdf-open-new-btn" title="Open a different PDF" style="display:none">📂 Open…</button>
+      <button class="btn btn-ghost" id="theme-toggle-btn-pdf" aria-label="Toggle dark mode">🌙</button>
+    </div>
+  </div>
+
+  <!-- Drop zone (visible before a PDF is loaded) -->
+  <div id="pdf-drop-zone">
+    <div class="drop-icon">📄</div>
+    <div class="drop-title">Drop a PDF here</div>
+    <div class="drop-hint">or click to choose a file</div>
+    <button class="btn btn-primary" style="margin-top:0.5rem">Choose PDF</button>
+    <input type="file" id="pdf-file-input" accept="application/pdf" hidden/>
+  </div>
+
+  <!-- Loading spinner -->
+  <div id="pdf-loading">
+    <div class="pdf-spinner"></div>
+    <span>Loading PDF…</span>
+  </div>
+
+  <!-- Page canvas area (visible after PDF loads) -->
+  <div class="pdf-canvas-area hidden" id="pdf-canvas-area"></div>
 </div>
 
 <!-- ─── PDF EXPORT MODAL ──────────────────────────────── -->
@@ -1138,6 +1377,345 @@ document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p' && !editorView.classList.contains('hidden')) {
     e.preventDefault();
     document.getElementById('download-pdf-btn').click();
+  }
+});
+
+// ─── PDF Reader ──────────────────────────────────────────
+// Uses PDF.js (loaded via CDN above) to render PDF files in-browser.
+// All processing is local — no data ever leaves the device.
+
+// Tell PDF.js where its worker script lives (same CDN version)
+if (typeof pdfjsLib !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+const pdfReaderView   = document.getElementById('pdf-reader-view');
+const pdfDropZone     = document.getElementById('pdf-drop-zone');
+const pdfFileInput    = document.getElementById('pdf-file-input');
+const pdfCanvasArea   = document.getElementById('pdf-canvas-area');
+const pdfLoading      = document.getElementById('pdf-loading');
+const pdfTopbarCtrl   = document.getElementById('pdf-topbar-controls');
+const pdfOpenNewBtn   = document.getElementById('pdf-open-new-btn');
+const pdfPrevBtn      = document.getElementById('pdf-prev-btn');
+const pdfNextBtn      = document.getElementById('pdf-next-btn');
+const pdfPageInput    = document.getElementById('pdf-page-input');
+const pdfPageCount    = document.getElementById('pdf-page-count');
+const pdfZoomSelect   = document.getElementById('pdf-zoom-select');
+const pdfZoomIn       = document.getElementById('pdf-zoom-in-btn');
+const pdfZoomOut      = document.getElementById('pdf-zoom-out-btn');
+const pdfFilenameEl   = document.getElementById('pdf-filename');
+const pdfBackBtn      = document.getElementById('pdf-reader-back-btn');
+const themeTogglePdf  = document.getElementById('theme-toggle-btn-pdf');
+
+let pdfDoc        = null;   // loaded PDFDocumentProxy
+let pdfCurrentPage = 1;
+let pdfZoom       = 1.0;
+let pdfFitWidth   = false;
+let pdfRendering  = false;
+let pdfRenderQueue = null;  // page number waiting to render
+
+// ── Navigation helpers ───────────────────────────────────
+function showPdfReader() {
+  homeView.classList.add('hidden');
+  editorView.classList.add('hidden');
+  pdfReaderView.classList.remove('hidden');
+  document.title = 'DocPad — PDF Reader';
+}
+
+function hidePdfReader() {
+  pdfReaderView.classList.add('hidden');
+  homeView.classList.remove('hidden');
+  document.title = 'DocPad — Simple documents, saved as PDF';
+}
+
+document.getElementById('open-pdf-reader-btn').addEventListener('click', showPdfReader);
+pdfBackBtn.addEventListener('click', () => {
+  hidePdfReader();
+  renderRecent(); // refresh home
+});
+
+// Sync the PDF dark-mode toggle with the main app theme
+function syncPdfThemeBtn() {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if (themeTogglePdf) {
+    themeTogglePdf.textContent = dark ? '☀️' : '🌙';
+    themeTogglePdf.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+  }
+}
+syncPdfThemeBtn();
+if (themeTogglePdf) {
+  themeTogglePdf.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const next = isDark ? 'light' : 'dark';
+    applyTheme(next);
+    localStorage.setItem(THEME_KEY, next);
+    syncPdfThemeBtn();
+  });
+}
+
+// ── File loading ─────────────────────────────────────────
+function loadPdfFile(file) {
+  if (!file || file.type !== 'application/pdf') {
+    showToast('⚠ Please select a valid PDF file', 3000);
+    return;
+  }
+  if (typeof pdfjsLib === 'undefined') {
+    showToast('❌ PDF.js failed to load. Check your internet connection.', 4000);
+    return;
+  }
+
+  // UI: show loading, hide drop zone and canvas area
+  pdfDropZone.classList.add('hidden');
+  pdfCanvasArea.classList.add('hidden');
+  pdfLoading.classList.add('visible');
+  pdfTopbarCtrl.style.display = 'none';
+  pdfOpenNewBtn.style.display = 'none';
+  pdfCanvasArea.innerHTML = '';
+
+  const fileName = file.name.replace(/\.pdf$/i, '');
+  pdfFilenameEl.textContent = fileName;
+  pdfFilenameEl.title = file.name;
+  document.title = fileName + ' — DocPad PDF Reader';
+
+  const reader = new FileReader();
+  reader.onload = evt => {
+    const typedArray = new Uint8Array(evt.target.result);
+    pdfjsLib.getDocument({ data: typedArray }).promise
+      .then(doc => {
+        pdfDoc = doc;
+        pdfCurrentPage = 1;
+        pdfPageInput.min = 1;
+        pdfPageInput.value = 1;
+        pdfPageCount.textContent = '/ ' + doc.numPages;
+        pdfPageInput.max = doc.numPages;
+
+        // Show controls
+        pdfTopbarCtrl.style.display = '';
+        pdfOpenNewBtn.style.display = '';
+        pdfLoading.classList.remove('visible');
+        pdfCanvasArea.classList.remove('hidden');
+
+        updateNavButtons();
+        renderAllPages();
+      })
+      .catch(err => {
+        pdfLoading.classList.remove('visible');
+        pdfDropZone.classList.remove('hidden');
+        showToast('❌ Could not read PDF: ' + (err.message || 'Unknown error'), 4000);
+        console.error('PDF.js error:', err);
+      });
+  };
+  reader.onerror = () => {
+    pdfLoading.classList.remove('visible');
+    pdfDropZone.classList.remove('hidden');
+    showToast('❌ Could not read file', 3500);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── Render all pages (lazy: renders visible pages first) ─
+async function renderAllPages() {
+  if (!pdfDoc) return;
+  pdfCanvasArea.innerHTML = '';
+
+  const containerWidth = pdfCanvasArea.clientWidth - 32; // 16px padding each side
+
+  for (let i = 1; i <= pdfDoc.numPages; i++) {
+    const page = await pdfDoc.getPage(i);
+    const baseViewport = page.getViewport({ scale: 1 });
+
+    let scale = pdfZoom;
+    if (pdfFitWidth && containerWidth > 0) {
+      scale = containerWidth / baseViewport.width;
+    }
+    const viewport = page.getViewport({ scale });
+
+    // Wrapper + canvas
+    const wrapper = document.createElement('div');
+    wrapper.className = 'pdf-page-wrapper';
+    wrapper.dataset.pageNum = i;
+
+    const canvas = document.createElement('canvas');
+    canvas.width  = Math.floor(viewport.width);
+    canvas.height = Math.floor(viewport.height);
+    wrapper.appendChild(canvas);
+
+    // Page label
+    const label = document.createElement('div');
+    label.className = 'pdf-page-label';
+    label.textContent = 'Page ' + i + ' of ' + pdfDoc.numPages;
+    wrapper.appendChild(label);
+
+    pdfCanvasArea.appendChild(wrapper);
+
+    // Render into canvas
+    const ctx = canvas.getContext('2d');
+    await page.render({ canvasContext: ctx, viewport }).promise;
+  }
+
+  // Scroll to current page
+  scrollToPage(pdfCurrentPage);
+}
+
+// ── Scroll to a specific page ────────────────────────────
+function scrollToPage(pageNum) {
+  const target = pdfCanvasArea.querySelector(`[data-page-num="${pageNum}"]`);
+  if (target) {
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// ── Track current page while scrolling ──────────────────
+pdfCanvasArea.addEventListener('scroll', () => {
+  if (!pdfDoc) return;
+  const wrappers = pdfCanvasArea.querySelectorAll('.pdf-page-wrapper');
+  const areaTop = pdfCanvasArea.getBoundingClientRect().top;
+  let closestPage = 1;
+  let closestDist = Infinity;
+  wrappers.forEach(w => {
+    const dist = Math.abs(w.getBoundingClientRect().top - areaTop);
+    if (dist < closestDist) {
+      closestDist = dist;
+      closestPage = parseInt(w.dataset.pageNum, 10);
+    }
+  });
+  if (closestPage !== pdfCurrentPage) {
+    pdfCurrentPage = closestPage;
+    pdfPageInput.value = closestPage;
+    updateNavButtons();
+  }
+}, { passive: true });
+
+// ── Nav button state ─────────────────────────────────────
+function updateNavButtons() {
+  if (!pdfDoc) return;
+  pdfPrevBtn.disabled = pdfCurrentPage <= 1;
+  pdfNextBtn.disabled = pdfCurrentPage >= pdfDoc.numPages;
+}
+
+// ── Page navigation ──────────────────────────────────────
+pdfPrevBtn.addEventListener('click', () => {
+  if (pdfCurrentPage > 1) {
+    pdfCurrentPage--;
+    pdfPageInput.value = pdfCurrentPage;
+    scrollToPage(pdfCurrentPage);
+    updateNavButtons();
+  }
+});
+pdfNextBtn.addEventListener('click', () => {
+  if (pdfDoc && pdfCurrentPage < pdfDoc.numPages) {
+    pdfCurrentPage++;
+    pdfPageInput.value = pdfCurrentPage;
+    scrollToPage(pdfCurrentPage);
+    updateNavButtons();
+  }
+});
+pdfPageInput.addEventListener('change', () => {
+  if (!pdfDoc) return;
+  let p = parseInt(pdfPageInput.value, 10);
+  if (isNaN(p)) p = 1;
+  p = Math.max(1, Math.min(p, pdfDoc.numPages));
+  pdfPageInput.value = p;
+  pdfCurrentPage = p;
+  scrollToPage(p);
+  updateNavButtons();
+});
+
+// ── Zoom ─────────────────────────────────────────────────
+const ZOOM_STEPS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+function applyZoom(newZoom, fitWidth = false) {
+  pdfFitWidth = fitWidth;
+  pdfZoom = newZoom;
+  if (!fitWidth) {
+    // sync select if one of the presets matches
+    const match = ZOOM_STEPS.find(s => Math.abs(s - newZoom) < 0.01);
+    pdfZoomSelect.value = match ? String(match) : String(newZoom);
+  } else {
+    pdfZoomSelect.value = 'fit';
+  }
+  if (pdfDoc) renderAllPages();
+}
+
+pdfZoomSelect.addEventListener('change', () => {
+  const v = pdfZoomSelect.value;
+  if (v === 'fit') {
+    applyZoom(1, true);
+  } else {
+    applyZoom(parseFloat(v), false);
+  }
+});
+pdfZoomIn.addEventListener('click', () => {
+  const idx = ZOOM_STEPS.findIndex(s => s > pdfZoom);
+  const next = idx === -1 ? Math.min(pdfZoom + 0.25, 4) : ZOOM_STEPS[idx];
+  applyZoom(next, false);
+});
+pdfZoomOut.addEventListener('click', () => {
+  const idx = [...ZOOM_STEPS].reverse().findIndex(s => s < pdfZoom);
+  const prev = idx === -1 ? Math.max(pdfZoom - 0.25, 0.25) : [...ZOOM_STEPS].reverse()[idx];
+  applyZoom(prev, false);
+});
+
+// ── Keyboard shortcuts (only active inside the reader) ───
+document.addEventListener('keydown', e => {
+  if (pdfReaderView.classList.contains('hidden')) return;
+  if (e.target.tagName === 'INPUT') return;
+  switch (e.key) {
+    case 'ArrowLeft':
+    case 'ArrowUp':
+      e.preventDefault(); pdfPrevBtn.click(); break;
+    case 'ArrowRight':
+    case 'ArrowDown':
+      e.preventDefault(); pdfNextBtn.click(); break;
+    case '+': case '=':
+      e.preventDefault(); pdfZoomIn.click(); break;
+    case '-':
+      e.preventDefault(); pdfZoomOut.click(); break;
+    case 'Escape':
+      pdfBackBtn.click(); break;
+  }
+});
+
+// ── Drop zone interactions ───────────────────────────────
+pdfDropZone.addEventListener('click', () => pdfFileInput.click());
+pdfFileInput.addEventListener('change', () => {
+  if (pdfFileInput.files[0]) loadPdfFile(pdfFileInput.files[0]);
+  pdfFileInput.value = '';
+});
+
+pdfDropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  pdfDropZone.classList.add('drag-over');
+});
+pdfDropZone.addEventListener('dragleave', () => {
+  pdfDropZone.classList.remove('drag-over');
+});
+pdfDropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  pdfDropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  loadPdfFile(file);
+});
+
+// "Open a different PDF" button
+pdfOpenNewBtn.addEventListener('click', () => {
+  // Reset to drop zone state
+  pdfDoc = null;
+  pdfCanvasArea.classList.add('hidden');
+  pdfCanvasArea.innerHTML = '';
+  pdfTopbarCtrl.style.display = 'none';
+  pdfOpenNewBtn.style.display = 'none';
+  pdfDropZone.classList.remove('hidden');
+  document.title = 'DocPad — PDF Reader';
+  pdfFilenameEl.textContent = '';
+});
+
+// Rerender on window resize (for fit-width mode)
+let resizeTimer;
+window.addEventListener('resize', () => {
+  if (pdfFitWidth && pdfDoc) {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(renderAllPages, 200);
   }
 });
 
