@@ -1003,17 +1003,101 @@ html[data-theme="dark"] .pdf-page-wrapper {
 <div id="toast" class="hidden"></div>
 
 <script>
-// ─── Storage ─────────────────────────────────────────────
-const STORAGE_KEY = 'docpad.docs.v1';
-function loadDocs() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-  catch { return []; }
-}
-function saveDocs(docs) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(docs));
-}
+// ─── Storage — IndexedDB ─────────────────────────────────
+// Uses IndexedDB for large-file support (500MB+).
+// Falls back to localStorage if IndexedDB is unavailable.
+const DB_NAME    = 'docpad_db';
+const DB_VERSION = 1;
+const STORE_NAME = 'documents';
+let _db = null;
+
 function uid() {
   return 'd_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    if (_db) { resolve(_db); return; }
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+        store.createIndex('updated', 'updated', { unique: false });
+      }
+    };
+    req.onsuccess = e => { _db = e.target.result; resolve(_db); };
+    req.onerror   = e => reject(e.target.error);
+  });
+}
+
+async function loadDocs() {
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx    = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const req   = store.getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror   = () => reject(req.error);
+    });
+  } catch(e) {
+    // Fallback to localStorage
+    try { return JSON.parse(localStorage.getItem('docpad.docs.v1')) || []; }
+    catch { return []; }
+  }
+}
+
+async function saveDoc(doc) {
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx    = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const req   = store.put(doc);
+      req.onsuccess = () => resolve();
+      req.onerror   = () => reject(req.error);
+    });
+  } catch(e) {
+    // Fallback to localStorage
+    try {
+      const docs = JSON.parse(localStorage.getItem('docpad.docs.v1')) || [];
+      const i = docs.findIndex(d => d.id === doc.id);
+      if (i >= 0) docs[i] = doc; else docs.push(doc);
+      localStorage.setItem('docpad.docs.v1', JSON.stringify(docs));
+    } catch(e2) { console.warn('Storage fallback failed', e2); }
+  }
+}
+
+async function deleteDoc(id) {
+  try {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx    = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const req   = store.delete(id);
+      req.onsuccess = () => resolve();
+      req.onerror   = () => reject(req.error);
+    });
+  } catch(e) {
+    try {
+      const docs = JSON.parse(localStorage.getItem('docpad.docs.v1')) || [];
+      localStorage.setItem('docpad.docs.v1', JSON.stringify(docs.filter(d => d.id !== id)));
+    } catch(e2) {}
+  }
+}
+
+// Migrate existing localStorage docs to IndexedDB on first run
+async function migrateFromLocalStorage() {
+  try {
+    const old = JSON.parse(localStorage.getItem('docpad.docs.v1'));
+    if (!old || !old.length) return;
+    const db = await openDB();
+    const existing = await loadDocs();
+    if (existing.length > 0) return; // already migrated
+    for (const doc of old) { await saveDoc(doc); }
+    localStorage.removeItem('docpad.docs.v1');
+  } catch(e) {}
 }
 
 // ─── Toast ───────────────────────────────────────────────
@@ -1056,8 +1140,8 @@ function showEditor() {
 }
 
 // ─── Home: render recent ─────────────────────────────────
-function renderRecent() {
-  const docs = loadDocs().sort((a, b) => b.updated - a.updated);
+async function renderRecent() {
+  const docs = (await loadDocs()).sort((a, b) => b.updated - a.updated);
   const list = document.getElementById('recent-list');
   if (!docs.length) {
     list.innerHTML = '<div class="recent-empty">No documents yet. Click <strong>Blank document</strong> above to get started.</div>';
@@ -1080,12 +1164,11 @@ function renderRecent() {
     });
   });
   list.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.addEventListener('click', e => {
+    btn.addEventListener('click', async e => {
       e.stopPropagation();
       const id = btn.dataset.deleteId;
       if (confirm('Delete this document? This cannot be undone.')) {
-        const remaining = loadDocs().filter(d => d.id !== id);
-        saveDocs(remaining);
+        await deleteDoc(id);
         renderRecent();
         showToast('Document deleted');
       }
@@ -1107,7 +1190,7 @@ const saveStatusEl = document.getElementById('save-status');
 const wordCountEl = document.getElementById('word-count');
 const lastEditEl = document.getElementById('last-edit');
 
-function newDoc() {
+async function newDoc() {
   const doc = {
     id: uid(),
     title: '',
@@ -1115,14 +1198,12 @@ function newDoc() {
     created: Date.now(),
     updated: Date.now()
   };
-  const docs = loadDocs();
-  docs.push(doc);
-  saveDocs(docs);
+  await saveDoc(doc);
   openDoc(doc.id);
 }
 
-function openDoc(id) {
-  const docs = loadDocs();
+async function openDoc(id) {
+  const docs = await loadDocs();
   const doc = docs.find(d => d.id === id);
   if (!doc) { showToast('Document not found'); return; }
   currentDocId = id;
@@ -1145,30 +1226,22 @@ function scheduleSave() {
   saveTimer = setTimeout(persistCurrent, 400);
 }
 
-function persistCurrent() {
+async function persistCurrent() {
   if (!currentDocId) return;
   try {
-    const docs = loadDocs();
-    const i = docs.findIndex(d => d.id === currentDocId);
-    if (i === -1) { setSaveStatus('Saved'); return; }
-    docs[i].title = titleInput.value;
-    docs[i].content = editor.innerHTML;
-    docs[i].updated = Date.now();
-    try {
-      saveDocs(docs);
-    } catch(quotaErr) {
-      // Try saving without images as fallback
-      const stripped = docs[i].content.replace(/<img[^>]+src="data:[^"]{500,}"[^>]*>/g,
-        '<img src="" alt="[Image removed — too large to save]" style="border:1px dashed #ccc;padding:8px;color:#999"/>');
-      docs[i].content = stripped;
-      saveDocs(docs);
-      showToast('⚠ Image too large to save locally. Try inserting a smaller image.', 4000);
-    }
+    const docs = await loadDocs();
+    const existing = docs.find(d => d.id === currentDocId);
+    if (!existing) { setSaveStatus('Saved'); return; }
+    existing.title   = titleInput.value;
+    existing.content = editor.innerHTML;
+    existing.updated = Date.now();
+    await saveDoc(existing);
     setSaveStatus('Saved');
-    document.title = (docs[i].title || 'Untitled') + ' — DocPad';
-    lastEditEl.textContent = 'Last edited ' + relativeTime(docs[i].updated);
+    document.title = (existing.title || 'Untitled') + ' — DocPad';
+    lastEditEl.textContent = 'Last edited ' + relativeTime(existing.updated);
   } catch(e) {
     setSaveStatus('Saved');
+    console.warn('Save error:', e);
   }
 }
 
@@ -1743,7 +1816,10 @@ window.addEventListener('resize', () => {
 });
 
 // ─── Boot ────────────────────────────────────────────────
-showHome();
+(async () => {
+  await migrateFromLocalStorage();
+  showHome();
+})();
 
 // ─── Theme toggle (dark / light) ─────────────────────────
 const THEME_KEY = 'docpad.theme';
