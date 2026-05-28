@@ -898,10 +898,14 @@ document.getElementById('pdf-download-confirm-btn').addEventListener('click', ()
     <div class="doc-title">${escapeHtml(title)}</div>
     ${editor.innerHTML}
   `;
-  // html2pdf needs the element to be in the DOM
-  renderRoot.style.position = 'absolute';
-  renderRoot.style.left = '-9999px';
+  // html2pdf needs the element to be in the DOM and visible to html2canvas.
+  // Using opacity:0 keeps it invisible to the user but still renderable (unlike left:-9999px).
+  renderRoot.style.position = 'fixed';
   renderRoot.style.top = '0';
+  renderRoot.style.left = '0';
+  renderRoot.style.opacity = '0';
+  renderRoot.style.pointerEvents = 'none';
+  renderRoot.style.zIndex = '-1';
   document.body.appendChild(renderRoot);
 
   pdfModal.classList.add('hidden');
@@ -914,7 +918,14 @@ document.getElementById('pdf-download-confirm-btn').addEventListener('click', ()
       margin: [0.5, 0.5, 0.5, 0.5],
       filename,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        removeContainer: false
+      },
       jsPDF: { unit: 'in', format: pageSize, orientation },
       pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     })
