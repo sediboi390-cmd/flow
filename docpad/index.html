@@ -25,6 +25,36 @@
   --danger: #dc2626;
   --radius: 8px;
   --radius-lg: 12px;
+  /* Paper colors — separate from app colors so the paper can stay
+     light-on-dark or follow the theme. We let the user toggle this too. */
+  --paper-bg: #ffffff;
+  --paper-text: #1a1a1a;
+  --paper-shadow-1: rgba(0,0,0,0.04);
+  --paper-shadow-2: rgba(0,0,0,0.04);
+}
+
+/* ─── DARK THEME ───────────────────────────────────────
+   Activated by setting `data-theme="dark"` on the <html> element.
+   We override only the CSS variables — everything that uses them
+   adapts automatically. */
+html[data-theme="dark"] {
+  --bg: #0f0f11;
+  --bg-soft: #18181b;
+  --surface: #1c1c1f;
+  --border: #2a2a2e;
+  --border-strong: #3a3a40;
+  --text: #ececef;
+  --text-muted: #a0a0a8;
+  --text-soft: #6b6b73;
+  --accent: #60a5fa;
+  --accent-hover: #93c5fd;
+  --accent-soft: #1e3a5f;
+  --success: #4ade80;
+  --danger: #f87171;
+  --paper-bg: #1f1f23;
+  --paper-text: #ececef;
+  --paper-shadow-1: rgba(0,0,0,0.4);
+  --paper-shadow-2: rgba(0,0,0,0.3);
 }
 html, body { height: 100%; }
 body {
@@ -296,18 +326,19 @@ body {
 .paper {
   max-width: 8.5in;
   margin: 0 auto;
-  background: #fff;
+  background: var(--paper-bg);
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 1in;
   min-height: 11in;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 3px var(--paper-shadow-1), 0 8px 24px var(--paper-shadow-2);
+  color: var(--paper-text);
 }
 #editor {
   font-family: 'Charter', Georgia, 'Times New Roman', serif;
   font-size: 16px;
   line-height: 1.7;
-  color: var(--text);
+  color: var(--paper-text);
   outline: none;
   min-height: 9in;
 }
@@ -315,6 +346,8 @@ body {
   content: attr(data-placeholder);
   color: var(--text-soft);
   pointer-events: none;
+  white-space: pre-line;
+  display: block;
 }
 #editor h1 { font-size: 2em; font-weight: 700; margin: 1em 0 0.5em; line-height: 1.25; }
 #editor h2 { font-size: 1.5em; font-weight: 600; margin: 1em 0 0.4em; line-height: 1.3; }
@@ -365,12 +398,13 @@ body {
   padding: 1rem;
 }
 .modal {
-  background: #fff;
+  background: var(--surface);
   border-radius: var(--radius-lg);
   padding: 1.75rem;
   max-width: 420px;
   width: 100%;
   box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  color: var(--text);
 }
 .modal h3 {
   font-size: 1.1rem;
@@ -396,7 +430,8 @@ body {
   border-radius: 6px;
   font: inherit;
   font-size: 0.95rem;
-  background: #fff;
+  background: var(--surface);
+  color: var(--text);
   margin-bottom: 1.25rem;
 }
 .modal-actions {
@@ -422,10 +457,107 @@ body {
 
 /* PDF print-friendly styling — see @media print block below */
 
+/* ─── IMAGE RESIZE FLOATING TOOLBAR ────────────────────
+   Shows when a user clicks an image inside the editor. Positioned
+   above the selected image; lets the user pick a width preset. */
+#image-toolbar {
+  position: absolute;
+  display: none;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 0.25rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  z-index: 50;
+  gap: 0.15rem;
+}
+#image-toolbar.visible { display: inline-flex; }
+#image-toolbar button {
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text);
+  padding: 0.35rem 0.55rem;
+  border-radius: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#image-toolbar button:hover { background: var(--bg-soft); }
+#image-toolbar button.active { background: var(--accent-soft); color: var(--accent); }
+#image-toolbar .img-tb-divider {
+  width: 1px;
+  background: var(--border);
+  margin: 0.2rem 0.15rem;
+}
+
+/* Toolbar overflow menu (mobile only — hides less-used buttons behind a "…" button) */
+.tool-overflow-btn { display: none; }
+#tool-overflow-menu {
+  position: absolute;
+  display: none;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 0.3rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  z-index: 60;
+  min-width: 160px;
+}
+#tool-overflow-menu.visible { display: flex; }
+#tool-overflow-menu button {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--text);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+}
+#tool-overflow-menu button:hover { background: var(--bg-soft); }
+#tool-overflow-menu .menu-icon {
+  width: 22px; text-align: center;
+  font-size: 0.95rem;
+}
+
 @media (max-width: 600px) {
   #home-view { padding: 2rem 1rem; }
   .home-header h1 { font-size: 1.5rem; }
   .paper { padding: 0.75in 0.5in; min-height: auto; }
+
+  /* Tighter top bar so the title input has more room */
+  .topbar { padding: 0.5rem 0.75rem; gap: 0.4rem; }
+  .topbar .btn { padding: 0.4rem 0.65rem; font-size: 0.8rem; }
+  #doc-title { font-size: 0.9rem; padding: 0.35rem 0.5rem; }
+  #save-status { display: none; }
+
+  /* Tighter editor toolbar — hide less-used controls behind overflow menu.
+     We keep the high-frequency buttons (B/I/U, headings, lists, image, undo). */
+  .toolbar { padding: 0.3rem 0.5rem; gap: 0.05rem; }
+  .tool-btn { width: 30px; height: 30px; font-size: 0.85rem; }
+  .tool-divider { margin: 0 0.15rem; }
+  /* Buttons hidden on mobile — accessed via overflow menu */
+  .toolbar [data-cmd="underline"],
+  .toolbar [data-cmd="formatBlock"][data-arg="p"],
+  .toolbar [data-cmd="formatBlock"][data-arg="blockquote"],
+  .toolbar [data-cmd="redo"],
+  .toolbar #link-btn {
+    display: none;
+  }
+  .tool-overflow-btn { display: inline-flex; }
+
+  /* Compact paper canvas padding on mobile */
+  .canvas { padding: 1rem 0.5rem 2rem; }
+
+  /* Image toolbar buttons get a touch more padding for fingers */
+  #image-toolbar button { padding: 0.5rem 0.75rem; font-size: 0.8rem; }
 }
 
 /* ─── PRINT / SAVE-AS-PDF ─────────────────────────────────
@@ -558,6 +690,7 @@ body {
       <span id="save-status">Saved</span>
     </div>
     <div class="topbar-right">
+      <button class="btn btn-ghost" id="theme-toggle-btn" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
       <button class="btn" id="download-pdf-btn">⬇️ Save as PDF</button>
     </div>
   </div>
@@ -582,12 +715,25 @@ body {
     <div class="tool-divider"></div>
     <button class="tool-btn" data-cmd="undo" title="Undo (Ctrl+Z)">↶</button>
     <button class="tool-btn" data-cmd="redo" title="Redo (Ctrl+Y)">↷</button>
+    <button class="tool-btn tool-overflow-btn" id="tool-overflow-btn" title="More tools" aria-label="More tools">⋯</button>
   </div>
+
+  <!-- Overflow menu (shown on mobile when ⋯ button is pressed) -->
+  <div id="tool-overflow-menu" class="hidden"></div>
 
   <!-- Paper -->
   <div class="canvas">
     <div class="paper" data-print-title="">
-      <div id="editor" contenteditable="true" data-placeholder="Start writing…"></div>
+      <div id="editor" contenteditable="true" data-placeholder="Start writing…&#10;&#10;💡 Tips: paste a screenshot (Ctrl+V), drag & drop an image, or press Ctrl+Shift+I to insert one. Use H1 / H2 buttons above for headings."></div>
+    </div>
+    <!-- Floating toolbar that appears when an image is clicked -->
+    <div id="image-toolbar" role="toolbar" aria-label="Image size">
+      <button data-img-size="25" title="Small (25%)">S</button>
+      <button data-img-size="50" title="Medium (50%)">M</button>
+      <button data-img-size="75" title="Large (75%)">L</button>
+      <button data-img-size="100" title="Full width" class="active">Full</button>
+      <span class="img-tb-divider"></span>
+      <button data-img-action="delete" title="Delete image">🗑️</button>
     </div>
   </div>
 
@@ -922,13 +1068,8 @@ function insertImageFile(file) {
   reader.readAsDataURL(file);
 }
 
-// Click an image to "select" it (so Backspace deletes the right thing)
-editor.addEventListener('click', e => {
-  document.querySelectorAll('#editor img.selected').forEach(img => img.classList.remove('selected'));
-  if (e.target.tagName === 'IMG') {
-    e.target.classList.add('selected');
-  }
-});
+// Click an image to "select" it — handled by the image-resize toolbar
+// code further down in this script (which adds the toolbar UI).
 
 // ─── Navigation ──────────────────────────────────────────
 document.getElementById('new-blank-btn').addEventListener('click', newDoc);
@@ -1002,6 +1143,172 @@ document.addEventListener('keydown', e => {
 
 // ─── Boot ────────────────────────────────────────────────
 showHome();
+
+// ─── Theme toggle (dark / light) ─────────────────────────
+const THEME_KEY = 'docpad.theme';
+const themeToggleBtn = document.getElementById('theme-toggle-btn');
+
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeToggleBtn.textContent = '☀️';
+    themeToggleBtn.setAttribute('aria-label', 'Switch to light mode');
+    themeToggleBtn.title = 'Switch to light mode';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    themeToggleBtn.textContent = '🌙';
+    themeToggleBtn.setAttribute('aria-label', 'Switch to dark mode');
+    themeToggleBtn.title = 'Switch to dark mode';
+  }
+}
+
+// Initialize: saved preference, else respect OS preference
+const savedTheme = localStorage.getItem(THEME_KEY);
+if (savedTheme) {
+  applyTheme(savedTheme);
+} else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+  applyTheme('dark');
+}
+
+themeToggleBtn.addEventListener('click', () => {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const next = isDark ? 'light' : 'dark';
+  applyTheme(next);
+  localStorage.setItem(THEME_KEY, next);
+});
+
+// ─── Image resize floating toolbar ───────────────────────
+const imageToolbar = document.getElementById('image-toolbar');
+let activeImage = null;
+
+function showImageToolbar(img) {
+  activeImage = img;
+  // Position the toolbar just above the image
+  const rect = img.getBoundingClientRect();
+  const canvasEl = document.querySelector('.canvas');
+  const canvasRect = canvasEl.getBoundingClientRect();
+  // Position relative to the canvas (its parent for our floating toolbar)
+  const top = rect.top - canvasRect.top + canvasEl.scrollTop - imageToolbar.offsetHeight - 8;
+  const left = rect.left - canvasRect.left + (rect.width / 2);
+  imageToolbar.style.top = Math.max(top, 4) + 'px';
+  imageToolbar.style.left = left + 'px';
+  imageToolbar.style.transform = 'translateX(-50%)';
+  imageToolbar.classList.add('visible');
+
+  // Highlight the size that matches the current image width
+  const currentPct = img.style.width
+    ? parseInt(img.style.width, 10)
+    : 100;
+  imageToolbar.querySelectorAll('button[data-img-size]').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.imgSize, 10) === currentPct);
+  });
+}
+
+function hideImageToolbar() {
+  imageToolbar.classList.remove('visible');
+  activeImage = null;
+}
+
+// Replace the simple "click image to select" behavior with one that also
+// shows the resize toolbar.
+editor.addEventListener('click', e => {
+  document.querySelectorAll('#editor img.selected').forEach(img => img.classList.remove('selected'));
+  if (e.target.tagName === 'IMG') {
+    e.target.classList.add('selected');
+    showImageToolbar(e.target);
+  } else {
+    hideImageToolbar();
+  }
+}, true); // capture phase so we run before the older listener
+
+// Hide the toolbar on scroll, resize, or click outside
+document.querySelector('.canvas').addEventListener('scroll', hideImageToolbar, { passive: true });
+window.addEventListener('resize', hideImageToolbar);
+
+// Image toolbar button actions
+imageToolbar.addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if (!btn || !activeImage) return;
+  if (btn.dataset.imgSize) {
+    const pct = btn.dataset.imgSize;
+    activeImage.style.width = pct + '%';
+    activeImage.style.maxWidth = pct + '%';
+    // Update active highlight
+    imageToolbar.querySelectorAll('button[data-img-size]').forEach(b => {
+      b.classList.toggle('active', b === btn);
+    });
+    scheduleSave();
+    // Reposition because the image height likely changed
+    setTimeout(() => activeImage && showImageToolbar(activeImage), 0);
+  } else if (btn.dataset.imgAction === 'delete') {
+    const img = activeImage;
+    hideImageToolbar();
+    img.remove();
+    scheduleSave();
+    updateWordCount();
+  }
+});
+
+// Hide image toolbar when leaving the editor view
+document.getElementById('back-home-btn').addEventListener('click', hideImageToolbar);
+
+// ─── Toolbar overflow menu (mobile) ──────────────────────
+const overflowBtn = document.getElementById('tool-overflow-btn');
+const overflowMenu = document.getElementById('tool-overflow-menu');
+
+// Items shown in the overflow menu (these are the same controls hidden by
+// the mobile @media rule on the main toolbar, plus a few useful extras)
+const overflowItems = [
+  { icon: 'U',   label: 'Underline',     cmd: 'underline' },
+  { icon: '¶',   label: 'Body text',     cmd: 'formatBlock', arg: 'p' },
+  { icon: '”',   label: 'Quote block',   cmd: 'formatBlock', arg: 'blockquote' },
+  { icon: '🔗',  label: 'Insert link',   action: 'link' },
+  { icon: '↷',   label: 'Redo',          cmd: 'redo' }
+];
+
+function buildOverflowMenu() {
+  overflowMenu.innerHTML = overflowItems.map(item => `
+    <button data-cmd="${item.cmd || ''}" data-arg="${item.arg || ''}" data-action="${item.action || ''}">
+      <span class="menu-icon">${item.icon}</span>
+      <span>${item.label}</span>
+    </button>
+  `).join('');
+}
+buildOverflowMenu();
+
+overflowBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  if (overflowMenu.classList.contains('visible')) {
+    overflowMenu.classList.remove('visible');
+    return;
+  }
+  // Position below the overflow button
+  const r = overflowBtn.getBoundingClientRect();
+  overflowMenu.style.top = (r.bottom + window.scrollY + 4) + 'px';
+  overflowMenu.style.right = (window.innerWidth - r.right) + 'px';
+  overflowMenu.style.left = 'auto';
+  overflowMenu.classList.remove('hidden');
+  overflowMenu.classList.add('visible');
+});
+
+document.addEventListener('click', e => {
+  if (!overflowMenu.contains(e.target) && e.target !== overflowBtn) {
+    overflowMenu.classList.remove('visible');
+  }
+});
+
+overflowMenu.addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  overflowMenu.classList.remove('visible');
+  if (btn.dataset.action === 'link') {
+    document.getElementById('link-btn').click();
+    return;
+  }
+  if (btn.dataset.cmd) {
+    execCmd(btn.dataset.cmd, btn.dataset.arg || undefined);
+  }
+});
 </script>
 </body>
 </html>
