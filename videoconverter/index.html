@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Video Converter — Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f7f6f3; --surface: #ffffff; --border: #e5e2da;
+  --accent: #e05c2a; --accent-hover: #c94e20;
+  --text: #1e1e1e; --muted: #888580;
+  --radius: 14px; --shadow: 0 2px 12px rgba(0,0,0,0.06);
+  --shadow-hover: 0 8px 32px rgba(0,0,0,0.10);
+}
+html.dark {
+  --bg: #111113; --surface: #1c1c1f; --border: #2a2a2e;
+  --text: #ececef; --muted: #7a7a82;
+}
+body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+.hidden { display: none !important; }
+</style>
+
+
+<style>
+/* Header */
+header { max-width: 760px; margin: 0 auto; padding: 48px 24px 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.back-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--muted); text-decoration: none; padding: 6px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); transition: all 0.15s; }
+.back-btn:hover { color: var(--accent); border-color: var(--accent); }
+.header-brand { display: flex; align-items: center; gap: 10px; }
+.header-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #e05c2a, #f0934a); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+.header-brand h1 { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.02em; }
+.header-brand p { font-size: 0.78rem; color: var(--muted); }
+.dark-toggle { width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.dark-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Main layout */
+main { max-width: 760px; margin: 32px auto 80px; padding: 0 24px; display: flex; flex-direction: column; gap: 20px; }
+
+/* Cards */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); }
+.card-label { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+</style>
+
+
+<style>
+/* Drop zone */
+.drop-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 48px 24px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--bg); }
+.drop-zone:hover, .drop-zone.drag-over { border-color: var(--accent); background: rgba(224,92,42,0.04); }
+.drop-icon { font-size: 2.4rem; margin-bottom: 10px; }
+.drop-zone h2 { font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
+.drop-zone p { font-size: 0.82rem; color: var(--muted); }
+.drop-zone input { display: none; }
+
+/* Video preview */
+.preview-wrap { position: relative; border-radius: 10px; overflow: hidden; background: #000; aspect-ratio: 16/9; }
+.preview-wrap video { width: 100%; height: 100%; object-fit: contain; }
+.video-info { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.info-pill { font-size: 0.72rem; padding: 4px 10px; border-radius: 999px; background: rgba(224,92,42,0.1); color: var(--accent); font-weight: 500; }
+
+/* Settings grid */
+.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media(max-width:540px){ .settings-grid { grid-template-columns: 1fr; } }
+.field label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+.field select, .field input[type=range] { width: 100%; }
+.field select { padding: 10px 12px; border: 1px solid var(--border); border-radius: 9px; background: var(--bg); color: var(--text); font: inherit; font-size: 0.88rem; outline: none; cursor: pointer; transition: border-color 0.15s; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23888' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+.field select:focus { border-color: var(--accent); }
+.quality-val { font-size: 0.8rem; color: var(--accent); font-weight: 600; margin-top: 4px; }
+input[type=range] { accent-color: var(--accent); cursor: pointer; }
+</style>
+
+
+<style>
+/* Convert button */
+.convert-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #e05c2a, #f0934a); color: #fff; border: none; border-radius: 10px; font: inherit; font-size: 1rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s, transform 0.15s; letter-spacing: -0.01em; }
+.convert-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+.convert-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* Progress */
+.progress-wrap { display: flex; flex-direction: column; gap: 10px; }
+.progress-bar-bg { height: 8px; background: var(--border); border-radius: 999px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: linear-gradient(90deg, #e05c2a, #f0934a); border-radius: 999px; width: 0%; transition: width 0.4s ease; }
+.progress-status { font-size: 0.82rem; color: var(--muted); }
+.progress-steps { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.step { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--muted); }
+.step.active { color: var(--text); }
+.step.done { color: #4a8c8c; }
+.step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); flex-shrink: 0; transition: background 0.2s; }
+.step.active .step-dot { background: var(--accent); }
+.step.done .step-dot { background: #4a8c8c; }
+
+/* Result */
+.result-card { text-align: center; padding: 32px 24px; }
+.result-icon { font-size: 2.8rem; margin-bottom: 10px; }
+.result-card h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; }
+.result-card p { font-size: 0.84rem; color: var(--muted); margin-bottom: 20px; }
+.result-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 9px; font: inherit; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.15s; text-decoration: none; border: none; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-hover, #c94e20); }
+.btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Error */
+.error-box { background: rgba(220,53,69,0.08); border: 1px solid rgba(220,53,69,0.2); border-radius: 10px; padding: 14px 16px; font-size: 0.84rem; color: #dc3545; }
+
+footer { text-align: center; padding: 16px 0 40px; font-size: 0.75rem; color: var(--muted); }
+</style>
+
+
+</head>
+<body>
+
+<header>
+  <a href="../" class="back-btn">← Back to Hub</a>
+  <div class="header-brand">
+    <div class="header-icon">🎞️</div>
+    <div>
+      <h1>Video Converter</h1>
+      <p>Resize, convert &amp; compress via Cloudinary</p>
+    </div>
+  </div>
+  <button class="dark-toggle" id="darkToggle">🌙</button>
+</header>
+
+<main>
+
+  <!-- Upload -->
+  <div class="card" id="uploadCard">
+    <div class="card-label">1 — Upload Video</div>
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-icon">🎬</div>
+      <h2>Drop your video here</h2>
+      <p>or click to browse · MP4, MOV, AVI, MKV, WebM supported</p>
+      <input type="file" id="fileInput" accept="video/*"/>
+    </div>
+  </div>
+
+  <!-- Preview -->
+  <div class="card hidden" id="previewCard">
+    <div class="card-label">Preview</div>
+    <div class="preview-wrap">
+      <video id="videoPreview" controls></video>
+    </div>
+    <div class="video-info" id="videoInfo"></div>
+  </div>
+
+  <!-- Settings -->
+  <div class="card hidden" id="settingsCard">
+    <div class="card-label">2 — Conversion Settings</div>
+    <div class="settings-grid">
+      <div class="field">
+        <label>Output Resolution</label>
+        <select id="resolution">
+          <option value="">Keep original</option>
+          <option value="360">360p</option>
+          <option value="480">480p</option>
+          <option value="720">720p (HD)</option>
+          <option value="1080">1080p (Full HD)</option>
+          <option value="1440">1440p (2K)</option>
+          <option value="2160">2160p (4K)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Output Format</label>
+        <select id="format">
+          <option value="mp4">MP4</option>
+          <option value="webm">WebM</option>
+          <option value="mov">MOV</option>
+          <option value="avi">AVI</option>
+          <option value="mkv">MKV</option>
+          <option value="gif">GIF (short clips)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Video Quality</label>
+        <select id="quality">
+          <option value="auto">Auto (recommended)</option>
+          <option value="auto:best">Best quality</option>
+          <option value="auto:good">Good quality</option>
+          <option value="auto:eco">Economy (smaller file)</option>
+          <option value="auto:low">Low (smallest file)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Aspect Ratio</label>
+        <select id="crop">
+          <option value="">Keep original</option>
+          <option value="16:9">16:9 (Widescreen)</option>
+          <option value="9:16">9:16 (Vertical/Reels)</option>
+          <option value="1:1">1:1 (Square)</option>
+          <option value="4:3">4:3 (Classic)</option>
+          <option value="21:9">21:9 (Cinematic)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Convert button -->
+  <div class="hidden" id="convertWrap">
+    <div id="errorBox" class="error-box hidden"></div>
+    <button class="convert-btn" id="convertBtn">🚀 Convert Video</button>
+  </div>
+
+  <!-- Progress -->
+  <div class="card hidden" id="progressCard">
+    <div class="card-label">Converting…</div>
+    <div class="progress-wrap">
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+      <div class="progress-status" id="progressStatus">Starting…</div>
+      <div class="progress-steps">
+        <div class="step" id="step1"><span class="step-dot"></span> Uploading to Cloudinary</div>
+        <div class="step" id="step2"><span class="step-dot"></span> Applying transformations</div>
+        <div class="step" id="step3"><span class="step-dot"></span> Processing video</div>
+        <div class="step" id="step4"><span class="step-dot"></span> Ready to download</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div class="card hidden result-card" id="resultCard">
+    <div class="result-icon">✅</div>
+    <h2>Conversion Complete!</h2>
+    <p id="resultDesc">Your video has been converted successfully.</p>
+    <div class="result-actions">
+      <a id="downloadBtn" class="btn btn-primary" href="#" target="_blank" download>⬇️ Download Video</a>
+      <button class="btn btn-outline" id="convertAnotherBtn">🔄 Convert Another</button>
+    </div>
+  </div>
+
+</main>
+
+<footer>Flow Video Converter · powered by Cloudinary</footer>
+
+
+<script>
+// ── Config ──
+const CLOUD_NAME   = 'root';
+const UPLOAD_PRESET = 'ml_default'; // unsigned preset
+
+// ── Dark mode ──
+const html = document.documentElement;
+const darkBtn = document.getElementById('darkToggle');
+const saved = localStorage.getItem('flow.darkMode');
+if (saved === 'true' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+  html.classList.add('dark'); darkBtn.textContent = '☀️';
+}
+darkBtn.addEventListener('click', () => {
+  const dark = html.classList.toggle('dark');
+  darkBtn.textContent = dark ? '☀️' : '🌙';
+  localStorage.setItem('flow.darkMode', dark);
+});
+
+// ── Elements ──
+const dropZone       = document.getElementById('dropZone');
+const fileInput      = document.getElementById('fileInput');
+const uploadCard     = document.getElementById('uploadCard');
+const previewCard    = document.getElementById('previewCard');
+const settingsCard   = document.getElementById('settingsCard');
+const convertWrap    = document.getElementById('convertWrap');
+const convertBtn     = document.getElementById('convertBtn');
+const progressCard   = document.getElementById('progressCard');
+const resultCard     = document.getElementById('resultCard');
+const videoPreview   = document.getElementById('videoPreview');
+const videoInfo      = document.getElementById('videoInfo');
+const progressFill   = document.getElementById('progressFill');
+const progressStatus = document.getElementById('progressStatus');
+const errorBox       = document.getElementById('errorBox');
+const downloadBtn    = document.getElementById('downloadBtn');
+const resultDesc     = document.getElementById('resultDesc');
+
+let selectedFile = null;
+let uploadedPublicId = null;
+
+// ── Drag & Drop ──
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith('video/')) loadFile(f);
+  else showError('Please drop a valid video file.');
+});
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) loadFile(fileInput.files[0]); });
+
+function loadFile(file) {
+  selectedFile = file;
+  const url = URL.createObjectURL(file);
+  videoPreview.src = url;
+  videoPreview.onloadedmetadata = () => {
+    const dur = Math.round(videoPreview.duration);
+    const mins = Math.floor(dur / 60);
+    const secs = dur % 60;
+    videoInfo.innerHTML = `
+      <span class="info-pill">📁 ${(file.size / 1024 / 1024).toFixed(1)} MB</span>
+      <span class="info-pill">⏱ ${mins}:${String(secs).padStart(2,'0')}</span>
+      <span class="info-pill">📐 ${videoPreview.videoWidth}×${videoPreview.videoHeight}</span>
+      <span class="info-pill">🎞️ ${file.name.split('.').pop().toUpperCase()}</span>
+    `;
+  };
+  previewCard.classList.remove('hidden');
+  settingsCard.classList.remove('hidden');
+  convertWrap.classList.remove('hidden');
+  hideError();
+}
+</script>
+
+
+<script>
+// ── Steps helper ──
+function setStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById(`step${i}`);
+    el.className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
+  }
+}
+
+function setProgress(pct, status) {
+  progressFill.style.width = pct + '%';
+  progressStatus.textContent = status;
+}
+
+function showError(msg) {
+  errorBox.textContent = '⚠️ ' + msg;
+  errorBox.classList.remove('hidden');
+}
+function hideError() { errorBox.classList.add('hidden'); }
+
+// ── Convert ──
+convertBtn.addEventListener('click', async () => {
+  if (!selectedFile) return;
+  hideError();
+  convertBtn.disabled = true;
+  progressCard.classList.remove('hidden');
+  resultCard.classList.add('hidden');
+  setStep(1); setProgress(5, 'Uploading video…');
+
+  try {
+    // Step 1 — Upload
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('upload_preset', UPLOAD_PRESET);
+    formData.append('resource_type', 'video');
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`);
+
+    xhr.upload.onprogress = e => {
+      if (e.lengthComputable) {
+        const pct = Math.round((e.loaded / e.total) * 40);
+        setProgress(5 + pct, `Uploading… ${Math.round((e.loaded/e.total)*100)}%`);
+      }
+    };
+
+    const uploadResult = await new Promise((resolve, reject) => {
+      xhr.onload = () => {
+        if (xhr.status === 200) resolve(JSON.parse(xhr.responseText));
+        else reject(new Error(JSON.parse(xhr.responseText).error?.message || 'Upload failed'));
+      };
+      xhr.onerror = () => reject(new Error('Network error during upload'));
+      xhr.send(formData);
+    });
+
+    uploadedPublicId = uploadResult.public_id;
+    setStep(2); setProgress(50, 'Building transformation URL…');
+
+    // Step 2 — Build transformation
+    const resolution = document.getElementById('resolution').value;
+    const format     = document.getElementById('format').value;
+    const quality    = document.getElementById('quality').value;
+    const crop       = document.getElementById('crop').value;
+
+    let transforms = [];
+    if (resolution) {
+      transforms.push(`h_${resolution},c_scale`);
+    }
+    if (crop) {
+      const [w, h] = crop.split(':');
+      const ar = `${w}:${h}`;
+      transforms.push(`ar_${ar},c_fill`);
+    }
+    transforms.push(`q_${quality}`);
+
+    const transformStr = transforms.join('/');
+    const outputUrl = `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/${transformStr}/fl_attachment/${uploadedPublicId}.${format}`;
+
+    setStep(3); setProgress(70, 'Processing on Cloudinary…');
+
+    // Step 3 — Ping the URL to trigger processing
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setProgress(90, 'Finalising…');
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Step 4 — Done
+    setStep(4); setProgress(100, 'Done!');
+
+    const resLabel = resolution ? `${resolution}p` : 'original resolution';
+    resultDesc.textContent = `Converted to ${format.toUpperCase()} at ${resLabel}. Click below to download.`;
+    downloadBtn.href = outputUrl;
+    downloadBtn.download = `converted_${Date.now()}.${format}`;
+
+    await new Promise(resolve => setTimeout(resolve, 600));
+    progressCard.classList.add('hidden');
+    resultCard.classList.remove('hidden');
+
+  } catch (err) {
+    progressCard.classList.add('hidden');
+    showError(err.message || 'Something went wrong. Please try again.');
+  } finally {
+    convertBtn.disabled = false;
+  }
+});
+
+// ── Convert another ──
+document.getElementById('convertAnotherBtn').addEventListener('click', () => {
+  selectedFile = null; uploadedPublicId = null;
+  fileInput.value = '';
+  videoPreview.src = '';
+  videoInfo.innerHTML = '';
+  previewCard.classList.add('hidden');
+  settingsCard.classList.add('hidden');
+  convertWrap.classList.add('hidden');
+  resultCard.classList.add('hidden');
+  progressCard.classList.add('hidden');
+  setProgress(0, '');
+  hideError();
+});
+</script>
+</body>
+</html>
