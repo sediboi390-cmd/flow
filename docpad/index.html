@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DocPad — Simple documents, saved as PDF</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Charter&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #ffffff;
+  --bg-soft: #f7f7f8;
+  --surface: #ffffff;
+  --border: #e6e6e9;
+  --border-strong: #d4d4d9;
+  --text: #1a1a1a;
+  --text-muted: #6b6b73;
+  --text-soft: #9a9aa3;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: #eff6ff;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --radius: 8px;
+  --radius-lg: 12px;
+}
+html, body { height: 100%; }
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.hidden { display: none !important; }
+
+/* ─── HOME VIEW ─────────────────────────────────────── */
+#home-view {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 4rem 2rem 6rem;
+}
+.home-header {
+  margin-bottom: 3rem;
+}
+.home-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.4rem;
+}
+.home-header p {
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+.section-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+.template-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 3rem;
+}
+.template-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem 1.25rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  width: 100%;
+}
+.template-card:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  transform: translateY(-1px);
+}
+.template-card .icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  background: var(--bg-soft);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
+}
+.template-card:hover .icon {
+  background: #fff;
+}
+.template-card .label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 0.15rem;
+}
+.template-card .desc {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+/* Recent docs */
+.recent-list {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.recent-empty {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+.recent-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.recent-item:last-child { border-bottom: none; }
+.recent-item:hover { background: var(--bg-soft); }
+.recent-item .doc-icon {
+  font-size: 1rem;
+  width: 28px; text-align: center;
+  color: var(--text-soft);
+}
+.recent-item .meta {
+  flex: 1;
+  min-width: 0;
+}
+.recent-item .meta .title {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.recent-item .meta .when {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+.recent-item .delete-btn {
+  background: none;
+  border: none;
+  color: var(--text-soft);
+  cursor: pointer;
+  padding: 0.4rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  opacity: 0;
+  transition: all 0.15s;
+}
+.recent-item:hover .delete-btn { opacity: 1; }
+.recent-item .delete-btn:hover {
+  color: var(--danger);
+  background: #fee;
+}
+
+/* ─── EDITOR VIEW ───────────────────────────────────── */
+#editor-view {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--bg-soft);
+}
+
+/* Top bar */
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0.6rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.topbar-left, .topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.topbar-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 200px;
+}
+#doc-title {
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 0.4rem 0.65rem;
+  border-radius: 6px;
+  width: 100%;
+  max-width: 400px;
+  color: var(--text);
+}
+#doc-title:hover { background: var(--bg-soft); }
+#doc-title:focus {
+  outline: none;
+  background: #fff;
+  border-color: var(--accent);
+}
+#save-status {
+  font-size: 0.8rem;
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.1s;
+  white-space: nowrap;
+}
+.btn:hover { background: var(--bg-soft); border-color: var(--border-strong); }
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.btn-ghost { border-color: transparent; }
+.btn-ghost:hover { background: var(--bg-soft); }
+
+/* Toolbar */
+.toolbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0.4rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.tool-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--text);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s;
+}
+.tool-btn:hover { background: var(--bg-soft); }
+.tool-btn.active { background: var(--accent-soft); color: var(--accent); }
+.tool-btn.bold { font-weight: 700; }
+.tool-btn.italic { font-style: italic; }
+.tool-btn.underline { text-decoration: underline; }
+.tool-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 0.3rem;
+}
+
+/* Paper / canvas */
+.canvas {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2.5rem 1rem 4rem;
+}
+.paper {
+  max-width: 8.5in;
+  margin: 0 auto;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1in;
+  min-height: 11in;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.04);
+}
+#editor {
+  font-family: 'Charter', Georgia, 'Times New Roman', serif;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--text);
+  outline: none;
+  min-height: 9in;
+}
+#editor:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-soft);
+  pointer-events: none;
+}
+#editor h1 { font-size: 2em; font-weight: 700; margin: 1em 0 0.5em; line-height: 1.25; }
+#editor h2 { font-size: 1.5em; font-weight: 600; margin: 1em 0 0.4em; line-height: 1.3; }
+#editor p { margin-bottom: 0.7em; }
+#editor ul, #editor ol { margin: 0.5em 0 0.7em 1.5em; }
+#editor li { margin-bottom: 0.3em; }
+#editor a { color: var(--accent); text-decoration: underline; }
+#editor blockquote {
+  border-left: 3px solid var(--border-strong);
+  padding-left: 1em;
+  color: var(--text-muted);
+  margin: 0.7em 0;
+}
+
+/* Footer */
+.editor-footer {
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0.5rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Modal */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 20, 25, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+.modal {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+.modal h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+.modal p {
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+}
+.modal label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+.modal select {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.95rem;
+  background: #fff;
+  margin-bottom: 1.25rem;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* Toast */
+#toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a1a1a;
+  color: #fff;
+  padding: 0.6rem 1.2rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  z-index: 9999;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+/* PDF print-friendly styling — applied during export */
+.pdf-render {
+  font-family: 'Charter', Georgia, serif;
+  font-size: 16px;
+  line-height: 1.7;
+  color: #1a1a1a;
+  background: #fff;
+}
+.pdf-render h1 { font-size: 2em; font-weight: 700; margin: 0 0 0.6em; }
+.pdf-render h2 { font-size: 1.5em; font-weight: 600; margin: 1em 0 0.4em; }
+.pdf-render p  { margin-bottom: 0.7em; }
+.pdf-render ul, .pdf-render ol { margin: 0.5em 0 0.7em 1.5em; }
+.pdf-render .doc-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.6em;
+  font-weight: 700;
+  margin-bottom: 1em;
+  border-bottom: 1px solid #e6e6e9;
+  padding-bottom: 0.5em;
+}
+
+@media (max-width: 600px) {
+  #home-view { padding: 2rem 1rem; }
+  .home-header h1 { font-size: 1.5rem; }
+  .paper { padding: 0.75in 0.5in; min-height: auto; }
+}
+</style>
+</head>
+<body>
+
+<!-- ─── HOME ───────────────────────────────────────────── -->
+<div id="home-view">
+  <header class="home-header">
+    <h1>📄 DocPad</h1>
+    <p>Simple documents, saved as PDF.</p>
+  </header>
+
+  <div class="section-label">Start a new document</div>
+  <div class="template-row">
+    <button class="template-card" id="new-blank-btn">
+      <div class="icon">+</div>
+      <div class="label">Blank document</div>
+      <div class="desc">Start from scratch</div>
+    </button>
+  </div>
+
+  <div class="section-label">Recent</div>
+  <div id="recent-list" class="recent-list">
+    <div class="recent-empty">No documents yet. Click <strong>Blank document</strong> above to get started.</div>
+  </div>
+</div>
+
+<!-- ─── EDITOR ─────────────────────────────────────────── -->
+<div id="editor-view" class="hidden">
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="btn btn-ghost" id="back-home-btn" title="Back to home">← Home</button>
+    </div>
+    <div class="topbar-center">
+      <input type="text" id="doc-title" placeholder="Untitled document" />
+      <span id="save-status">Saved</span>
+    </div>
+    <div class="topbar-right">
+      <button class="btn" id="download-pdf-btn">⬇️ Download PDF</button>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar" id="toolbar">
+    <button class="tool-btn bold"     data-cmd="bold"      title="Bold (Ctrl+B)">B</button>
+    <button class="tool-btn italic"   data-cmd="italic"    title="Italic (Ctrl+I)">I</button>
+    <button class="tool-btn underline" data-cmd="underline" title="Underline (Ctrl+U)">U</button>
+    <div class="tool-divider"></div>
+    <button class="tool-btn" data-cmd="formatBlock" data-arg="h1" title="Heading 1">H1</button>
+    <button class="tool-btn" data-cmd="formatBlock" data-arg="h2" title="Heading 2">H2</button>
+    <button class="tool-btn" data-cmd="formatBlock" data-arg="p"  title="Body text">¶</button>
+    <div class="tool-divider"></div>
+    <button class="tool-btn" data-cmd="insertUnorderedList" title="Bulleted list">•</button>
+    <button class="tool-btn" data-cmd="insertOrderedList"   title="Numbered list">1.</button>
+    <button class="tool-btn" data-cmd="formatBlock" data-arg="blockquote" title="Quote">”</button>
+    <div class="tool-divider"></div>
+    <button class="tool-btn" id="link-btn"   title="Insert link (Ctrl+K)">🔗</button>
+    <div class="tool-divider"></div>
+    <button class="tool-btn" data-cmd="undo" title="Undo (Ctrl+Z)">↶</button>
+    <button class="tool-btn" data-cmd="redo" title="Redo (Ctrl+Y)">↷</button>
+  </div>
+
+  <!-- Paper -->
+  <div class="canvas">
+    <div class="paper">
+      <div id="editor" contenteditable="true" data-placeholder="Start writing…"></div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="editor-footer">
+    <span id="word-count">0 words</span>
+    <span id="last-edit"></span>
+  </div>
+</div>
+
+<!-- ─── PDF EXPORT MODAL ──────────────────────────────── -->
+<div id="pdf-modal" class="modal-backdrop hidden">
+  <div class="modal">
+    <h3>Download as PDF</h3>
+    <p>Choose a page size for your document.</p>
+    <label for="pdf-page-size">Page size</label>
+    <select id="pdf-page-size">
+      <option value="letter">US Letter (8.5 × 11 in)</option>
+      <option value="a4">A4 (210 × 297 mm)</option>
+      <option value="legal">US Legal (8.5 × 14 in)</option>
+    </select>
+    <label for="pdf-orientation">Orientation</label>
+    <select id="pdf-orientation">
+      <option value="portrait">Portrait</option>
+      <option value="landscape">Landscape</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn" id="pdf-cancel-btn">Cancel</button>
+      <button class="btn btn-primary" id="pdf-download-confirm-btn">Download</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="hidden"></div>
+
+<script>
+// ─── Storage ─────────────────────────────────────────────
+const STORAGE_KEY = 'docpad.docs.v1';
+function loadDocs() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch { return []; }
+}
+function saveDocs(docs) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(docs));
+}
+function uid() {
+  return 'd_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+// ─── Toast ───────────────────────────────────────────────
+function showToast(msg, duration = 2200) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.remove('hidden');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.add('hidden'), duration);
+}
+
+// ─── Time formatting ─────────────────────────────────────
+function relativeTime(ts) {
+  const diff = Date.now() - ts;
+  const sec = Math.floor(diff / 1000);
+  if (sec < 60) return 'just now';
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min} min ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return hr === 1 ? '1 hour ago' : `${hr} hours ago`;
+  const day = Math.floor(hr / 24);
+  if (day === 1) return 'yesterday';
+  if (day < 7) return `${day} days ago`;
+  if (day < 30) return `${Math.floor(day / 7)} week${Math.floor(day/7) > 1 ? 's' : ''} ago`;
+  return new Date(ts).toLocaleDateString();
+}
+
+// ─── Views ───────────────────────────────────────────────
+const homeView = document.getElementById('home-view');
+const editorView = document.getElementById('editor-view');
+function showHome() {
+  homeView.classList.remove('hidden');
+  editorView.classList.add('hidden');
+  renderRecent();
+  document.title = 'DocPad — Simple documents, saved as PDF';
+}
+function showEditor() {
+  homeView.classList.add('hidden');
+  editorView.classList.remove('hidden');
+}
+
+// ─── Home: render recent ─────────────────────────────────
+function renderRecent() {
+  const docs = loadDocs().sort((a, b) => b.updated - a.updated);
+  const list = document.getElementById('recent-list');
+  if (!docs.length) {
+    list.innerHTML = '<div class="recent-empty">No documents yet. Click <strong>Blank document</strong> above to get started.</div>';
+    return;
+  }
+  list.innerHTML = docs.map(d => `
+    <div class="recent-item" data-id="${d.id}">
+      <div class="doc-icon">📄</div>
+      <div class="meta">
+        <div class="title">${escapeHtml(d.title || 'Untitled document')}</div>
+        <div class="when">${relativeTime(d.updated)}</div>
+      </div>
+      <button class="delete-btn" data-delete-id="${d.id}" title="Delete">✕</button>
+    </div>
+  `).join('');
+  list.querySelectorAll('.recent-item').forEach(el => {
+    el.addEventListener('click', e => {
+      if (e.target.closest('.delete-btn')) return;
+      openDoc(el.dataset.id);
+    });
+  });
+  list.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const id = btn.dataset.deleteId;
+      if (confirm('Delete this document? This cannot be undone.')) {
+        const remaining = loadDocs().filter(d => d.id !== id);
+        saveDocs(remaining);
+        renderRecent();
+        showToast('Document deleted');
+      }
+    });
+  });
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+
+// ─── Editor state ────────────────────────────────────────
+let currentDocId = null;
+let saveTimer = null;
+const editor = document.getElementById('editor');
+const titleInput = document.getElementById('doc-title');
+const saveStatusEl = document.getElementById('save-status');
+const wordCountEl = document.getElementById('word-count');
+const lastEditEl = document.getElementById('last-edit');
+
+function newDoc() {
+  const doc = {
+    id: uid(),
+    title: '',
+    content: '',
+    created: Date.now(),
+    updated: Date.now()
+  };
+  const docs = loadDocs();
+  docs.push(doc);
+  saveDocs(docs);
+  openDoc(doc.id);
+}
+
+function openDoc(id) {
+  const docs = loadDocs();
+  const doc = docs.find(d => d.id === id);
+  if (!doc) { showToast('Document not found'); return; }
+  currentDocId = id;
+  titleInput.value = doc.title || '';
+  editor.innerHTML = doc.content || '';
+  showEditor();
+  setTimeout(() => editor.focus(), 50);
+  updateWordCount();
+  setSaveStatus('Saved');
+  document.title = (doc.title || 'Untitled') + ' — DocPad';
+}
+
+function setSaveStatus(text) {
+  saveStatusEl.textContent = text;
+}
+
+function scheduleSave() {
+  setSaveStatus('Saving…');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(persistCurrent, 400);
+}
+
+function persistCurrent() {
+  if (!currentDocId) return;
+  const docs = loadDocs();
+  const i = docs.findIndex(d => d.id === currentDocId);
+  if (i === -1) return;
+  docs[i].title = titleInput.value;
+  docs[i].content = editor.innerHTML;
+  docs[i].updated = Date.now();
+  saveDocs(docs);
+  setSaveStatus('Saved');
+  document.title = (docs[i].title || 'Untitled') + ' — DocPad';
+  lastEditEl.textContent = 'Last edited ' + relativeTime(docs[i].updated);
+}
+
+function updateWordCount() {
+  const text = editor.innerText || '';
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  wordCountEl.textContent = words === 1 ? '1 word' : `${words} words`;
+}
+
+// Title + content listeners
+titleInput.addEventListener('input', scheduleSave);
+editor.addEventListener('input', () => {
+  scheduleSave();
+  updateWordCount();
+  refreshToolbarState();
+});
+
+// ─── Toolbar ─────────────────────────────────────────────
+function execCmd(cmd, arg) {
+  document.execCommand(cmd, false, arg);
+  editor.focus();
+  refreshToolbarState();
+}
+
+document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const cmd = btn.dataset.cmd;
+    const arg = btn.dataset.arg;
+    execCmd(cmd, arg);
+  });
+});
+
+document.getElementById('link-btn').addEventListener('click', () => {
+  const sel = window.getSelection();
+  const url = prompt('Link URL:', 'https://');
+  if (!url) return;
+  if (sel && sel.toString().trim()) {
+    execCmd('createLink', url);
+  } else {
+    // Insert linked text if no selection
+    const text = prompt('Link text:', url);
+    if (!text) return;
+    execCmd('insertHTML', `<a href="${escapeHtml(url)}">${escapeHtml(text)}</a>`);
+  }
+});
+
+function refreshToolbarState() {
+  // Highlight active formatting
+  document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
+    const cmd = btn.dataset.cmd;
+    if (['bold', 'italic', 'underline'].includes(cmd)) {
+      btn.classList.toggle('active', document.queryCommandState(cmd));
+    } else if (cmd === 'formatBlock' && btn.dataset.arg) {
+      const block = (document.queryCommandValue('formatBlock') || '').toLowerCase();
+      btn.classList.toggle('active', block === btn.dataset.arg);
+    }
+  });
+}
+document.addEventListener('selectionchange', () => {
+  if (!editorView.classList.contains('hidden')) refreshToolbarState();
+});
+
+// Keyboard shortcuts
+editor.addEventListener('keydown', e => {
+  if (!(e.ctrlKey || e.metaKey)) return;
+  const k = e.key.toLowerCase();
+  if (k === 'k') {
+    e.preventDefault();
+    document.getElementById('link-btn').click();
+  } else if (k === 's') {
+    e.preventDefault();
+    persistCurrent();
+    showToast('Saved');
+  }
+});
+
+// Paste as plain text by default to avoid weird styles from Word/Google Docs
+editor.addEventListener('paste', e => {
+  e.preventDefault();
+  const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+  document.execCommand('insertText', false, text);
+});
+
+// ─── Navigation ──────────────────────────────────────────
+document.getElementById('new-blank-btn').addEventListener('click', newDoc);
+document.getElementById('back-home-btn').addEventListener('click', () => {
+  persistCurrent();
+  currentDocId = null;
+  showHome();
+});
+
+// ─── PDF Export ──────────────────────────────────────────
+const pdfModal = document.getElementById('pdf-modal');
+document.getElementById('download-pdf-btn').addEventListener('click', () => {
+  pdfModal.classList.remove('hidden');
+});
+document.getElementById('pdf-cancel-btn').addEventListener('click', () => {
+  pdfModal.classList.add('hidden');
+});
+pdfModal.addEventListener('click', e => {
+  if (e.target === pdfModal) pdfModal.classList.add('hidden');
+});
+
+document.getElementById('pdf-download-confirm-btn').addEventListener('click', () => {
+  const pageSize = document.getElementById('pdf-page-size').value;
+  const orientation = document.getElementById('pdf-orientation').value;
+  const title = (titleInput.value || 'Untitled').trim();
+
+  // Build a clean, standalone DOM tree to render — keeps print styling separate from the editor UI
+  const renderRoot = document.createElement('div');
+  renderRoot.className = 'pdf-render';
+  renderRoot.style.padding = '0.75in';
+  renderRoot.style.width = pageSize === 'a4' ? '210mm' :
+                            pageSize === 'legal' ? '8.5in' : '8.5in';
+  renderRoot.innerHTML = `
+    <div class="doc-title">${escapeHtml(title)}</div>
+    ${editor.innerHTML}
+  `;
+  // html2pdf needs the element to be in the DOM
+  renderRoot.style.position = 'absolute';
+  renderRoot.style.left = '-9999px';
+  renderRoot.style.top = '0';
+  document.body.appendChild(renderRoot);
+
+  pdfModal.classList.add('hidden');
+  showToast('Generating PDF…', 5000);
+
+  const filename = (title || 'document').replace(/[^\w\s.-]+/g, '_').replace(/\s+/g, '_') + '.pdf';
+
+  html2pdf()
+    .set({
+      margin: [0.5, 0.5, 0.5, 0.5],
+      filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+      jsPDF: { unit: 'in', format: pageSize, orientation },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    })
+    .from(renderRoot)
+    .save()
+    .then(() => {
+      document.body.removeChild(renderRoot);
+      showToast('✅ PDF downloaded');
+    })
+    .catch(err => {
+      document.body.removeChild(renderRoot);
+      console.error(err);
+      showToast('❌ PDF export failed: ' + err.message, 4000);
+    });
+});
+
+// ─── Boot ────────────────────────────────────────────────
+showHome();
+</script>
+</body>
+</html>
