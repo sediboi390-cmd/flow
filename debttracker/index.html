@@ -256,6 +256,14 @@ html.dark .toast{background:#ececef;color:#111}
           </div>
         </div>
       </div>
+      <!-- Monthly/Yearly terms field -->
+      <div class="hidden" id="monthlyTermsFields">
+        <div class="field">
+          <label>Number of Terms</label>
+          <input type="number" id="dMonthlyTerms" min="1" max="360" step="1" value="12" placeholder="e.g. 12"/>
+          <span style="font-size:.7rem;color:var(--muted);margin-top:3px" id="monthlyTermsHint">How many months total — capital will be divided equally per term</span>
+        </div>
+      </div>
       <div class="field">
         <label>Notes</label>
         <textarea id="dNotes" placeholder="Optional notes about this loan…"></textarea>
@@ -425,18 +433,22 @@ function generateSchedule(debtor) {
   } else if (debtor.interestType === 'monthly') {
     const startDate = new Date(debtor.date + 'T00:00:00');
     const interestPerMonth = debtor.amount * (debtor.rate / 100);
-    const monthsElapsed = Math.floor(((now - startDate) / (1000 * 60 * 60 * 24)) / 30.4375);
-    const maxMonths = Math.min(Math.max(monthsElapsed + 6, 6), 24);
+    const numTerms = debtor.monthlyTerms || 12;
+    const capitalPerTerm = debtor.amount / numTerms;
+    const paymentPerTerm = capitalPerTerm + interestPerMonth;
     const paid = totalPaid(debtor);
-    for (let i = 1; i <= maxMonths; i++) {
+    for (let i = 1; i <= numTerms; i++) {
       const dueDate = new Date(startDate);
       dueDate.setMonth(dueDate.getMonth() + i);
       const totalInterest = interestPerMonth * i;
+      const capitalPaid = capitalPerTerm * i;
       const totalOwed = debtor.amount + totalInterest;
       schedule.push({
         term: i,
         dueDate,
+        capitalDue: capitalPerTerm,
         interestDue: interestPerMonth,
+        paymentDue: paymentPerTerm,
         totalInterest,
         totalDue: Math.max(0, totalOwed - paid),
         isPast: dueDate <= now
@@ -446,10 +458,11 @@ function generateSchedule(debtor) {
   } else if (debtor.interestType === 'yearly') {
     const startDate = new Date(debtor.date + 'T00:00:00');
     const interestPerYear = debtor.amount * (debtor.rate / 100);
-    const yearsElapsed = Math.floor(((now - startDate) / (1000 * 60 * 60 * 24)) / 365.25);
-    const maxYears = Math.min(Math.max(yearsElapsed + 3, 3), 10);
+    const numTerms = debtor.monthlyTerms || 3;
+    const capitalPerTerm = debtor.amount / numTerms;
+    const paymentPerTerm = capitalPerTerm + interestPerYear;
     const paid = totalPaid(debtor);
-    for (let i = 1; i <= maxYears; i++) {
+    for (let i = 1; i <= numTerms; i++) {
       const dueDate = new Date(startDate);
       dueDate.setFullYear(dueDate.getFullYear() + i);
       const totalInterest = interestPerYear * i;
@@ -457,7 +470,9 @@ function generateSchedule(debtor) {
       schedule.push({
         term: i,
         dueDate,
+        capitalDue: capitalPerTerm,
         interestDue: interestPerYear,
+        paymentDue: paymentPerTerm,
         totalInterest,
         totalDue: Math.max(0, totalOwed - paid),
         isPast: dueDate <= now
@@ -549,8 +564,9 @@ function debtorCardHTML(d) {
   const interestLabel = d.interestType === 'term'
     ? `${d.rate}%/${d.termLength||1} ${d.termUnit||'months'}`
     : d.interestType === 'biweekly' ? `${d.rate}%/bi-weekly · ${d.biweeklyTerms||6} terms`
-    : d.interestType === 'monthly' ? `${d.rate}%/month`
-    : d.interestType === 'yearly' ? `${d.rate}%/year` : 'No interest';
+    : d.interestType === 'monthly' ? `${d.rate}%/month · ${d.monthlyTerms||12} terms`
+    : d.interestType === 'yearly' ? `${d.rate}%/year · ${d.monthlyTerms||3} terms`
+    : 'No interest';
 
   // Generate schedule for term/biweekly/monthly/yearly
   let scheduleHTML = '';
@@ -575,7 +591,9 @@ function debtorCardHTML(d) {
               <tr style="background:var(--bg)">
                 <th style="padding:6px 8px;text-align:left;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border)">${colHeader}</th>
                 <th style="padding:6px 8px;text-align:left;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border)">Due Date</th>
+                ${(d.interestType==='monthly'||d.interestType==='yearly')?`<th style="padding:6px 8px;text-align:right;color:#3b82f6;font-weight:600;border-bottom:1px solid var(--border)">Capital</th>`:''}
                 <th style="padding:6px 8px;text-align:right;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border)">Interest</th>
+                ${(d.interestType==='monthly'||d.interestType==='yearly')?`<th style="padding:6px 8px;text-align:right;color:#10b981;font-weight:600;border-bottom:1px solid var(--border)">Payment Due</th>`:''}
                 <th style="padding:6px 8px;text-align:right;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border)">Total Interest</th>
                 <th style="padding:6px 8px;text-align:right;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border)">Balance Due</th>
                 <th style="padding:6px 8px;text-align:center;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border)">Status</th>
@@ -590,10 +608,13 @@ function debtorCardHTML(d) {
                   : isNext
                   ? `<span style="color:#f59e0b;font-weight:700;font-size:.68rem">⏰ NEXT DUE</span>`
                   : `<span style="color:var(--muted);font-size:.68rem">upcoming</span>`;
+                const hasCapital = s.capitalDue !== undefined;
                 return `<tr style="background:${rowBg};border-bottom:1px solid var(--border)">
                   <td style="padding:6px 8px;font-weight:600">${s.term}</td>
                   <td style="padding:6px 8px">${formatDate(s.dueDate.toISOString().split('T')[0])}</td>
+                  ${hasCapital ? `<td style="padding:6px 8px;text-align:right;color:#3b82f6;font-weight:600">${fmt(s.capitalDue)}</td>` : ''}
                   <td style="padding:6px 8px;text-align:right;color:#f59e0b;font-weight:600">+${fmt(s.interestDue)}</td>
+                  ${hasCapital ? `<td style="padding:6px 8px;text-align:right;font-weight:700;color:#10b981">${fmt(s.paymentDue)}</td>` : ''}
                   <td style="padding:6px 8px;text-align:right;font-weight:600">${fmt(s.totalInterest)}</td>
                   <td style="padding:6px 8px;text-align:right;font-weight:700;color:var(--accent)">${fmt(s.totalDue)}</td>
                   <td style="padding:6px 8px;text-align:center">${statusBadge}</td>
@@ -706,6 +727,11 @@ function toggleTermField() {
   const type = document.getElementById('dInterestType').value;
   document.getElementById('termFields').classList.toggle('hidden', type !== 'term');
   document.getElementById('biweeklyFields').classList.toggle('hidden', type !== 'biweekly');
+  document.getElementById('monthlyTermsFields').classList.toggle('hidden', type !== 'monthly' && type !== 'yearly');
+  const hint = document.getElementById('monthlyTermsHint');
+  if (hint) hint.textContent = type === 'yearly'
+    ? 'How many years total — capital will be divided equally per term'
+    : 'How many months total — capital will be divided equally per term';
 }
 
 // ══════════════════════════════════════════════
@@ -731,6 +757,7 @@ function openDebtorModal(id) {
     document.getElementById('dTermUnit').value    = d.termUnit || 'months';
     document.getElementById('dCutoffDate').value  = d.cutoffDate || '';
     document.getElementById('dBiweeklyTerms').value = d.biweeklyTerms || 6;
+    document.getElementById('dMonthlyTerms').value  = d.monthlyTerms || 12;
     document.getElementById('dNotes').value       = d.notes || '';
     toggleTermField();
   } else {
@@ -744,6 +771,7 @@ function openDebtorModal(id) {
     document.getElementById('dTermUnit').value    = 'months';
     document.getElementById('dCutoffDate').value  = '';
     document.getElementById('dBiweeklyTerms').value = '6';
+    document.getElementById('dMonthlyTerms').value  = '12';
     document.getElementById('dNotes').value       = '';
     toggleTermField();
   }
@@ -770,6 +798,7 @@ document.getElementById('debtorModalSave').addEventListener('click', () => {
   const termUnit   = document.getElementById('dTermUnit').value;
   const cutoffDate = document.getElementById('dCutoffDate').value;
   const biweeklyTerms = parseInt(document.getElementById('dBiweeklyTerms').value) || 6;
+  const monthlyTerms = parseInt(document.getElementById('dMonthlyTerms').value) || 12;
   const notes  = document.getElementById('dNotes').value.trim();
 
   if (!name)           { showToast('⚠️ Name is required'); return; }
@@ -778,9 +807,9 @@ document.getElementById('debtorModalSave').addEventListener('click', () => {
 
   if (editingDebtorId) {
     const d = debtors.find(x => x.id === editingDebtorId);
-    if (d) { d.name=name; d.amount=amount; d.date=date; d.rate=rate; d.interestType=interestType; d.termLength=termLength; d.termUnit=termUnit; d.cutoffDate=cutoffDate; d.biweeklyTerms=biweeklyTerms; d.notes=notes; }
+    if (d) { d.name=name; d.amount=amount; d.date=date; d.rate=rate; d.interestType=interestType; d.termLength=termLength; d.termUnit=termUnit; d.cutoffDate=cutoffDate; d.biweeklyTerms=biweeklyTerms; d.monthlyTerms=monthlyTerms; d.notes=notes; }
   } else {
-    debtors.unshift({ id:uid(), name, amount, date, rate, interestType, termLength, termUnit, cutoffDate, biweeklyTerms, notes, payments:[] });
+    debtors.unshift({ id:uid(), name, amount, date, rate, interestType, termLength, termUnit, cutoffDate, biweeklyTerms, monthlyTerms, notes, payments:[] });
   }
   saveData(); renderAll(); closeDebtorModal();
   showToast(editingDebtorId ? '✅ Debtor updated' : '✅ Debtor added');
