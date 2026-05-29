@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Image Cropper — Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f7f6f3;
+  --surface: #ffffff;
+  --border: #e5e2da;
+  --text: #1e1e1e;
+  --muted: #888580;
+  --radius: 14px;
+  --accent: #06b6d4;
+  --accent-light: #cffafe;
+  --accent-dim: rgba(6,182,212,0.12);
+  --shadow: 0 2px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+}
+
+html.dark {
+  --bg: #111113;
+  --surface: #1c1c1f;
+  --border: #2a2a2e;
+  --text: #ececef;
+  --muted: #7a7a82;
+  --accent-light: #164e63;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Header */
+header {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 24px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.83rem;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+.back-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-title .icon {
+  width: 36px; height: 36px;
+  background: var(--accent-dim);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem;
+}
+
+.header-title h1 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.dark-toggle {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.dark-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Upload Zone */
+#uploadZone {
+  max-width: 960px;
+  margin: 32px auto;
+  padding: 0 24px;
+}
+
+.drop-area {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 60px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.drop-area:hover, .drop-area.drag-over {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+.drop-area .drop-icon { font-size: 3rem; margin-bottom: 12px; }
+.drop-area h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; }
+.drop-area p { font-size: 0.85rem; color: var(--muted); margin-bottom: 20px; }
+
+.browse-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font: 600 0.88rem 'Inter', sans-serif;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.browse-btn:hover { opacity: 0.88; }
+
+/* Editor layout */
+#editorZone {
+  display: none;
+  max-width: 960px;
+  margin: 24px auto 60px;
+  padding: 0 24px;
+  gap: 20px;
+}
+#editorZone.visible { display: flex; }
+
+/* Canvas area */
+.canvas-wrap {
+  flex: 1;
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 380px;
+}
+
+#mainCanvas {
+  display: block;
+  cursor: crosshair;
+  max-width: 100%;
+  max-height: 520px;
+}
+
+/* Controls panel */
+.panel {
+  width: 240px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.panel-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+.panel-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+/* Aspect ratio buttons */
+.ratio-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.ratio-btn {
+  padding: 7px 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: 500 0.75rem 'Inter', sans-serif;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+}
+.ratio-btn:hover { border-color: var(--accent); color: var(--accent); }
+.ratio-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* Tool buttons */
+.tool-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.tool-btn {
+  padding: 8px 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: 500 0.75rem 'Inter', sans-serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: all 0.15s;
+}
+.tool-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Zoom row */
+.zoom-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.zoom-row span {
+  flex: 1;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+.zoom-btn {
+  width: 32px; height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.zoom-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Crop info */
+.info-box {
+  font-size: 0.78rem;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.info-box strong { color: var(--text); }
+
+/* Preview */
+.preview-box {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: repeating-conic-gradient(#ccc 0% 25%, transparent 0% 50%) 0 0 / 14px 14px;
+  display: flex; align-items: center; justify-content: center;
+}
+html.dark .preview-box {
+  background: repeating-conic-gradient(#333 0% 25%, transparent 0% 50%) 0 0 / 14px 14px;
+}
+#previewCanvas { max-width: 100%; max-height: 100%; display: block; }
+
+/* Download & Reset buttons */
+.dl-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.dl-btn {
+  padding: 9px 6px;
+  border: none;
+  border-radius: 9px;
+  background: var(--accent);
+  color: #fff;
+  font: 600 0.78rem 'Inter', sans-serif;
+  cursor: pointer;
+  text-align: center;
+  transition: opacity 0.15s;
+}
+.dl-btn:hover { opacity: 0.85; }
+
+.reset-btn {
+  width: 100%;
+  padding: 9px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg);
+  color: var(--muted);
+  font: 500 0.78rem 'Inter', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.reset-btn:hover { border-color: #ef4444; color: #ef4444; }
+
+/* Responsive */
+@media (max-width: 700px) {
+  #editorZone.visible { flex-direction: column; }
+  .panel { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+
+<header>
+  <a href="../" class="back-btn">← Back</a>
+  <div class="header-title">
+    <div class="icon">✂️</div>
+    <h1>Image Cropper</h1>
+  </div>
+  <button class="dark-toggle" id="darkToggle" title="Toggle dark mode">🌙</button>
+</header>
+
+<!-- Upload Zone -->
+<div id="uploadZone">
+  <div class="drop-area" id="dropArea">
+    <div class="drop-icon">🖼️</div>
+    <h2>Drop your image here</h2>
+    <p>Supports JPG, PNG and WEBP files</p>
+    <button class="browse-btn" id="browseBtn">📂 Browse Files</button>
+    <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" style="display:none"/>
+  </div>
+</div>
+
+<!-- Editor Zone -->
+<div id="editorZone">
+
+  <!-- Canvas -->
+  <div class="canvas-wrap" id="canvasWrap">
+    <canvas id="mainCanvas"></canvas>
+  </div>
+
+  <!-- Controls Panel -->
+  <div class="panel">
+
+    <!-- Aspect Ratio -->
+    <div class="panel-section">
+      <div class="panel-label">Aspect Ratio</div>
+      <div class="ratio-grid">
+        <button class="ratio-btn active" data-ratio="free">Free</button>
+        <button class="ratio-btn" data-ratio="1:1">1:1 Square</button>
+        <button class="ratio-btn" data-ratio="4:3">4:3 Classic</button>
+        <button class="ratio-btn" data-ratio="16:9">16:9 Wide</button>
+        <button class="ratio-btn" data-ratio="9:16">9:16 Reel</button>
+        <button class="ratio-btn" data-ratio="3:2">3:2 Photo</button>
+      </div>
+    </div>
+
+    <!-- Transform Tools -->
+    <div class="panel-section">
+      <div class="panel-label">Transform</div>
+      <div class="tool-row">
+        <button class="tool-btn" id="rotL">↺ Rotate L</button>
+        <button class="tool-btn" id="rotR">↻ Rotate R</button>
+        <button class="tool-btn" id="flipH">↔ Flip H</button>
+        <button class="tool-btn" id="flipV">↕ Flip V</button>
+      </div>
+    </div>
+
+    <!-- Zoom -->
+    <div class="panel-section">
+      <div class="panel-label">Zoom</div>
+      <div class="zoom-row">
+        <button class="zoom-btn" id="zoomOut">−</button>
+        <span id="zoomLabel">100%</span>
+        <button class="zoom-btn" id="zoomIn">+</button>
+      </div>
+    </div>
+
+    <!-- Crop Info -->
+    <div class="panel-section">
+      <div class="panel-label">Crop Info</div>
+      <div class="info-box">
+        <div>Crop: <strong id="infoSize">– × –</strong></div>
+        <div>Original: <strong id="infoOrig">– × –</strong></div>
+      </div>
+    </div>
+
+    <!-- Preview -->
+    <div class="panel-section">
+      <div class="panel-label">Preview</div>
+      <div class="preview-box">
+        <canvas id="previewCanvas"></canvas>
+      </div>
+    </div>
+
+    <!-- Download -->
+    <div class="panel-section">
+      <div class="panel-label">Download</div>
+      <div class="dl-row">
+        <button class="dl-btn" id="dlJpg">⬇ JPG</button>
+        <button class="dl-btn" id="dlPng">⬇ PNG</button>
+      </div>
+      <div style="margin-top:8px">
+        <button class="reset-btn" id="resetBtn">↺ Reset Everything</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+
+<script>
+// ── Dark mode ──────────────────────────────────────
+const html = document.documentElement;
+const darkBtn = document.getElementById('darkToggle');
+const savedDark = localStorage.getItem('flow.darkMode');
+if (savedDark === 'true' || (!savedDark && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+  html.classList.add('dark'); darkBtn.textContent = '☀️';
+}
+darkBtn.addEventListener('click', () => {
+  const d = html.classList.toggle('dark');
+  darkBtn.textContent = d ? '☀️' : '🌙';
+  localStorage.setItem('flow.darkMode', d);
+});
+
+// ── State ──────────────────────────────────────────
+let img = null;           // HTMLImageElement
+let origW = 0, origH = 0; // original image dimensions
+let rotation = 0;         // 0 | 90 | 180 | 270
+let flipH = false, flipV = false;
+let zoom = 1;
+let aspectRatio = null;   // null = free, otherwise number (w/h)
+
+// Crop box in canvas coords
+let cropX = 0, cropY = 0, cropW = 100, cropH = 100;
+
+// Drag state
+let isDragging = false;
+let dragType = null; // 'move' | corner/edge handles
+let dragStartX = 0, dragStartY = 0;
+let cropAtDragStart = null;
+
+// Canvas / display
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const preview = document.getElementById('previewCanvas');
+const pctx = preview.getContext('2d');
+const canvasWrap = document.getElementById('canvasWrap');
+
+const HANDLE_SIZE = 10;
+const MIN_CROP = 20;
+
+// ── File upload ────────────────────────────────────
+const dropArea = document.getElementById('dropArea');
+const fileInput = document.getElementById('fileInput');
+document.getElementById('browseBtn').addEventListener('click', () => fileInput.click());
+
+fileInput.addEventListener('change', e => {
+  if (e.target.files[0]) loadFile(e.target.files[0]);
+});
+
+dropArea.addEventListener('dragover', e => { e.preventDefault(); dropArea.classList.add('drag-over'); });
+dropArea.addEventListener('dragleave', () => dropArea.classList.remove('drag-over'));
+dropArea.addEventListener('drop', e => {
+  e.preventDefault(); dropArea.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.match(/^image\/(jpeg|png|webp)$/)) loadFile(f);
+});
+
+function loadFile(file) {
+  const url = URL.createObjectURL(file);
+  const image = new Image();
+  image.onload = () => {
+    img = image;
+    origW = img.naturalWidth;
+    origH = img.naturalHeight;
+    rotation = 0; flipH = false; flipV = false; zoom = 1;
+    document.getElementById('infoOrig').textContent = origW + ' × ' + origH;
+    document.getElementById('uploadZone').style.display = 'none';
+    document.getElementById('editorZone').classList.add('visible');
+    resizeCanvas();
+    resetCrop();
+    requestAnimationFrame(render);
+  };
+  image.src = url;
+}
+
+// ── Canvas sizing ──────────────────────────────────
+function getDisplaySize() {
+  // Dimensions after rotation
+  const swapped = rotation === 90 || rotation === 270;
+  const dw = swapped ? origH : origW;
+  const dh = swapped ? origW : origH;
+
+  const maxW = canvasWrap.clientWidth || 680;
+  const maxH = 520;
+  const scale = Math.min(1, maxW / dw, maxH / dh) * zoom;
+  return { dw: Math.round(dw * scale), dh: Math.round(dh * scale), scale };
+}
+
+function resizeCanvas() {
+  const { dw, dh } = getDisplaySize();
+  canvas.width = dw;
+  canvas.height = dh;
+}
+
+function resetCrop() {
+  const { dw, dh } = getDisplaySize();
+  const pad = 20;
+  cropX = pad; cropY = pad;
+  cropW = dw - pad * 2; cropH = dh - pad * 2;
+  if (aspectRatio) enforceAspectRatio('se');
+  updateInfo();
+}
+
+// ── Aspect ratio ───────────────────────────────────
+document.querySelectorAll('.ratio-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.ratio-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const r = btn.dataset.ratio;
+    if (r === 'free') { aspectRatio = null; }
+    else {
+      const [w, h] = r.split(':').map(Number);
+      aspectRatio = w / h;
+    }
+    if (aspectRatio) enforceAspectRatio('se');
+  });
+});
+
+function enforceAspectRatio(handle) {
+  const { dw, dh } = getDisplaySize();
+  if (!aspectRatio) return;
+  // Adjust height based on width (keep width as authority)
+  let newH = Math.round(cropW / aspectRatio);
+  if (newH < MIN_CROP) { newH = MIN_CROP; cropW = Math.round(newH * aspectRatio); }
+  if (cropY + newH > dh) { newH = dh - cropY; cropW = Math.round(newH * aspectRatio); }
+  cropH = newH;
+  // Clamp
+  if (cropX + cropW > dw) { cropW = dw - cropX; cropH = Math.round(cropW / aspectRatio); }
+}
+
+// ── Render loop ────────────────────────────────────
+function render() {
+  if (!img) return;
+  resizeCanvas();
+  const { dw, dh, scale } = getDisplaySize();
+
+  // Clear
+  ctx.clearRect(0, 0, dw, dh);
+
+  // --- Draw image with transforms ---
+  ctx.save();
+  ctx.translate(dw / 2, dh / 2);
+  ctx.rotate(rotation * Math.PI / 180);
+  ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+
+  const swapped = rotation === 90 || rotation === 270;
+  const srcW = swapped ? origH : origW;
+  const srcH = swapped ? origW : origH;
+  const s = Math.min(1, (swapped ? dh : dw) / origW, (swapped ? dw : dh) / origH) * zoom;
+
+  ctx.drawImage(img, -origW * s / 2, -origH * s / 2, origW * s, origH * s);
+  ctx.restore();
+
+  // --- Dark overlay outside crop ---
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.52)';
+  // Top
+  ctx.fillRect(0, 0, dw, cropY);
+  // Bottom
+  ctx.fillRect(0, cropY + cropH, dw, dh - cropY - cropH);
+  // Left
+  ctx.fillRect(0, cropY, cropX, cropH);
+  // Right
+  ctx.fillRect(cropX + cropW, cropY, dw - cropX - cropW, cropH);
+  ctx.restore();
+
+  // --- Crop box border ---
+  ctx.save();
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([5, 4]);
+  ctx.strokeRect(cropX, cropY, cropW, cropH);
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // --- Rule of thirds ---
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 0.8;
+  const tx1 = cropX + cropW / 3, tx2 = cropX + cropW * 2 / 3;
+  const ty1 = cropY + cropH / 3, ty2 = cropY + cropH * 2 / 3;
+  ctx.beginPath();
+  ctx.moveTo(tx1, cropY); ctx.lineTo(tx1, cropY + cropH);
+  ctx.moveTo(tx2, cropY); ctx.lineTo(tx2, cropY + cropH);
+  ctx.moveTo(cropX, ty1); ctx.lineTo(cropX + cropW, ty1);
+  ctx.moveTo(cropX, ty2); ctx.lineTo(cropX + cropW, ty2);
+  ctx.stroke();
+  ctx.restore();
+
+  // --- 8 resize handles ---
+  drawHandles();
+
+  // --- Update preview ---
+  updatePreview();
+  requestAnimationFrame(render);
+}
+
+function handlePositions() {
+  const cx = cropX, cy = cropY, cw = cropW, ch = cropH;
+  const mx = cx + cw / 2, my = cy + ch / 2;
+  return {
+    nw: [cx, cy], n: [mx, cy], ne: [cx + cw, cy],
+    e:  [cx + cw, my],
+    se: [cx + cw, cy + ch], s: [mx, cy + ch], sw: [cx, cy + ch],
+    w:  [cx, my]
+  };
+}
+
+function drawHandles() {
+  const hs = HANDLE_SIZE;
+  const positions = handlePositions();
+  ctx.save();
+  Object.values(positions).forEach(([hx, hy]) => {
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#333333';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.rect(hx - hs / 2, hy - hs / 2, hs, hs);
+    ctx.fill();
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+
+// ── Preview ────────────────────────────────────────
+function updatePreview() {
+  const pw = 210, ph = 210;
+  preview.width = pw; preview.height = ph;
+  if (!img || cropW < 1 || cropH < 1) return;
+
+  // Get image pixel coords for the crop area
+  const { scale } = getDisplaySize();
+  const swapped = rotation === 90 || rotation === 270;
+  const dispW = swapped ? origH : origW;
+  const dispH = swapped ? origW : origH;
+  const s2 = Math.min(1, canvas.width / dispW, canvas.height / dispH) * zoom;
+
+  // Crop box on canvas -> image coordinates
+  const imgX = (cropX - canvas.width / 2 + origW * s2 / 2) / s2;
+  const imgY = (cropY - canvas.height / 2 + origH * s2 / 2) / s2;
+  const imgCW = cropW / s2;
+  const imgCH = cropH / s2;
+
+  pctx.clearRect(0, 0, pw, ph);
+  pctx.save();
+  const pscale = Math.min(pw / cropW, ph / cropH);
+  const pdw = cropW * pscale, pdh = cropH * pscale;
+  const ox = (pw - pdw) / 2, oy = (ph - pdh) / 2;
+
+  pctx.translate(pw / 2, ph / 2);
+  pctx.rotate(rotation * Math.PI / 180);
+  pctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+
+  const pimgW = origW * s2 * pscale;
+  const pimgH = origH * s2 * pscale;
+  const pimgX = -(cropX + cropW / 2 - canvas.width / 2) * pscale;
+  const pimgY = -(cropY + cropH / 2 - canvas.height / 2) * pscale;
+
+  pctx.drawImage(img, pimgX - pimgW / 2, pimgY - pimgH / 2, pimgW, pimgH);
+  pctx.restore();
+
+  // Clip to preview area
+  pctx.save();
+  pctx.globalCompositeOperation = 'destination-in';
+  pctx.fillStyle = '#000';
+  pctx.fillRect(ox, oy, pdw, pdh);
+  pctx.restore();
+}
+
+// ── Info ───────────────────────────────────────────
+function updateInfo() {
+  const { scale } = getDisplaySize();
+  const swapped = rotation === 90 || rotation === 270;
+  const dispW = swapped ? origH : origW;
+  const dispH = swapped ? origW : origH;
+  const s2 = Math.min(1, canvas.width / dispW, canvas.height / dispH) * zoom;
+  const pw = Math.round(cropW / s2);
+  const ph = Math.round(cropH / s2);
+  document.getElementById('infoSize').textContent = pw + ' × ' + ph;
+}
+
+// ── Mouse / Touch Events ───────────────────────────
+function getRect() { return canvas.getBoundingClientRect(); }
+
+function canvasCoords(e) {
+  const rect = getRect();
+  const cx = (e.clientX || e.touches[0].clientX) - rect.left;
+  const cy = (e.clientY || e.touches[0].clientY) - rect.top;
+  return [cx * (canvas.width / rect.width), cy * (canvas.height / rect.height)];
+}
+
+function hitHandle(mx, my) {
+  const pos = handlePositions();
+  const hs = HANDLE_SIZE;
+  for (const [name, [hx, hy]] of Object.entries(pos)) {
+    if (Math.abs(mx - hx) <= hs && Math.abs(my - hy) <= hs) return name;
+  }
+  return null;
+}
+
+function insideCrop(mx, my) {
+  return mx >= cropX && mx <= cropX + cropW && my >= cropY && my <= cropY + cropH;
+}
+
+function onPointerDown(e) {
+  e.preventDefault();
+  const [mx, my] = canvasCoords(e);
+  const handle = hitHandle(mx, my);
+  if (handle) {
+    isDragging = true; dragType = handle;
+  } else if (insideCrop(mx, my)) {
+    isDragging = true; dragType = 'move';
+  } else {
+    // Start new crop box
+    isDragging = true; dragType = 'new';
+    cropX = mx; cropY = my; cropW = 1; cropH = 1;
+  }
+  dragStartX = mx; dragStartY = my;
+  cropAtDragStart = { cropX, cropY, cropW, cropH };
+}
+
+function onPointerMove(e) {
+  if (!isDragging) {
+    // Update cursor
+    const [mx, my] = canvasCoords(e);
+    const handle = hitHandle(mx, my);
+    const cursors = { nw:'nw-resize', n:'n-resize', ne:'ne-resize', e:'e-resize',
+                      se:'se-resize', s:'s-resize', sw:'sw-resize', w:'w-resize' };
+    if (handle) canvas.style.cursor = cursors[handle] || 'pointer';
+    else if (insideCrop(mx, my)) canvas.style.cursor = 'move';
+    else canvas.style.cursor = 'crosshair';
+    return;
+  }
+  e.preventDefault();
+  const [mx, my] = canvasCoords(e);
+  const dx = mx - dragStartX, dy = my - dragStartY;
+  const { dw, dh } = getDisplaySize();
+  const c = cropAtDragStart;
+
+  if (dragType === 'move') {
+    cropX = Math.max(0, Math.min(dw - cropW, c.cropX + dx));
+    cropY = Math.max(0, Math.min(dh - cropH, c.cropY + dy));
+  } else if (dragType === 'new') {
+    cropX = Math.min(dragStartX, mx);
+    cropY = Math.min(dragStartY, my);
+    cropW = Math.max(MIN_CROP, Math.abs(mx - dragStartX));
+    cropH = Math.max(MIN_CROP, Math.abs(my - dragStartY));
+    cropX = Math.max(0, Math.min(dw - cropW, cropX));
+    cropY = Math.max(0, Math.min(dh - cropH, cropY));
+    if (aspectRatio) enforceAspectRatio('se');
+  } else {
+    // Handle drag resize
+    let nx = c.cropX, ny = c.cropY, nw = c.cropW, nh = c.cropH;
+    if (dragType.includes('w')) { nx = c.cropX + dx; nw = c.cropW - dx; }
+    if (dragType.includes('e')) { nw = c.cropW + dx; }
+    if (dragType.includes('n')) { ny = c.cropY + dy; nh = c.cropH - dy; }
+    if (dragType.includes('s')) { nh = c.cropH + dy; }
+    // Enforce minimums
+    if (nw < MIN_CROP) { if (dragType.includes('w')) nx = c.cropX + c.cropW - MIN_CROP; nw = MIN_CROP; }
+    if (nh < MIN_CROP) { if (dragType.includes('n')) ny = c.cropY + c.cropH - MIN_CROP; nh = MIN_CROP; }
+    // Clamp to canvas
+    if (nx < 0) { nw += nx; nx = 0; }
+    if (ny < 0) { nh += ny; ny = 0; }
+    if (nx + nw > dw) nw = dw - nx;
+    if (ny + nh > dh) nh = dh - ny;
+    cropX = nx; cropY = ny; cropW = nw; cropH = nh;
+    if (aspectRatio) {
+      cropH = Math.round(cropW / aspectRatio);
+      if (ny + cropH > dh) { cropH = dh - ny; cropW = Math.round(cropH * aspectRatio); }
+    }
+  }
+  updateInfo();
+}
+
+function onPointerUp() { isDragging = false; dragType = null; updateInfo(); }
+
+canvas.addEventListener('mousedown', onPointerDown);
+canvas.addEventListener('mousemove', onPointerMove);
+canvas.addEventListener('mouseup', onPointerUp);
+canvas.addEventListener('mouseleave', onPointerUp);
+canvas.addEventListener('touchstart', onPointerDown, { passive: false });
+canvas.addEventListener('touchmove', onPointerMove, { passive: false });
+canvas.addEventListener('touchend', onPointerUp);
+
+// ── Toolbar ────────────────────────────────────────
+document.getElementById('rotL').addEventListener('click', () => {
+  rotation = (rotation - 90 + 360) % 360; resizeCanvas(); resetCrop();
+});
+document.getElementById('rotR').addEventListener('click', () => {
+  rotation = (rotation + 90) % 360; resizeCanvas(); resetCrop();
+});
+document.getElementById('flipH').addEventListener('click', () => { flipH = !flipH; });
+document.getElementById('flipV').addEventListener('click', () => { flipV = !flipV; });
+
+document.getElementById('zoomIn').addEventListener('click', () => {
+  zoom = Math.min(3, zoom + 0.1);
+  document.getElementById('zoomLabel').textContent = Math.round(zoom * 100) + '%';
+  resizeCanvas(); resetCrop();
+});
+document.getElementById('zoomOut').addEventListener('click', () => {
+  zoom = Math.max(0.3, zoom - 0.1);
+  document.getElementById('zoomLabel').textContent = Math.round(zoom * 100) + '%';
+  resizeCanvas(); resetCrop();
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  rotation = 0; flipH = false; flipV = false; zoom = 1;
+  document.getElementById('zoomLabel').textContent = '100%';
+  aspectRatio = null;
+  document.querySelectorAll('.ratio-btn').forEach((b,i) => b.classList.toggle('active', i === 0));
+  resizeCanvas(); resetCrop();
+});
+
+// ── Download ───────────────────────────────────────
+function download(format) {
+  if (!img) return;
+  const swapped = rotation === 90 || rotation === 270;
+  const dispW = swapped ? origH : origW;
+  const dispH = swapped ? origW : origH;
+  const s2 = Math.min(1, canvas.width / dispW, canvas.height / dispH) * zoom;
+
+  // Real pixel crop dimensions
+  const rW = Math.round(cropW / s2);
+  const rH = Math.round(cropH / s2);
+
+  const off = document.createElement('canvas');
+  off.width = rW; off.height = rH;
+  const oc = off.getContext('2d');
+
+  oc.save();
+  oc.translate(rW / 2, rH / 2);
+  oc.rotate(rotation * Math.PI / 180);
+  oc.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+
+  // Image position relative to crop center
+  const imgCX = canvas.width / 2 - origW * s2 / 2;
+  const imgCY = canvas.height / 2 - origH * s2 / 2;
+  const offsetX = (imgCX - cropX) / s2;
+  const offsetY = (imgCY - cropY) / s2;
+
+  oc.drawImage(img, offsetX, offsetY, origW, origH);
+  oc.restore();
+
+  const mime = format === 'jpg' ? 'image/jpeg' : 'image/png';
+  const quality = format === 'jpg' ? 0.92 : 1;
+  const url = off.toDataURL(mime, quality);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'cropped.' + format;
+  a.click();
+}
+
+document.getElementById('dlJpg').addEventListener('click', () => download('jpg'));
+document.getElementById('dlPng').addEventListener('click', () => download('png'));
+
+// ── Resize observer ────────────────────────────────
+const ro = new ResizeObserver(() => {
+  if (img) { resizeCanvas(); resetCrop(); }
+});
+ro.observe(canvasWrap);
+</script>
+</body>
+</html>
