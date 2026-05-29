@@ -242,11 +242,18 @@ html.dark .toast{background:#ececef;color:#111}
         </div>
       </div>
       <!-- Bi-weekly cutoff field -->
-      <div class="form-row hidden" id="biweeklyFields">
-        <div class="field">
-          <label>First Cut-off Date</label>
-          <input type="date" id="dCutoffDate"/>
-          <span style="font-size:.7rem;color:var(--muted);margin-top:3px">The date when the first bi-weekly payment is due</span>
+      <div class="hidden" id="biweeklyFields">
+        <div class="form-row">
+          <div class="field">
+            <label>First Cut-off Date</label>
+            <input type="date" id="dCutoffDate"/>
+            <span style="font-size:.7rem;color:var(--muted);margin-top:3px">Date when the first bi-weekly payment is due</span>
+          </div>
+          <div class="field">
+            <label>Number of Terms</label>
+            <input type="number" id="dBiweeklyTerms" min="1" max="52" step="1" value="6" placeholder="e.g. 6"/>
+            <span style="font-size:.7rem;color:var(--muted);margin-top:3px">How many bi-weekly periods in total</span>
+          </div>
         </div>
       </div>
       <div class="field">
@@ -367,11 +374,11 @@ function calcInterest(debtor, asOf) {
     const termsElapsed = Math.floor(diffDays / termDays);
     return debtor.amount * (debtor.rate / 100) * termsElapsed;
   } else if (debtor.interestType === 'biweekly') {
-    // count how many 14-day periods have passed since first cutoff
     const cutoff = debtor.cutoffDate ? new Date(debtor.cutoffDate + 'T00:00:00') : borrowDate;
     const diffFromCutoff = (now - cutoff) / (1000 * 60 * 60 * 24);
     if (diffFromCutoff < 0) return 0;
-    const periodsElapsed = Math.floor(diffFromCutoff / 14) + 1;
+    const maxTerms = debtor.biweeklyTerms || 6;
+    const periodsElapsed = Math.min(Math.floor(diffFromCutoff / 14) + 1, maxTerms);
     return debtor.amount * (debtor.rate / 100) * periodsElapsed;
   } else if (debtor.interestType === 'monthly') {
     const months = diffDays / 30.4375;
@@ -415,10 +422,9 @@ function generateSchedule(debtor) {
       : new Date(debtor.date + 'T00:00:00');
     const interestPerPeriod = debtor.amount * (debtor.rate / 100);
     const now = new Date();
-    const maxPeriods = Math.max(12, Math.floor(((now - cutoff) / (1000 * 60 * 60 * 24)) / 14) + 4);
-    for (let i = 0; i <= Math.min(maxPeriods, 24); i++) {
+    const maxPeriods = debtor.biweeklyTerms || 6; // respect user-defined number of terms
+    for (let i = 0; i < maxPeriods; i++) {
       const dueDate = new Date(cutoff.getTime() + i * 14 * 24 * 60 * 60 * 1000);
-      if (i === 0 && dueDate < new Date(debtor.date + 'T00:00:00')) continue;
       schedule.push({
         term: i + 1,
         dueDate,
@@ -512,7 +518,7 @@ function debtorCardHTML(d) {
 
   const interestLabel = d.interestType === 'term'
     ? `${d.rate}%/${d.termLength||1} ${d.termUnit||'months'}`
-    : d.interestType === 'biweekly' ? `${d.rate}%/bi-weekly`
+    : d.interestType === 'biweekly' ? `${d.rate}%/bi-weekly · ${d.biweeklyTerms||6} terms`
     : d.interestType === 'monthly' ? `${d.rate}%/month`
     : d.interestType === 'yearly' ? `${d.rate}%/year` : 'No interest';
 
@@ -688,6 +694,7 @@ function openDebtorModal(id) {
     document.getElementById('dTermLength').value  = d.termLength || 1;
     document.getElementById('dTermUnit').value    = d.termUnit || 'months';
     document.getElementById('dCutoffDate').value  = d.cutoffDate || '';
+    document.getElementById('dBiweeklyTerms').value = d.biweeklyTerms || 6;
     document.getElementById('dNotes').value       = d.notes || '';
     toggleTermField();
   } else {
@@ -700,6 +707,7 @@ function openDebtorModal(id) {
     document.getElementById('dTermLength').value  = '1';
     document.getElementById('dTermUnit').value    = 'months';
     document.getElementById('dCutoffDate').value  = '';
+    document.getElementById('dBiweeklyTerms').value = '6';
     document.getElementById('dNotes').value       = '';
     toggleTermField();
   }
@@ -725,6 +733,7 @@ document.getElementById('debtorModalSave').addEventListener('click', () => {
   const termLength = parseInt(document.getElementById('dTermLength').value) || 1;
   const termUnit   = document.getElementById('dTermUnit').value;
   const cutoffDate = document.getElementById('dCutoffDate').value;
+  const biweeklyTerms = parseInt(document.getElementById('dBiweeklyTerms').value) || 6;
   const notes  = document.getElementById('dNotes').value.trim();
 
   if (!name)           { showToast('⚠️ Name is required'); return; }
@@ -733,9 +742,9 @@ document.getElementById('debtorModalSave').addEventListener('click', () => {
 
   if (editingDebtorId) {
     const d = debtors.find(x => x.id === editingDebtorId);
-    if (d) { d.name=name; d.amount=amount; d.date=date; d.rate=rate; d.interestType=interestType; d.termLength=termLength; d.termUnit=termUnit; d.cutoffDate=cutoffDate; d.notes=notes; }
+    if (d) { d.name=name; d.amount=amount; d.date=date; d.rate=rate; d.interestType=interestType; d.termLength=termLength; d.termUnit=termUnit; d.cutoffDate=cutoffDate; d.biweeklyTerms=biweeklyTerms; d.notes=notes; }
   } else {
-    debtors.unshift({ id:uid(), name, amount, date, rate, interestType, termLength, termUnit, cutoffDate, notes, payments:[] });
+    debtors.unshift({ id:uid(), name, amount, date, rate, interestType, termLength, termUnit, cutoffDate, biweeklyTerms, notes, payments:[] });
   }
   saveData(); renderAll(); closeDebtorModal();
   showToast(editingDebtorId ? '✅ Debtor updated' : '✅ Debtor added');
