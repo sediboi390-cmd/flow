@@ -14,13 +14,20 @@ such as "Sold Out", stock numbers, and price data.
 """
 
 from scrapling.fetchers import Fetcher
-import json, os, re
+import json, os, re, smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 
 # ── Config ──────────────────────────────────────────
 PRODUCT_URL  = "https://shopee.ph/product/258376387/49059376697"
 SAVE_FILE    = "shopee_restock_status.json"
 HISTORY_FILE = "shopee_restock_history.json"
+
+# Email config
+EMAIL_SENDER   = "sediboi390@gmail.com"
+EMAIL_PASSWORD = "zsdwrlbrvjqjlthe"   # App password
+EMAIL_RECEIVER = "sediboi390@gmail.com"
 # ────────────────────────────────────────────────────
 
 def check_stock():
@@ -116,6 +123,57 @@ def save_and_compare(result):
     return 'NO_CHANGE'
 
 
+def send_email_alert(product_name, url):
+    print("📧 Sending email alert...")
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = f"🚨 Shopee Restock Alert — {product_name}"
+        msg['From']    = EMAIL_SENDER
+        msg['To']      = EMAIL_RECEIVER
+
+        text = f"""
+🚨 RESTOCK ALERT!
+
+✅ {product_name} is BACK IN STOCK on Shopee!
+
+🛒 Buy now: {url}
+
+🕐 Detected at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+---
+Sent by your Shopee Restock Tracker 🤖
+        """.strip()
+
+        html = f"""
+<html><body style="font-family:Arial,sans-serif;max-width:500px;margin:auto;padding:20px">
+  <div style="background:#ee4d2d;color:#fff;padding:20px;border-radius:10px;text-align:center">
+    <h1>🚨 RESTOCK ALERT!</h1>
+  </div>
+  <div style="padding:20px;border:1px solid #eee;border-radius:10px;margin-top:16px">
+    <h2 style="color:#ee4d2d">✅ Back in Stock!</h2>
+    <p><strong>{product_name}</strong> is now available on Shopee!</p>
+    <a href="{url}" style="display:inline-block;background:#ee4d2d;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:10px">
+      🛒 Buy Now on Shopee
+    </a>
+    <p style="color:#888;font-size:12px;margin-top:20px">
+      Detected at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+    </p>
+  </div>
+</body></html>
+        """.strip()
+
+        msg.attach(MIMEText(text, 'plain'))
+        msg.attach(MIMEText(html, 'html'))
+
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(EMAIL_SENDER, EMAIL_PASSWORD)
+            server.sendmail(EMAIL_SENDER, EMAIL_RECEIVER, msg.as_string())
+
+        print(f"✅ Email sent to {EMAIL_RECEIVER}!")
+    except Exception as e:
+        print(f"❌ Email failed: {e}")
+
+
 def print_result(result, change):
     print("=" * 50)
     print(f"📦 Product : {result['name']}")
@@ -134,6 +192,7 @@ def print_result(result, change):
         print("\n🚨🚨🚨 RESTOCK ALERT! 🚨🚨🚨")
         print(f"✅ '{result['name']}' is BACK IN STOCK!")
         print(f"🛒 Buy now: {result['url']}")
+        send_email_alert(result['name'], result['url'])
     elif change == 'OUT_OF_STOCK':
         print("\n⚠️  Product just went OUT OF STOCK.")
     elif change == 'FIRST_CHECK':
