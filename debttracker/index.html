@@ -568,12 +568,17 @@ function debtorCardHTML(d) {
     : d.interestType === 'yearly' ? `${d.rate}%/year · ${d.monthlyTerms||3} terms`
     : 'No interest';
 
-  // Generate schedule for term/biweekly/monthly/yearly
+  // Generate schedule — auto-expand by default
   let scheduleHTML = '';
   if ((d.interestType === 'term' || d.interestType === 'biweekly' || d.interestType === 'monthly' || d.interestType === 'yearly') && d.rate > 0) {
     const schedule = generateSchedule(d);
     const now = new Date();
     const nextDue = schedule.find(s => !s.isPast);
+    const schedKey = d.id + '_sched';
+    if (!expandedPayments.has(schedKey + '_closed') && !expandedPayments.has(schedKey)) {
+      expandedPayments.add(schedKey);
+    }
+    const isExpanded = expandedPayments.has(schedKey);
     const schedLabel = d.interestType === 'monthly' ? '📅 Monthly Due Schedule'
       : d.interestType === 'yearly' ? '📅 Yearly Due Schedule'
       : '📅 Expected Bill Schedule';
@@ -582,9 +587,9 @@ function debtorCardHTML(d) {
     scheduleHTML = `
       <div style="margin-top:6px">
         <button class="payments-toggle" data-id="${d.id}" data-toggle="schedule">
-          ${expandedPayments.has(d.id+'_sched') ? '▾' : '▸'} ${schedLabel}
+          ${isExpanded ? '▾' : '▸'} ${schedLabel}
         </button>
-        ${expandedPayments.has(d.id+'_sched') ? `
+        ${isExpanded ? `
         <div style="margin-top:8px;overflow-x:auto">
           <table style="width:100%;border-collapse:collapse;font-size:.74rem">
             <thead>
@@ -703,8 +708,13 @@ function attachCardListeners() {
     btn.addEventListener('click', e => {
       e.stopPropagation();
       const id = btn.dataset.id + '_sched';
-      if (expandedPayments.has(id)) expandedPayments.delete(id);
-      else expandedPayments.add(id);
+      if (expandedPayments.has(id)) {
+        expandedPayments.delete(id);
+        expandedPayments.add(id + '_closed');
+      } else {
+        expandedPayments.add(id);
+        expandedPayments.delete(id + '_closed');
+      }
       renderAll();
     });
   });
