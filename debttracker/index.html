@@ -389,11 +389,19 @@ function calcInterest(debtor, asOf) {
     const periodsElapsed = Math.min(Math.floor(diffFromCutoff / 14) + 1, maxTerms);
     return debtor.amount * (debtor.rate / 100) * periodsElapsed;
   } else if (debtor.interestType === 'monthly') {
+    const numTerms = debtor.monthlyTerms || 12;
+    const capitalPerTerm = debtor.amount / numTerms;
+    const interestPerTerm = capitalPerTerm * (debtor.rate / 100);
     const months = diffDays / 30.4375;
-    return debtor.amount * (debtor.rate / 100) * months;
+    const termsElapsed = Math.min(Math.floor(months), numTerms);
+    return interestPerTerm * termsElapsed;
   } else if (debtor.interestType === 'yearly') {
+    const numTerms = debtor.monthlyTerms || 3;
+    const capitalPerTerm = debtor.amount / numTerms;
+    const interestPerTerm = capitalPerTerm * (debtor.rate / 100);
     const years = diffDays / 365.25;
-    return debtor.amount * (debtor.rate / 100) * years;
+    const termsElapsed = Math.min(Math.floor(years), numTerms);
+    return interestPerTerm * termsElapsed;
   }
   return 0;
 }
@@ -424,21 +432,24 @@ function generateSchedule(debtor) {
       ? new Date(debtor.cutoffDate + 'T00:00:00')
       : new Date(debtor.date + 'T00:00:00');
     const maxPeriods = debtor.biweeklyTerms || 6;
-    const interestPerPeriod = debtor.amount * (debtor.rate / 100);
+    // Capital per term = Principal ÷ Terms
     const capitalPerTerm = debtor.amount / maxPeriods;
+    // Interest per term = Capital per term × rate%
+    const interestPerPeriod = capitalPerTerm * (debtor.rate / 100);
     const paymentPerTerm = capitalPerTerm + interestPerPeriod;
     const paid = totalPaid(debtor);
     for (let i = 0; i < maxPeriods; i++) {
       const dueDate = new Date(cutoff.getTime() + i * 14 * 24 * 60 * 60 * 1000);
       const totalInterest = interestPerPeriod * (i + 1);
-      const totalOwed = debtor.amount + totalInterest;
+      const totalOwed = debtor.amount + (interestPerPeriod * maxPeriods);
+      const paidSoFar = paymentPerTerm * (i + 1);
       schedule.push({
         term: i + 1,
         dueDate,
         capitalDue: capitalPerTerm,
         interestDue: interestPerPeriod,
         paymentDue: paymentPerTerm,
-        totalInterest,
+        totalInterest: interestPerPeriod * maxPeriods,
         totalDue: Math.max(0, totalOwed - paid),
         isPast: dueDate <= now
       });
@@ -446,24 +457,23 @@ function generateSchedule(debtor) {
 
   } else if (debtor.interestType === 'monthly') {
     const startDate = new Date(debtor.date + 'T00:00:00');
-    const interestPerMonth = debtor.amount * (debtor.rate / 100);
     const numTerms = debtor.monthlyTerms || 12;
     const capitalPerTerm = debtor.amount / numTerms;
+    const interestPerMonth = capitalPerTerm * (debtor.rate / 100);
     const paymentPerTerm = capitalPerTerm + interestPerMonth;
+    const totalInterestAll = interestPerMonth * numTerms;
     const paid = totalPaid(debtor);
     for (let i = 1; i <= numTerms; i++) {
       const dueDate = new Date(startDate);
       dueDate.setMonth(dueDate.getMonth() + i);
-      const totalInterest = interestPerMonth * i;
-      const capitalPaid = capitalPerTerm * i;
-      const totalOwed = debtor.amount + totalInterest;
+      const totalOwed = debtor.amount + totalInterestAll;
       schedule.push({
         term: i,
         dueDate,
         capitalDue: capitalPerTerm,
         interestDue: interestPerMonth,
         paymentDue: paymentPerTerm,
-        totalInterest,
+        totalInterest: totalInterestAll,
         totalDue: Math.max(0, totalOwed - paid),
         isPast: dueDate <= now
       });
@@ -471,23 +481,23 @@ function generateSchedule(debtor) {
 
   } else if (debtor.interestType === 'yearly') {
     const startDate = new Date(debtor.date + 'T00:00:00');
-    const interestPerYear = debtor.amount * (debtor.rate / 100);
     const numTerms = debtor.monthlyTerms || 3;
     const capitalPerTerm = debtor.amount / numTerms;
+    const interestPerYear = capitalPerTerm * (debtor.rate / 100);
     const paymentPerTerm = capitalPerTerm + interestPerYear;
+    const totalInterestAll = interestPerYear * numTerms;
     const paid = totalPaid(debtor);
     for (let i = 1; i <= numTerms; i++) {
       const dueDate = new Date(startDate);
       dueDate.setFullYear(dueDate.getFullYear() + i);
-      const totalInterest = interestPerYear * i;
-      const totalOwed = debtor.amount + totalInterest;
+      const totalOwed = debtor.amount + totalInterestAll;
       schedule.push({
         term: i,
         dueDate,
         capitalDue: capitalPerTerm,
         interestDue: interestPerYear,
         paymentDue: paymentPerTerm,
-        totalInterest,
+        totalInterest: totalInterestAll,
         totalDue: Math.max(0, totalOwed - paid),
         isPast: dueDate <= now
       });
