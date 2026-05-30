@@ -14,7 +14,7 @@ such as "Sold Out", stock numbers, and price data.
 """
 
 from scrapling.fetchers import Fetcher
-import json, os, re, smtplib
+import json, os, re, smtplib, sys, subprocess, threading
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
@@ -144,6 +144,66 @@ def save_and_compare(result):
     return 'NO_CHANGE'
 
 
+def send_popup_alert(product_name, variant, url):
+    """Show a desktop popup with alarm sound — works on Windows, Mac and Linux"""
+    msg = f"🚨 RESTOCK ALERT!\n\n{product_name}\nVariant: {variant}\n\nGo buy it now!"
+
+    try:
+        if sys.platform == 'win32':
+            # ── Windows ──
+            # Alarm sound (beep 5 times)
+            import winsound
+            def beep():
+                for _ in range(5):
+                    winsound.Beep(1000, 500)  # 1000Hz, 500ms
+                    winsound.Beep(800, 300)
+            threading.Thread(target=beep, daemon=True).start()
+            # Popup
+            import ctypes
+            ctypes.windll.user32.MessageBoxW(
+                0,
+                f"✅ {product_name}\nVariant: {variant}\n\n🛒 {url}",
+                "🚨 SHOPEE RESTOCK ALERT!",
+                0x40 | 0x1  # Info icon + OK/Cancel buttons
+            )
+
+        elif sys.platform == 'darwin':
+            # ── macOS ──
+            # Alarm sound
+            subprocess.Popen(['afplay', '/System/Library/Sounds/Sosumi.aiff'])
+            # Popup
+            subprocess.run([
+                'osascript', '-e',
+                f'display dialog "{msg}" with title "🚨 Shopee Restock!" buttons {{"Open Shopee"}} default button "Open Shopee"'
+            ])
+
+        else:
+            # ── Linux ──
+            # Alarm sound using aplay or paplay
+            for _ in range(3):
+                subprocess.Popen(['paplay', '/usr/share/sounds/freedesktop/stereo/complete.oga'],
+                                 stderr=subprocess.DEVNULL)
+            # Popup using zenity or notify-send
+            try:
+                subprocess.run([
+                    'zenity', '--warning',
+                    f'--title=🚨 Shopee Restock Alert!',
+                    f'--text={msg}\n\n{url}',
+                    '--width=400'
+                ])
+            except FileNotFoundError:
+                subprocess.run([
+                    'notify-send',
+                    '🚨 Shopee Restock Alert!',
+                    f'{product_name} — {variant} is back!\n{url}',
+                    '--urgency=critical'
+                ])
+
+        print("🔔 Desktop popup shown!")
+    except Exception as e:
+        print(f"⚠️  Popup failed: {e} (email still sent)")
+
+
 def send_email_alert(product_name, variant, url):
     print("📧 Sending email alert...")
     try:
@@ -214,8 +274,9 @@ def print_result(result, change):
 
     if change == 'RESTOCKED':
         print("\n🚨🚨🚨 RESTOCK ALERT! 🚨🚨🚨")
-        print(f"✅ '{result['name']}' is BACK IN STOCK!")
+        print(f"✅ '{result['name']}' — {result['variant']} is BACK IN STOCK!")
         print(f"🛒 Buy now: {result['url']}")
+        send_popup_alert(result['name'], result['variant'], result['url'])
         send_email_alert(result['name'], result['variant'], result['url'])
     elif change == 'OUT_OF_STOCK':
         print("\n⚠️  Product just went OUT OF STOCK.")
