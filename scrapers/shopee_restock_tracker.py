@@ -20,9 +20,10 @@ from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 
 # ── Config ──────────────────────────────────────────
-PRODUCT_URL  = "https://shopee.ph/product/258376387/49059376697"
-SAVE_FILE    = "shopee_restock_status.json"
-HISTORY_FILE = "shopee_restock_history.json"
+PRODUCT_URL    = "https://shopee.ph/product/258376387/49059376697"
+TARGET_VARIANT = "FMC Plus (DJI RC 2)"   # The specific variant to track
+SAVE_FILE      = "shopee_restock_status.json"
+HISTORY_FILE   = "shopee_restock_history.json"
 
 # Email config
 EMAIL_SENDER   = "sediboi390@gmail.com"
@@ -45,16 +46,34 @@ def check_stock():
     name_match = re.search(r'"name"\s*:\s*"([^"]{3,120})"', html)
     name = name_match.group(1) if name_match else "Unknown Product"
 
+    # ── Detect variant-specific stock ──
+    # Look for the variant name near a stock/soldout indicator
+    variant_section = re.search(
+        rf'.{{0,500}}{re.escape(TARGET_VARIANT)}.{{0,500}}',
+        html, re.IGNORECASE | re.DOTALL
+    )
+
+    if variant_section:
+        vsec = variant_section.group(0)
+        variant_sold_out = bool(re.search(r'sold.out|out.of.stock|"stock"\s*:\s*0', vsec, re.IGNORECASE))
+        variant_in_stock = bool(re.search(r'"stock"\s*:\s*[1-9]\d*', vsec))
+        variant_found = True
+    else:
+        # Variant name not in static HTML (JS rendered) — fall back to page-level check
+        variant_sold_out = bool(re.search(r'soldout|sold.out|out.of.stock', html, re.IGNORECASE))
+        variant_in_stock = bool(re.search(r'"stock"\s*:\s*[1-9]\d*', html))
+        variant_found = False
+
     # ── Detect sold out indicators ──
     sold_out_signals = [
-        bool(re.search(r'soldout|sold.out|out.of.stock', html, re.IGNORECASE)),
+        variant_sold_out,
         '"stock":0' in html,
         '"stock": 0' in html,
     ]
 
     # ── Detect in-stock indicators ──
     in_stock_signals = [
-        bool(re.search(r'"stock"\s*:\s*([1-9]\d*)', html)),
+        variant_in_stock,
         bool(re.search(r'add.to.cart|buy.now', html, re.IGNORECASE)),
     ]
 
@@ -81,13 +100,15 @@ def check_stock():
         in_stock = None  # unknown
 
     return {
-        'name':       name,
-        'stock':      stock,
-        'price_min':  f"₱{price_min:,.2f}" if price_min > 0 else "See Shopee",
-        'price_max':  f"₱{price_max:,.2f}" if price_max > 0 else "See Shopee",
-        'in_stock':   in_stock,
-        'url':        PRODUCT_URL,
-        'checked_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        'name':          name,
+        'variant':       TARGET_VARIANT,
+        'variant_found': variant_found,
+        'stock':         stock,
+        'price_min':     f"₱{price_min:,.2f}" if price_min > 0 else "See Shopee",
+        'price_max':     f"₱{price_max:,.2f}" if price_max > 0 else "See Shopee",
+        'in_stock':      in_stock,
+        'url':           PRODUCT_URL,
+        'checked_at':    datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     }
 
 
@@ -123,21 +144,20 @@ def save_and_compare(result):
     return 'NO_CHANGE'
 
 
-def send_email_alert(product_name, url):
+def send_email_alert(product_name, variant, url):
     print("📧 Sending email alert...")
     try:
         msg = MIMEMultipart('alternative')
-        msg['Subject'] = f"🚨 Shopee Restock Alert — {product_name}"
+        msg['Subject'] = f"🚨 Shopee Restock Alert — {product_name} ({variant})"
         msg['From']    = EMAIL_SENDER
         msg['To']      = EMAIL_RECEIVER
 
         text = f"""
 🚨 RESTOCK ALERT!
 
-✅ {product_name} is BACK IN STOCK on Shopee!
+✅ {product_name} — {variant} is BACK IN STOCK on Shopee!
 
 🛒 Buy now: {url}
-
 🕐 Detected at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
 ---
@@ -151,7 +171,8 @@ Sent by your Shopee Restock Tracker 🤖
   </div>
   <div style="padding:20px;border:1px solid #eee;border-radius:10px;margin-top:16px">
     <h2 style="color:#ee4d2d">✅ Back in Stock!</h2>
-    <p><strong>{product_name}</strong> is now available on Shopee!</p>
+    <p><strong>{product_name}</strong></p>
+    <p>Variant: <strong style="color:#ee4d2d">{variant}</strong> is now available!</p>
     <a href="{url}" style="display:inline-block;background:#ee4d2d;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:10px">
       🛒 Buy Now on Shopee
     </a>
@@ -177,7 +198,10 @@ Sent by your Shopee Restock Tracker 🤖
 def print_result(result, change):
     print("=" * 50)
     print(f"📦 Product : {result['name']}")
-    print(f"🏪 Shop    : {result.get('shop', 'N/A')}")
+    print(f"🎨 Variant : {result['variant']}")
+    if not result.get('variant_found'):
+        print(f"   ⚠️  Variant not found in static HTML (JS-rendered)")
+        print(f"   ℹ️  Tracking page-level stock as fallback")
     print(f"💰 Price   : {result['price_min']}", end="")
     if result.get('price_max') != result.get('price_min'):
         print(f" – {result['price_max']}")
@@ -192,7 +216,7 @@ def print_result(result, change):
         print("\n🚨🚨🚨 RESTOCK ALERT! 🚨🚨🚨")
         print(f"✅ '{result['name']}' is BACK IN STOCK!")
         print(f"🛒 Buy now: {result['url']}")
-        send_email_alert(result['name'], result['url'])
+        send_email_alert(result['name'], result['variant'], result['url'])
     elif change == 'OUT_OF_STOCK':
         print("\n⚠️  Product just went OUT OF STOCK.")
     elif change == 'FIRST_CHECK':
