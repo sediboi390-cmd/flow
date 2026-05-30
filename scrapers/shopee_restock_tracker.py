@@ -1,132 +1,99 @@
 """
-Shopee Restock Tracker
-Monitors a Shopee product and alerts when it comes back in stock.
+Shopee Restock Tracker — PythonAnywhere Compatible
+Uses only: requests, smtplib, urllib (all built-in or pip installable)
+NO Playwright, NO Scrapling, NO browser needed!
 
-Usage:
-  python3 shopee_restock_tracker.py
-
-To run every hour automatically (Linux/Mac):
-  watch -n 3600 python3 shopee_restock_tracker.py
-
-Note: Shopee protects its API with login sessions.
-This tracker works by detecting changes in the page HTML
-such as "Sold Out", stock numbers, and price data.
+Install:  pip install requests --user
+Run:      python3 shopee_restock_tracker.py
 """
 
-from scrapling.fetchers import Fetcher
-import json, os, re, smtplib, sys, subprocess, threading, urllib.request, urllib.parse
+import requests, json, os, re, smtplib, sys, subprocess, threading, urllib.request
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 
 # ── Config ──────────────────────────────────────────
 PRODUCT_URL    = "https://shopee.ph/product/258376387/49059376697"
-TARGET_VARIANT = "FMC Plus (DJI RC 2)"   # The specific variant to track
+TARGET_VARIANT = "FMC Plus (DJI RC 2)"
 SAVE_FILE      = "shopee_restock_status.json"
 HISTORY_FILE   = "shopee_restock_history.json"
 
-# Email config
+# Email
 EMAIL_SENDER   = "sediboi390@gmail.com"
-EMAIL_PASSWORD = "zsdwrlbrvjqjlthe"   # App password
+EMAIL_PASSWORD = "zsdwrlbrvjqjlthe"
 EMAIL_RECEIVER = "sediboi390@gmail.com"
 
-# Pushbullet config
+# Pushbullet
 PUSHBULLET_TOKEN = "o.agbesjAzlZdQFUVWmgS35YqPh9EHlotu"
 # ────────────────────────────────────────────────────
+
+HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Referer': 'https://www.google.com/',
+}
 
 def check_stock():
     print(f"🛍️  Checking Shopee product...")
     print(f"🔗 {PRODUCT_URL}\n")
 
-    page = Fetcher.get(
-        PRODUCT_URL,
-        stealthy_headers=True,
-        follow_redirects=True
-    )
-    html = page.html_content
+    try:
+        resp = requests.get(PRODUCT_URL, headers=HEADERS, timeout=15, allow_redirects=True)
+        html = resp.text
+        print(f"✅ Status: {resp.status_code}")
+    except Exception as e:
+        print(f"❌ Failed to fetch page: {e}")
+        return None
 
-    # ── Extract product name ──
+    # Extract product name
     name_match = re.search(r'"name"\s*:\s*"([^"]{3,120})"', html)
-    name = name_match.group(1) if name_match else "Unknown Product"
+    name = name_match.group(1) if name_match else "6.6 Festive skin 2026"
 
-    # ── Detect variant-specific stock ──
-    # Look for the variant name near a stock/soldout indicator
-    variant_section = re.search(
-        rf'.{{0,500}}{re.escape(TARGET_VARIANT)}.{{0,500}}',
-        html, re.IGNORECASE | re.DOTALL
+    # Detect sold out
+    sold_out = (
+        bool(re.search(r'soldout|sold.out|out.of.stock', html, re.IGNORECASE)) or
+        '"stock":0' in html or '"stock": 0' in html
     )
 
-    if variant_section:
-        vsec = variant_section.group(0)
-        variant_sold_out = bool(re.search(r'sold.out|out.of.stock|"stock"\s*:\s*0', vsec, re.IGNORECASE))
-        variant_in_stock = bool(re.search(r'"stock"\s*:\s*[1-9]\d*', vsec))
-        variant_found = True
-    else:
-        # Variant name not in static HTML (JS rendered) — fall back to page-level check
-        variant_sold_out = bool(re.search(r'soldout|sold.out|out.of.stock', html, re.IGNORECASE))
-        variant_in_stock = bool(re.search(r'"stock"\s*:\s*[1-9]\d*', html))
-        variant_found = False
+    # Detect in stock
+    in_stock_signal = bool(re.search(r'"stock"\s*:\s*([1-9]\d*)', html))
 
-    # ── Detect sold out indicators ──
-    sold_out_signals = [
-        variant_sold_out,
-        '"stock":0' in html,
-        '"stock": 0' in html,
-    ]
-
-    # ── Detect in-stock indicators ──
-    in_stock_signals = [
-        variant_in_stock,
-        bool(re.search(r'add.to.cart|buy.now', html, re.IGNORECASE)),
-    ]
-
-    # ── Extract any price found ──
-    price_raw = re.search(r'"price"\s*:\s*(\d{6,})', html)
+    # Price
+    price_raw = re.search(r'"price_min"\s*:\s*(\d{6,})', html)
     price = int(price_raw.group(1)) / 100000 if price_raw else 0
 
-    price_min_raw = re.search(r'"price_min"\s*:\s*(\d{6,})', html)
-    price_min = int(price_min_raw.group(1)) / 100000 if price_min_raw else price
-
-    price_max_raw = re.search(r'"price_max"\s*:\s*(\d{6,})', html)
-    price_max = int(price_max_raw.group(1)) / 100000 if price_max_raw else price
-
-    # ── Extract stock number ──
+    # Stock count
     stock_raw = re.search(r'"stock"\s*:\s*([1-9]\d*)', html)
     stock = int(stock_raw.group(1)) if stock_raw else 0
 
-    # ── Determine status ──
-    if any(sold_out_signals):
+    if sold_out:
         in_stock = False
-    elif any(in_stock_signals):
+    elif in_stock_signal:
         in_stock = True
     else:
-        in_stock = None  # unknown
+        in_stock = None
 
     return {
-        'name':          name,
-        'variant':       TARGET_VARIANT,
-        'variant_found': variant_found,
-        'stock':         stock,
-        'price_min':     f"₱{price_min:,.2f}" if price_min > 0 else "See Shopee",
-        'price_max':     f"₱{price_max:,.2f}" if price_max > 0 else "See Shopee",
-        'in_stock':      in_stock,
-        'url':           PRODUCT_URL,
-        'checked_at':    datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        'name':       name,
+        'variant':    TARGET_VARIANT,
+        'stock':      stock,
+        'price':      f"₱{price:,.2f}" if price > 0 else "See Shopee",
+        'in_stock':   in_stock,
+        'url':        PRODUCT_URL,
+        'checked_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     }
 
 
 def save_and_compare(result):
-    # Load previous status
     prev = None
     if os.path.exists(SAVE_FILE):
         with open(SAVE_FILE) as f:
             prev = json.load(f)
 
-    # Save current
     with open(SAVE_FILE, 'w') as f:
         json.dump(result, f, indent=2)
 
-    # Append to history
     history = []
     if os.path.exists(HISTORY_FILE):
         with open(HISTORY_FILE) as f:
@@ -137,140 +104,56 @@ def save_and_compare(result):
     with open(HISTORY_FILE, 'w') as f:
         json.dump(history, f, indent=2)
 
-    # Detect restock
     if prev and not prev.get('in_stock') and result.get('in_stock'):
         return 'RESTOCKED'
-    elif prev and prev.get('in_stock') and not result.get('in_stock'):
-        return 'OUT_OF_STOCK'
     elif not prev:
         return 'FIRST_CHECK'
     return 'NO_CHANGE'
 
 
 def send_pushbullet_alert(product_name, variant, url):
-    """Send push notification to phone via Pushbullet"""
     print("📱 Sending Pushbullet notification...")
     try:
-        data = json.dumps({
-            "type":  "link",
-            "title": f"🚨 Shopee Restock! {product_name}",
-            "body":  f"✅ {variant} is BACK IN STOCK!\nTap to buy now!",
-            "url":   url
-        }).encode('utf-8')
-
-        req = urllib.request.Request(
+        resp = requests.post(
             'https://api.pushbullet.com/v2/pushes',
-            data=data,
             headers={
                 'Access-Token': PUSHBULLET_TOKEN,
                 'Content-Type': 'application/json'
             },
-            method='POST'
+            json={
+                "type":  "link",
+                "title": f"🚨 Shopee Restock! {product_name}",
+                "body":  f"✅ {variant} is BACK IN STOCK!\nTap to buy now!",
+                "url":   url
+            },
+            timeout=10
         )
-        urllib.request.urlopen(req, timeout=10)
-        print("✅ Pushbullet notification sent to your phone!")
+        if resp.status_code == 200:
+            print("✅ Pushbullet notification sent!")
+        else:
+            print(f"⚠️ Pushbullet error: {resp.status_code}")
     except Exception as e:
         print(f"❌ Pushbullet failed: {e}")
-
-
-def send_popup_alert(product_name, variant, url):
-    """Show a desktop popup with alarm sound — works on Windows, Mac and Linux"""
-    msg = f"🚨 RESTOCK ALERT!\n\n{product_name}\nVariant: {variant}\n\nGo buy it now!"
-
-    try:
-        if sys.platform == 'win32':
-            # ── Windows ──
-            # Alarm sound (beep 5 times)
-            import winsound
-            def beep():
-                for _ in range(5):
-                    winsound.Beep(1000, 500)  # 1000Hz, 500ms
-                    winsound.Beep(800, 300)
-            threading.Thread(target=beep, daemon=True).start()
-            # Popup
-            import ctypes
-            ctypes.windll.user32.MessageBoxW(
-                0,
-                f"✅ {product_name}\nVariant: {variant}\n\n🛒 {url}",
-                "🚨 SHOPEE RESTOCK ALERT!",
-                0x40 | 0x1  # Info icon + OK/Cancel buttons
-            )
-
-        elif sys.platform == 'darwin':
-            # ── macOS ──
-            # Alarm sound
-            subprocess.Popen(['afplay', '/System/Library/Sounds/Sosumi.aiff'])
-            # Popup
-            subprocess.run([
-                'osascript', '-e',
-                f'display dialog "{msg}" with title "🚨 Shopee Restock!" buttons {{"Open Shopee"}} default button "Open Shopee"'
-            ])
-
-        else:
-            # ── Linux ──
-            # Alarm sound using aplay or paplay
-            for _ in range(3):
-                subprocess.Popen(['paplay', '/usr/share/sounds/freedesktop/stereo/complete.oga'],
-                                 stderr=subprocess.DEVNULL)
-            # Popup using zenity or notify-send
-            try:
-                subprocess.run([
-                    'zenity', '--warning',
-                    f'--title=🚨 Shopee Restock Alert!',
-                    f'--text={msg}\n\n{url}',
-                    '--width=400'
-                ])
-            except FileNotFoundError:
-                subprocess.run([
-                    'notify-send',
-                    '🚨 Shopee Restock Alert!',
-                    f'{product_name} — {variant} is back!\n{url}',
-                    '--urgency=critical'
-                ])
-
-        print("🔔 Desktop popup shown!")
-    except Exception as e:
-        print(f"⚠️  Popup failed: {e} (email still sent)")
 
 
 def send_email_alert(product_name, variant, url):
     print("📧 Sending email alert...")
     try:
         msg = MIMEMultipart('alternative')
-        msg['Subject'] = f"🚨 Shopee Restock Alert — {product_name} ({variant})"
+        msg['Subject'] = f"🚨 Shopee Restock — {product_name} ({variant})"
         msg['From']    = EMAIL_SENDER
         msg['To']      = EMAIL_RECEIVER
 
-        text = f"""
-🚨 RESTOCK ALERT!
-
-✅ {product_name} — {variant} is BACK IN STOCK on Shopee!
-
-🛒 Buy now: {url}
-🕐 Detected at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
----
-Sent by your Shopee Restock Tracker 🤖
-        """.strip()
-
-        html = f"""
-<html><body style="font-family:Arial,sans-serif;max-width:500px;margin:auto;padding:20px">
-  <div style="background:#ee4d2d;color:#fff;padding:20px;border-radius:10px;text-align:center">
-    <h1>🚨 RESTOCK ALERT!</h1>
-  </div>
+        text = f"🚨 RESTOCK ALERT!\n\n✅ {product_name} — {variant} is BACK IN STOCK!\n\n🛒 {url}\n🕐 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        html = f"""<html><body style="font-family:Arial,sans-serif;max-width:500px;margin:auto;padding:20px">
+  <div style="background:#ee4d2d;color:#fff;padding:20px;border-radius:10px;text-align:center"><h1>🚨 RESTOCK ALERT!</h1></div>
   <div style="padding:20px;border:1px solid #eee;border-radius:10px;margin-top:16px">
     <h2 style="color:#ee4d2d">✅ Back in Stock!</h2>
-    <p><strong>{product_name}</strong></p>
-    <p>Variant: <strong style="color:#ee4d2d">{variant}</strong> is now available!</p>
-    <a href="{url}" style="display:inline-block;background:#ee4d2d;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:10px">
-      🛒 Buy Now on Shopee
-    </a>
-    <p style="color:#888;font-size:12px;margin-top:20px">
-      Detected at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-    </p>
+    <p><strong>{product_name}</strong><br>Variant: <strong style="color:#ee4d2d">{variant}</strong></p>
+    <a href="{url}" style="display:inline-block;background:#ee4d2d;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:10px">🛒 Buy Now on Shopee</a>
+    <p style="color:#888;font-size:12px;margin-top:20px">Detected at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
   </div>
-</body></html>
-        """.strip()
+</body></html>"""
 
         msg.attach(MIMEText(text, 'plain'))
         msg.attach(MIMEText(html, 'html'))
@@ -278,7 +161,6 @@ Sent by your Shopee Restock Tracker 🤖
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
             server.login(EMAIL_SENDER, EMAIL_PASSWORD)
             server.sendmail(EMAIL_SENDER, EMAIL_RECEIVER, msg.as_string())
-
         print(f"✅ Email sent to {EMAIL_RECEIVER}!")
     except Exception as e:
         print(f"❌ Email failed: {e}")
@@ -288,14 +170,7 @@ def print_result(result, change):
     print("=" * 50)
     print(f"📦 Product : {result['name']}")
     print(f"🎨 Variant : {result['variant']}")
-    if not result.get('variant_found'):
-        print(f"   ⚠️  Variant not found in static HTML (JS-rendered)")
-        print(f"   ℹ️  Tracking page-level stock as fallback")
-    print(f"💰 Price   : {result['price_min']}", end="")
-    if result.get('price_max') != result.get('price_min'):
-        print(f" – {result['price_max']}")
-    else:
-        print()
+    print(f"💰 Price   : {result['price']}")
     print(f"📊 Stock   : {result['stock']} units")
     print(f"✅ Status  : {'IN STOCK 🟢' if result['in_stock'] else 'OUT OF STOCK 🔴'}")
     print(f"🕐 Checked : {result['checked_at']}")
@@ -303,20 +178,16 @@ def print_result(result, change):
 
     if change == 'RESTOCKED':
         print("\n🚨🚨🚨 RESTOCK ALERT! 🚨🚨🚨")
-        print(f"✅ '{result['name']}' — {result['variant']} is BACK IN STOCK!")
+        print(f"✅ {result['name']} — {result['variant']} is BACK IN STOCK!")
         print(f"🛒 Buy now: {result['url']}")
         send_pushbullet_alert(result['name'], result['variant'], result['url'])
-        send_popup_alert(result['name'], result['variant'], result['url'])
         send_email_alert(result['name'], result['variant'], result['url'])
-    elif change == 'OUT_OF_STOCK':
-        print("\n⚠️  Product just went OUT OF STOCK.")
     elif change == 'FIRST_CHECK':
-        print("\n📝 First check recorded. Run again to track changes.")
+        print("\n📝 First check recorded. Tracker is running!")
     else:
         print("\n✅ No change since last check.")
 
-    print(f"\n💾 Status saved to {SAVE_FILE}")
-    print(f"📜 History saved to {HISTORY_FILE}")
+    print(f"\n💾 Saved to {SAVE_FILE}")
 
 
 if __name__ == '__main__':
