@@ -5,23 +5,102 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Color Palette Generator — Flow</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#f7f6f3;--surface:#fff;--border:#e5e2da;--accent:#7c3aed;--accent-hover:#6d28d9;--text:#1e1e1e;--muted:#888580;--radius:14px;--shadow:0 2px 12px rgba(0,0,0,.06)}
 html.dark{--bg:#111113;--surface:#1c1c1f;--border:#2a2a2e;--text:#ececef;--muted:#7a7a82}
 body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
 .hidden{display:none!important}
-header{max-width:960px;margin:0 auto;padding:40px 24px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
-.back-btn{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;color:var(--muted);text-decoration:none;padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);transition:all .15s}
-.back-btn:hover{color:var(--accent);border-color:var(--accent)}
-.header-brand{display:flex;align-items:center;gap:10px}
-.header-icon{width:40px;height:40px;background:linear-gradient(135deg,#7c3aed,#a78bfa);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem}
-.header-brand h1{font-size:1.3rem;font-weight:700;letter-spacing:-.02em}
-.header-brand p{font-size:.78rem;color:var(--muted)}
-.dark-toggle{width:34px;height:34px;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:.95rem;display:flex;align-items:center;justify-content:center;transition:all .15s}
-.dark-toggle:hover{border-color:var(--accent);color:var(--accent)}
-main{max-width:960px;margin:28px auto 80px;padding:0 24px;display:flex;flex-direction:column;gap:18px}
+
+/* ── Hero Section ── */
+.hero{position:relative;overflow:hidden;background:linear-gradient(135deg,#0f0520 0%,#1a0533 40%,#0d1a3d 100%);padding:60px 24px 52px;color:#fff}
+.hero-inner{position:relative;z-index:2;max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+.hero-nav{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;color:rgba(255,255,255,.65);text-decoration:none;padding:6px 14px;border:1px solid rgba(255,255,255,.15);border-radius:8px;background:rgba(255,255,255,.07);transition:all .18s;backdrop-filter:blur(8px)}
+.back-btn:hover{color:#fff;border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.13)}
+.dark-toggle{width:36px;height:36px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all .18s;backdrop-filter:blur(8px)}
+.dark-toggle:hover{border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.16)}
+
+/* Animated rainbow strip at top of hero */
+.rainbow-strip{position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#f43f5e,#f97316,#eab308,#22c55e,#06b6d4,#7c3aed,#ec4899,#f43f5e);background-size:200% 100%;animation:rainbowShift 4s linear infinite;z-index:3}
+@keyframes rainbowShift{0%{background-position:0% 0%}100%{background-position:200% 0%}}
+
+/* Floating blobs */
+.blobs{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+.blob{position:absolute;border-radius:50%;filter:blur(60px);opacity:.35;animation:floatBlob var(--dur,12s) var(--delay,0s) ease-in-out infinite alternate}
+@keyframes floatBlob{0%{transform:translateY(0) scale(1)}100%{transform:translateY(-30px) scale(1.08)}}
+.b1{width:320px;height:320px;background:#7c3aed;top:-80px;left:-60px;--dur:13s;--delay:0s}
+.b2{width:260px;height:260px;background:#ec4899;top:20px;right:5%;--dur:10s;--delay:-3s}
+.b3{width:200px;height:200px;background:#06b6d4;bottom:-40px;left:30%;--dur:15s;--delay:-6s}
+.b4{width:180px;height:180px;background:#f97316;bottom:10px;right:20%;--dur:11s;--delay:-2s}
+.b5{width:140px;height:140px;background:#22c55e;top:30%;left:60%;--dur:9s;--delay:-4s}
+
+/* Floating color swatches */
+.float-swatches{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+.fsw{position:absolute;width:48px;height:48px;border-radius:14px;opacity:.22;animation:swatchFloat var(--sd,14s) var(--sl,0s) ease-in-out infinite alternate;border:2px solid rgba(255,255,255,.15)}
+@keyframes swatchFloat{0%{transform:translateY(0) rotate(0deg)}100%{transform:translateY(-22px) rotate(8deg)}}
+.fsw1{background:#f43f5e;top:15%;left:8%;--sd:12s;--sl:0s}
+.fsw2{background:#eab308;top:60%;left:15%;--sd:16s;--sl:-4s}
+.fsw3{background:#22c55e;top:25%;right:12%;--sd:10s;--sl:-2s}
+.fsw4{background:#06b6d4;top:70%;right:8%;--sd:14s;--sl:-7s}
+.fsw5{background:#a78bfa;top:45%;left:45%;--sd:11s;--sl:-5s}
+.fsw6{background:#fb923c;top:10%;right:30%;--sd:18s;--sl:-1s}
+
+/* Hero Title */
+.hero-title-wrap{text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:999px;background:rgba(124,58,237,.35);border:1px solid rgba(167,139,250,.4);font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#c4b5fd;margin-bottom:4px}
+.hero-title{font-size:clamp(2.2rem,6vw,4rem);font-weight:900;letter-spacing:-.03em;line-height:1.05;background:linear-gradient(135deg,#fff 0%,#c4b5fd 40%,#f9a8d4 70%,#fed7aa 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-subtitle{font-size:clamp(1rem,2.5vw,1.25rem);color:rgba(255,255,255,.65);font-weight:400;max-width:440px;text-align:center;line-height:1.5}
+
+/* Feature pills */
+.feature-pills{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.feature-pill{display:inline-flex;align-items:center;gap:5px;padding:5px 14px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);font-size:.76rem;font-weight:500;color:rgba(255,255,255,.75);backdrop-filter:blur(6px);transition:all .18s}
+.feature-pill:hover{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff}
+
+/* Live preview strip */
+.live-strip-wrap{width:100%;position:relative}
+.live-strip-label{font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.4);margin-bottom:6px}
+.live-strip{height:14px;border-radius:999px;background:linear-gradient(90deg,#f43f5e,#f97316,#eab308,#22c55e,#06b6d4,#7c3aed,#ec4899);background-size:200% 100%;animation:rainbowShift 6s linear infinite;box-shadow:0 0 20px rgba(124,58,237,.5),0 0 40px rgba(236,72,153,.2);transition:background 0.5s ease;overflow:hidden;border:1px solid rgba(255,255,255,.12)}
+
+/* Generate controls inside hero */
+.hero-controls{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:24px 28px;backdrop-filter:blur(16px);display:flex;flex-direction:column;gap:18px}
+.hero-controls-top{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.hc-group{display:flex;flex-direction:column;gap:8px}
+.hc-label{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5)}
+
+/* Big color picker */
+.big-color-wrap{display:flex;align-items:center;gap:12px;cursor:pointer}
+.big-swatch-ring{width:56px;height:56px;border-radius:16px;padding:3px;background:linear-gradient(135deg,rgba(255,255,255,.3),rgba(255,255,255,.05));box-shadow:0 0 0 1px rgba(255,255,255,.15),0 4px 20px rgba(0,0,0,.3);transition:box-shadow .2s}
+.big-swatch-ring:hover{box-shadow:0 0 0 2px #a78bfa,0 4px 20px rgba(124,58,237,.4)}
+.big-swatch-inner{width:100%;height:100%;border-radius:13px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center}
+.big-swatch-inner input[type=color]{position:absolute;width:200%;height:200%;top:-50%;left:-50%;border:none;background:none;cursor:pointer;padding:0;opacity:0}
+.big-color-val{display:flex;flex-direction:column;gap:3px}
+.big-color-hex{font-size:1.1rem;font-weight:700;letter-spacing:.04em;font-family:monospace}
+.big-color-name{font-size:.72rem;color:rgba(255,255,255,.5)}
+
+/* Harmony pill buttons */
+.pill-group{display:flex;flex-wrap:wrap;gap:6px}
+.pill-btn{padding:6px 13px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:rgba(255,255,255,.7);font:inherit;font-size:.76rem;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
+.pill-btn:hover{border-color:rgba(167,139,250,.6);color:#c4b5fd;background:rgba(124,58,237,.2)}
+.pill-btn.active{background:rgba(124,58,237,.5);border-color:#a78bfa;color:#fff;font-weight:600}
+
+/* Count pill buttons */
+.count-pills{display:flex;gap:6px}
+.count-pill{width:40px;height:36px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:rgba(255,255,255,.7);font:inherit;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.count-pill:hover{border-color:rgba(167,139,250,.6);color:#c4b5fd}
+.count-pill.active{background:rgba(124,58,237,.5);border-color:#a78bfa;color:#fff}
+
+/* Generate button */
+.hero-controls-actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn-generate{display:inline-flex;align-items:center;gap:8px;padding:13px 28px;border-radius:14px;font:inherit;font-size:.95rem;font-weight:700;cursor:pointer;border:none;background:linear-gradient(135deg,#7c3aed,#a855f7,#ec4899);color:#fff;box-shadow:0 4px 24px rgba(124,58,237,.5),0 1px 0 rgba(255,255,255,.15) inset;transition:all .18s;letter-spacing:.01em}
+.btn-generate:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(124,58,237,.65),0 1px 0 rgba(255,255,255,.15) inset}
+.btn-generate:active{transform:translateY(0)}
+.btn-hero-outline{display:inline-flex;align-items:center;gap:6px;padding:12px 20px;border-radius:14px;font:inherit;font-size:.88rem;font-weight:600;cursor:pointer;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:rgba(255,255,255,.8);transition:all .18s;backdrop-filter:blur(6px)}
+.btn-hero-outline:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.4);color:#fff;transform:translateY(-1px)}
+
+/* ── Main content below hero ── */
+.main-content{max-width:960px;margin:28px auto 80px;padding:0 24px;display:flex;flex-direction:column;gap:18px}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow)}
 .card-label{font-size:.68rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:9px;font:inherit;font-size:.88rem;font-weight:600;cursor:pointer;transition:all .15s;text-decoration:none;border:none}
@@ -33,15 +112,6 @@ main{max-width:960px;margin:28px auto 80px;padding:0 24px;display:flex;flex-dire
 footer{text-align:center;padding:16px 0 40px;font-size:.75rem;color:var(--muted)}
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:#1e1e1e;color:#fff;padding:10px 20px;border-radius:999px;font-size:.82rem;font-weight:500;opacity:0;transition:all .3s;pointer-events:none;z-index:999}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-.controls-row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
-.control-group{display:flex;flex-direction:column;gap:6px}
-.control-group label{font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-.color-input-wrap{display:flex;align-items:center;gap:8px;padding:6px 12px;border:1px solid var(--border);border-radius:9px;background:var(--bg);cursor:pointer;transition:border-color .15s}
-.color-input-wrap:hover{border-color:var(--accent)}
-.color-input-wrap input[type=color]{width:32px;height:32px;border:none;background:none;cursor:pointer;padding:0;border-radius:6px}
-.color-input-wrap span{font-size:.86rem;font-weight:600;min-width:70px}
-select{padding:10px 12px;border:1px solid var(--border);border-radius:9px;background:var(--bg);color:var(--text);font:inherit;font-size:.86rem;outline:none;cursor:pointer;transition:border-color .15s;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23888' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
-select:focus{border-color:var(--accent)}
 .palette-strip{display:flex;border-radius:12px;overflow:hidden;height:120px;margin-bottom:14px;box-shadow:var(--shadow)}
 .palette-swatch{flex:1;position:relative;cursor:pointer;transition:flex .2s}
 .palette-swatch:hover{flex:2}
@@ -76,56 +146,152 @@ select:focus{border-color:var(--accent)}
 .contrast-badge{padding:4px 10px;border-radius:999px;font-size:.72rem;font-weight:600;display:inline-block;margin:2px}
 .badge-pass{background:#dcfce7;color:#166534}
 .badge-fail{background:#fee2e2;color:#991b1b}
+select{padding:10px 12px;border:1px solid var(--border);border-radius:9px;background:var(--bg);color:var(--text);font:inherit;font-size:.86rem;outline:none;cursor:pointer;transition:border-color .15s;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23888' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+select:focus{border-color:var(--accent)}
+.color-input-wrap{display:flex;align-items:center;gap:8px;padding:6px 12px;border:1px solid var(--border);border-radius:9px;background:var(--bg);cursor:pointer;transition:border-color .15s}
+.color-input-wrap:hover{border-color:var(--accent)}
+.color-input-wrap input[type=color]{width:32px;height:32px;border:none;background:none;cursor:pointer;padding:0;border-radius:6px}
+.color-input-wrap span{font-size:.86rem;font-weight:600;min-width:70px}
+.control-group{display:flex;flex-direction:column;gap:6px}
+.control-group label{font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.controls-row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
 </style>
 </head>
 <body>
-<header>
-  <a href="../" class="back-btn">← Back to Hub</a>
-  <div class="header-brand">
-    <div class="header-icon">🎨</div>
-    <div><h1>Color Palette Generator</h1><p>Generate beautiful color palettes instantly</p></div>
+
+
+<!-- ══════════════ HERO ══════════════ -->
+<div class="hero">
+  <!-- animated rainbow strip -->
+  <div class="rainbow-strip" id="liveStripTop"></div>
+
+  <!-- background blobs -->
+  <div class="blobs">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+    <div class="blob b4"></div>
+    <div class="blob b5"></div>
   </div>
-  <button class="dark-toggle" id="darkToggle">🌙</button>
-</header>
-<main>
-  <!-- Generator -->
-  <div class="card">
-    <div class="card-label">Generate Palette</div>
-    <div class="controls-row">
-      <div class="control-group">
-        <label>Base Color</label>
-        <div class="color-input-wrap" onclick="document.getElementById('baseColorInput').click()">
-          <input type="color" id="baseColorInput" value="#7c3aed" oninput="onBaseColorChange(this.value)"/>
-          <span id="baseColorHex">#7c3aed</span>
+
+  <!-- floating color swatches -->
+  <div class="float-swatches">
+    <div class="fsw fsw1"></div>
+    <div class="fsw fsw2"></div>
+    <div class="fsw fsw3"></div>
+    <div class="fsw fsw4"></div>
+    <div class="fsw fsw5"></div>
+    <div class="fsw fsw6"></div>
+  </div>
+
+  <div class="hero-inner">
+    <!-- nav row -->
+    <div class="hero-nav">
+      <a href="../" class="back-btn">← Back to Hub</a>
+      <button class="dark-toggle" id="darkToggle">🌙</button>
+    </div>
+
+    <!-- title block -->
+    <div class="hero-title-wrap">
+      <div class="hero-badge">✨ Powered by Color Theory</div>
+      <h1 class="hero-title">Color Palette Generator</h1>
+      <p class="hero-subtitle">Create beautiful, harmonious palettes in seconds</p>
+    </div>
+
+    <!-- live preview strip -->
+    <div class="live-strip-wrap">
+      <div class="live-strip-label">Live Palette Preview</div>
+      <div class="live-strip" id="livePaletteStrip"></div>
+    </div>
+
+    <!-- generate controls -->
+    <div class="hero-controls">
+      <div class="hero-controls-top">
+
+        <!-- Base color -->
+        <div class="hc-group">
+          <div class="hc-label">Base Color</div>
+          <div class="big-color-wrap" onclick="document.getElementById('baseColorInput').click()">
+            <div class="big-swatch-ring">
+              <div class="big-swatch-inner" id="bigSwatchInner" style="background:#7c3aed">
+                <input type="color" id="baseColorInput" value="#7c3aed" oninput="onBaseColorChange(this.value)"/>
+              </div>
+            </div>
+            <div class="big-color-val">
+              <span class="big-color-hex" id="baseColorHex">#7c3aed</span>
+              <span class="big-color-name">Tap to change</span>
+            </div>
+          </div>
         </div>
+
+        <!-- Harmony pills -->
+        <div class="hc-group" style="flex:1;min-width:260px">
+          <div class="hc-label">Harmony Type</div>
+          <div class="pill-group" id="harmonyPills">
+            <button class="pill-btn active" data-val="analogous" onclick="selectHarmony(this)">🌈 Analogous</button>
+            <button class="pill-btn" data-val="complementary" onclick="selectHarmony(this)">⚡ Complementary</button>
+            <button class="pill-btn" data-val="triadic" onclick="selectHarmony(this)">🔺 Triadic</button>
+            <button class="pill-btn" data-val="tetradic" onclick="selectHarmony(this)">◆ Tetradic</button>
+            <button class="pill-btn" data-val="split" onclick="selectHarmony(this)">✂️ Split</button>
+            <button class="pill-btn" data-val="monochromatic" onclick="selectHarmony(this)">🎭 Mono</button>
+            <button class="pill-btn" data-val="shades" onclick="selectHarmony(this)">🌓 Shades</button>
+            <button class="pill-btn" data-val="random" onclick="selectHarmony(this)">🎲 Random</button>
+          </div>
+        </div>
+
+        <!-- Count pills -->
+        <div class="hc-group">
+          <div class="hc-label">Colors</div>
+          <div class="count-pills" id="countPills">
+            <button class="count-pill" data-val="4" onclick="selectCount(this)">4</button>
+            <button class="count-pill active" data-val="5" onclick="selectCount(this)">5</button>
+            <button class="count-pill" data-val="6" onclick="selectCount(this)">6</button>
+            <button class="count-pill" data-val="8" onclick="selectCount(this)">8</button>
+          </div>
+        </div>
+
       </div>
-      <div class="control-group">
-        <label>Harmony</label>
-        <select id="harmonySelect" onchange="generatePalette()">
-          <option value="analogous">🌈 Analogous</option>
-          <option value="complementary">⚡ Complementary</option>
-          <option value="triadic">🔺 Triadic</option>
-          <option value="tetradic">◆ Tetradic</option>
-          <option value="split">✂️ Split Complementary</option>
-          <option value="monochromatic">🎭 Monochromatic</option>
-          <option value="shades">🌓 Shades &amp; Tints</option>
-          <option value="random">🎲 Random</option>
-        </select>
+
+      <!-- action buttons -->
+      <div class="hero-controls-actions">
+        <button class="btn-generate" onclick="generatePalette()">✨ Generate Palette</button>
+        <button class="btn-hero-outline" onclick="savePalette()">💾 Save</button>
+        <button class="btn-hero-outline" onclick="copyAllHex()">📋 Copy All</button>
       </div>
-      <div class="control-group">
-        <label>Count</label>
-        <select id="countSelect" onchange="generatePalette()">
-          <option value="4">4 colors</option>
-          <option value="5" selected>5 colors</option>
-          <option value="6">6 colors</option>
-          <option value="8">8 colors</option>
-        </select>
-      </div>
-      <button class="btn btn-primary" onclick="generatePalette()">🎲 Generate</button>
-      <button class="btn btn-outline" onclick="savePalette()">💾 Save</button>
-      <button class="btn btn-outline" onclick="copyAllHex()">📋 Copy All</button>
+    </div>
+
+    <!-- feature pills -->
+    <div class="feature-pills">
+      <span class="feature-pill">🎨 8 Harmony Types</span>
+      <span class="feature-pill">🌈 Gradient Builder</span>
+      <span class="feature-pill">⚖️ Contrast Checker</span>
+      <span class="feature-pill">📦 Export CSS / JSON</span>
+      <span class="feature-pill">🔒 Lock Colors</span>
     </div>
   </div>
+</div><!-- /hero -->
+
+
+<!-- ══════════════ MAIN CONTENT ══════════════ -->
+<main class="main-content">
+
+  <!-- Hidden selects kept for JS compatibility -->
+  <select id="harmonySelect" class="hidden" onchange="generatePalette()">
+    <option value="analogous">Analogous</option>
+    <option value="complementary">Complementary</option>
+    <option value="triadic">Triadic</option>
+    <option value="tetradic">Tetradic</option>
+    <option value="split">Split Complementary</option>
+    <option value="monochromatic">Monochromatic</option>
+    <option value="shades">Shades &amp; Tints</option>
+    <option value="random">Random</option>
+  </select>
+  <select id="countSelect" class="hidden" onchange="generatePalette()">
+    <option value="4">4</option>
+    <option value="5" selected>5</option>
+    <option value="6">6</option>
+    <option value="8">8</option>
+  </select>
 
   <!-- Palette Display -->
   <div class="card" id="paletteCard">
@@ -245,6 +411,7 @@ select:focus{border-color:var(--accent)}
     <div id="savedList"></div>
   </div>
 </main>
+
 <footer>Flow Color Palette Generator</footer>
 <div class="toast" id="toast"></div>
 
@@ -255,6 +422,20 @@ const html=document.documentElement,darkBtn=document.getElementById('darkToggle'
 const sv=localStorage.getItem('flow.darkMode');
 if(sv==='true'||(!sv&&window.matchMedia('(prefers-color-scheme:dark)').matches)){html.classList.add('dark');darkBtn.textContent='☀️'}
 darkBtn.addEventListener('click',()=>{const d=html.classList.toggle('dark');darkBtn.textContent=d?'☀️':'🌙';localStorage.setItem('flow.darkMode',d)});
+
+// ── Pill UI helpers ──
+function selectHarmony(btn){
+  document.querySelectorAll('#harmonyPills .pill-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('harmonySelect').value=btn.dataset.val;
+  generatePalette();
+}
+function selectCount(btn){
+  document.querySelectorAll('#countPills .count-pill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('countSelect').value=btn.dataset.val;
+  generatePalette();
+}
 
 // ── Color Math ──
 function hexToHsl(hex){
@@ -309,41 +490,35 @@ function generatePalette(){
   const count=parseInt(document.getElementById('countSelect').value);
   const[h,s,l]=hexToHsl(baseHex);
   let colors=[];
-
   const gen=(hue,sat,lit)=>hslToHex(((hue%360)+360)%360,Math.max(10,Math.min(90,sat)),Math.max(10,Math.min(90,lit)));
-
   switch(harmony){
-    case 'analogous':
-      for(let i=0;i<count;i++)colors.push(gen(h+(i-Math.floor(count/2))*30,s,l));break;
-    case 'complementary':
-      colors=[baseHex];
-      for(let i=1;i<count;i++)colors.push(i%2===0?gen(h+i*15,s,l):gen(h+180+i*10,s,l));break;
-    case 'triadic':
-      colors=[baseHex,gen(h+120,s,l),gen(h+240,s,l)];
-      while(colors.length<count)colors.push(gen(h+colors.length*20,s,Math.max(30,l-10)));break;
-    case 'tetradic':
-      colors=[baseHex,gen(h+90,s,l),gen(h+180,s,l),gen(h+270,s,l)];
-      while(colors.length<count)colors.push(gen(h+colors.length*15,s,l));break;
-    case 'split':
-      colors=[baseHex,gen(h+150,s,l),gen(h+210,s,l)];
-      while(colors.length<count)colors.push(gen(h+colors.length*25,s,l));break;
-    case 'monochromatic':
-      for(let i=0;i<count;i++)colors.push(gen(h,Math.max(20,s-(i*10)),Math.max(20,Math.min(85,l+(i-Math.floor(count/2))*15))));break;
-    case 'shades':
-      for(let i=0;i<count;i++)colors.push(gen(h,Math.max(5,s-i*5),Math.round(10+i*(80/(count-1)))));break;
-    case 'random':
-      for(let i=0;i<count;i++)colors.push(hslToHex(Math.random()*360,30+Math.random()*60,35+Math.random()*40));break;
+    case 'analogous':for(let i=0;i<count;i++)colors.push(gen(h+(i-Math.floor(count/2))*30,s,l));break;
+    case 'complementary':colors=[baseHex];for(let i=1;i<count;i++)colors.push(i%2===0?gen(h+i*15,s,l):gen(h+180+i*10,s,l));break;
+    case 'triadic':colors=[baseHex,gen(h+120,s,l),gen(h+240,s,l)];while(colors.length<count)colors.push(gen(h+colors.length*20,s,Math.max(30,l-10)));break;
+    case 'tetradic':colors=[baseHex,gen(h+90,s,l),gen(h+180,s,l),gen(h+270,s,l)];while(colors.length<count)colors.push(gen(h+colors.length*15,s,l));break;
+    case 'split':colors=[baseHex,gen(h+150,s,l),gen(h+210,s,l)];while(colors.length<count)colors.push(gen(h+colors.length*25,s,l));break;
+    case 'monochromatic':for(let i=0;i<count;i++)colors.push(gen(h,Math.max(20,s-(i*10)),Math.max(20,Math.min(85,l+(i-Math.floor(count/2))*15))));break;
+    case 'shades':for(let i=0;i<count;i++)colors.push(gen(h,Math.max(5,s-i*5),Math.round(10+i*(80/(count-1)))));break;
+    case 'random':for(let i=0;i<count;i++)colors.push(hslToHex(Math.random()*360,30+Math.random()*60,35+Math.random()*40));break;
   }
-
-  // Apply locked colors
   currentColors=colors.map((c,i)=>lockedColors[i]||c);
   renderPalette();
   updateGradient();
+  updateLiveStrip();
 }
 
 function onBaseColorChange(val){
   document.getElementById('baseColorHex').textContent=val;
+  document.getElementById('bigSwatchInner').style.background=val;
   generatePalette();
+}
+
+// ── Live Strip Update ──
+function updateLiveStrip(){
+  const strip=document.getElementById('livePaletteStrip');
+  if(!currentColors.length)return;
+  strip.style.background=`linear-gradient(90deg, ${currentColors.join(', ')})`;
+  strip.style.animation='none';
 }
 
 // ── Render ──
@@ -351,14 +526,11 @@ function renderPalette(){
   const strip=document.getElementById('paletteStrip');
   const grid=document.getElementById('colorsGrid');
   const harmony=document.getElementById('harmonySelect').value;
-
   strip.innerHTML=currentColors.map((c,i)=>`
     <div class="palette-swatch" style="background:${c}" onclick="copyHex('${c}')">
       <div class="swatch-info">${c}</div>
     </div>`).join('');
-
   grid.innerHTML=currentColors.map((c,i)=>{
-    const tc=getTextColor(c);
     const[h,s,l]=hexToHsl(c);
     const{r,g,b}=hexToRgb(c);
     const locked=!!lockedColors[i];
@@ -380,7 +552,6 @@ function renderPalette(){
       </div>
     </div>`;
   }).join('');
-
   document.getElementById('harmonyInfo').textContent=harmonyDesc[harmony]||'';
 }
 
@@ -440,10 +611,8 @@ function checkContrast(){
   const ratio=contrastRatio(fg,bg);
   const ratioStr=ratio.toFixed(2);
   const wcagAA=ratio>=4.5,wcagAAA=ratio>=7,wcagAALarge=ratio>=3;
-
   document.getElementById('contrastPreview').style.cssText=`background:${bg};color:${fg};padding:20px;border-radius:10px;text-align:center;font-size:1.1rem;font-weight:600;margin-bottom:10px`;
   document.getElementById('contrastPreview').textContent='Sample Text Preview';
-
   const color=ratio>=7?'#166534':ratio>=4.5?'#854d0e':'#991b1b';
   const bg2=ratio>=7?'#dcfce7':ratio>=4.5?'#fef9c3':'#fee2e2';
   document.getElementById('contrastResult').innerHTML=`
@@ -469,12 +638,11 @@ function mixColors(){
   const mixed=rgbToHex(ra.r*(ratio)+rb.r*(1-ratio),ra.g*(ratio)+rb.g*(1-ratio),ra.b*(ratio)+rb.b*(1-ratio));
   document.getElementById('mixSwatch').style.background=mixed;
   document.getElementById('mixHex').textContent=mixed;
-  // Mix steps
   const steps=document.getElementById('mixSteps');
   steps.innerHTML=Array.from({length:8},(_,i)=>{
     const t=i/7;const mr=hexToRgb(a),mb=hexToRgb(b);
     const sc=rgbToHex(mr.r*(1-t)+mb.r*t,mr.g*(1-t)+mb.g*t,mr.b*(1-t)+mb.b*t);
-    return`<div style="flex:1;background:${sc};cursor:pointer;title='${sc}'" onclick="copyHex('${sc}')" title="${sc}"></div>`;
+    return`<div style="flex:1;background:${sc};cursor:pointer" onclick="copyHex('${sc}')" title="${sc}"></div>`;
   }).join('');
 }
 function copyMixResult(){copyHex(document.getElementById('mixHex').textContent)}
@@ -507,7 +675,7 @@ function renderSaved(){
       </div>
     </div>`).join('');
 }
-function loadPalette(i){currentColors=[...savedPalettes[i].colors];lockedColors={};renderPalette();updateGradient();showToast('Palette loaded!')}
+function loadPalette(i){currentColors=[...savedPalettes[i].colors];lockedColors={};renderPalette();updateGradient();updateLiveStrip();showToast('Palette loaded!')}
 function deletePalette(i){savedPalettes.splice(i,1);localStorage.setItem('flow.palettes',JSON.stringify(savedPalettes));renderSaved()}
 function clearSaved(){savedPalettes=[];localStorage.removeItem('flow.palettes');renderSaved()}
 
