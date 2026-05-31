@@ -434,11 +434,11 @@ select:focus{border-color:rgba(167,139,250,.6)}
         <button class="btn btn-outline btn-sm" onclick="copyMixResult()">📋 Copy</button>
       </div>
       <div style="display:flex;flex-direction:column;gap:4px">
-        <label style="font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Mix Ratio</label>
+        <label style="font-size:.72rem;font-weight:600;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em">Mix Ratio</label>
         <div style="display:flex;align-items:center;gap:10px">
-          <span style="font-size:.78rem;color:var(--muted)" id="ratioA">50%</span>
+          <span style="font-size:.78rem;color:rgba(255,255,255,.5)" id="ratioA">50%</span>
           <input type="range" id="mixRatio" min="0" max="100" value="50" style="flex:1;accent-color:var(--accent)" oninput="mixColors()"/>
-          <span style="font-size:.78rem;color:var(--muted)" id="ratioB">50%</span>
+          <span style="font-size:.78rem;color:rgba(255,255,255,.5)" id="ratioB">50%</span>
         </div>
       </div>
       <div id="mixSteps" style="display:flex;gap:6px;margin-top:14px;border-radius:10px;overflow:hidden;height:50px"></div>
