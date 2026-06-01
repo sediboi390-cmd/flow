@@ -42,24 +42,24 @@ body {
 body::before {
   content: '';
   position: fixed;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background: 
-    radial-gradient(ellipse at 20% 20%, rgba(74, 140, 140, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 80%, rgba(123, 123, 168, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(107, 143, 113, 0.05) 0%, transparent 60%);
-  animation: bgFloat 20s ease-in-out infinite;
+    radial-gradient(circle 800px at 10% 20%, rgba(74, 140, 140, 0.15) 0%, transparent 60%),
+    radial-gradient(circle 600px at 90% 80%, rgba(139, 92, 246, 0.12) 0%, transparent 55%),
+    radial-gradient(circle 500px at 50% 10%, rgba(245, 158, 11, 0.08) 0%, transparent 50%);
+  animation: pulseGlow 8s ease-in-out infinite alternate;
   z-index: -1;
   pointer-events: none;
 }
 
 html.dark body::before {
   background: 
-    radial-gradient(ellipse at 20% 20%, rgba(74, 140, 140, 0.12) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 80%, rgba(123, 123, 168, 0.10) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(139, 92, 246, 0.06) 0%, transparent 60%);
+    radial-gradient(circle 800px at 10% 20%, rgba(74, 140, 140, 0.2) 0%, transparent 60%),
+    radial-gradient(circle 600px at 90% 80%, rgba(139, 92, 246, 0.18) 0%, transparent 55%),
+    radial-gradient(circle 500px at 50% 10%, rgba(245, 158, 11, 0.1) 0%, transparent 50%);
 }
 
 body::after {
@@ -70,46 +70,97 @@ body::after {
   width: 100%;
   height: 100%;
   background: 
-    radial-gradient(circle at 70% 30%, rgba(245, 158, 11, 0.04) 0%, transparent 40%),
-    radial-gradient(circle at 30% 70%, rgba(14, 165, 233, 0.04) 0%, transparent 40%);
-  animation: bgFloat2 25s ease-in-out infinite;
+    radial-gradient(circle 400px at 80% 20%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
+    radial-gradient(circle 700px at 20% 90%, rgba(14, 165, 233, 0.1) 0%, transparent 55%),
+    radial-gradient(circle 300px at 60% 60%, rgba(16, 185, 129, 0.08) 0%, transparent 45%);
+  animation: pulseGlow2 12s ease-in-out infinite alternate;
   z-index: -1;
   pointer-events: none;
 }
 
 html.dark body::after {
   background: 
-    radial-gradient(circle at 70% 30%, rgba(245, 158, 11, 0.06) 0%, transparent 40%),
-    radial-gradient(circle at 30% 70%, rgba(14, 165, 233, 0.06) 0%, transparent 40%);
+    radial-gradient(circle 400px at 80% 20%, rgba(236, 72, 153, 0.14) 0%, transparent 50%),
+    radial-gradient(circle 700px at 20% 90%, rgba(14, 165, 233, 0.14) 0%, transparent 55%),
+    radial-gradient(circle 300px at 60% 60%, rgba(16, 185, 129, 0.1) 0%, transparent 45%);
 }
 
-@keyframes bgFloat {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  33% { transform: translate(2%, -2%) rotate(1deg); }
-  66% { transform: translate(-1%, 1%) rotate(-0.5deg); }
+@keyframes pulseGlow {
+  0% { opacity: 0.7; transform: scale(1); }
+  100% { opacity: 1; transform: scale(1.05); }
 }
 
-@keyframes bgFloat2 {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(-1.5%, 1.5%); }
+@keyframes pulseGlow2 {
+  0% { opacity: 1; transform: scale(1.05) rotate(0.5deg); }
+  100% { opacity: 0.7; transform: scale(1) rotate(-0.5deg); }
 }
 
-/* ── Mesh grid overlay (subtle) ── */
-.mesh-bg {
+/* ── Floating orbs ── */
+.orb {
   position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background-image: 
-    linear-gradient(rgba(74, 140, 140, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(74, 140, 140, 0.03) 1px, transparent 1px);
-  background-size: 60px 60px;
+  border-radius: 50%;
+  filter: blur(80px);
   z-index: -1;
   pointer-events: none;
+  opacity: 0.5;
 }
 
-html.dark .mesh-bg {
-  background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+.orb-1 {
+  width: 350px; height: 350px;
+  background: rgba(74, 140, 140, 0.3);
+  top: -100px; left: -80px;
+  animation: orbMove1 15s ease-in-out infinite;
+}
+
+.orb-2 {
+  width: 280px; height: 280px;
+  background: rgba(139, 92, 246, 0.25);
+  bottom: -50px; right: -60px;
+  animation: orbMove2 18s ease-in-out infinite;
+}
+
+.orb-3 {
+  width: 200px; height: 200px;
+  background: rgba(236, 72, 153, 0.2);
+  top: 40%; right: 10%;
+  animation: orbMove3 22s ease-in-out infinite;
+}
+
+.orb-4 {
+  width: 250px; height: 250px;
+  background: rgba(245, 158, 11, 0.2);
+  bottom: 30%; left: 5%;
+  animation: orbMove4 20s ease-in-out infinite;
+}
+
+html.dark .orb-1 { background: rgba(74, 140, 140, 0.4); }
+html.dark .orb-2 { background: rgba(139, 92, 246, 0.35); }
+html.dark .orb-3 { background: rgba(236, 72, 153, 0.3); }
+html.dark .orb-4 { background: rgba(245, 158, 11, 0.25); }
+
+@keyframes orbMove1 {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(60px, 40px); }
+  50% { transform: translate(30px, 80px); }
+  75% { transform: translate(-20px, 40px); }
+}
+
+@keyframes orbMove2 {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-50px, -30px); }
+  50% { transform: translate(-80px, -60px); }
+  75% { transform: translate(-30px, -20px); }
+}
+
+@keyframes orbMove3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-40px, 30px) scale(1.1); }
+  66% { transform: translate(20px, -20px) scale(0.9); }
+}
+
+@keyframes orbMove4 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(50px, -40px) scale(1.15); }
 }
 
 /* ── Header ── */
@@ -351,7 +402,10 @@ footer {
 </style>
 </head>
 <body>
-<div class="mesh-bg"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+<div class="orb orb-4"></div>
 
 <header>
   <div class="brand">
