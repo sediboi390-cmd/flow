@@ -122,16 +122,31 @@ let watchlist = { products: [] };
 const MAX_PRODUCTS = 5;
 const WATCHLIST_PATH = '../scrapers/price_watchlist.json';
 const STORAGE_KEY = 'flow_price_watchlist';
+let serverMode = false; // true when local server is running
 
 async function init() {
-  // Try localStorage first (persists user edits across refreshes)
+  // Check if local server is running (enables direct file saving)
+  try {
+    const ping = await fetch('/api/watchlist', { signal: AbortSignal.timeout(1000) });
+    if (ping.ok) {
+      serverMode = true;
+      watchlist = await ping.json();
+      render();
+      showServerBadge(true);
+      return;
+    }
+  } catch(e) { /* server not running, use static mode */ }
+
+  showServerBadge(false);
+
+  // Try localStorage (persists user edits across refreshes)
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
     try {
       watchlist = JSON.parse(saved);
       render();
       return;
-    } catch(e) { console.warn('Invalid localStorage data, loading from file'); }
+    } catch(e) { console.warn('Invalid localStorage data'); }
   }
 
   // Fallback: load from JSON file
@@ -146,6 +161,41 @@ async function init() {
 
 function saveToLocal() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(watchlist));
+}
+
+async function saveWatchlist() {
+  if (serverMode) {
+    // Save directly to file via server API
+    try {
+      const res = await fetch('/api/watchlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(watchlist)
+      });
+      if (!res.ok) console.warn('Server save failed');
+    } catch(e) { console.warn('Server save error:', e); }
+  }
+  // Always save to localStorage as backup
+  saveToLocal();
+}
+
+function showServerBadge(connected) {
+  let badge = document.getElementById('serverBadge');
+  if (!badge) {
+    badge = document.createElement('div');
+    badge.id = 'serverBadge';
+    badge.style.cssText = 'text-align:center;font-size:0.7rem;padding:0.4rem;margin-bottom:1rem;border-radius:8px;';
+    document.querySelector('.header').after(badge);
+  }
+  if (connected) {
+    badge.style.background = 'rgba(16,185,129,0.1)';
+    badge.style.color = '#10b981';
+    badge.textContent = '🟢 Connected to local server — changes save directly to file';
+  } else {
+    badge.style.background = 'rgba(245,158,11,0.1)';
+    badge.style.color = '#f59e0b';
+    badge.textContent = '🟡 Static mode — download JSON after editing to update tracker';
+  }
 }
 
 function render() {
@@ -265,7 +315,7 @@ function addProduct() {
   if (watchlist.products.length >= MAX_PRODUCTS) { showError('Max 5 products reached'); return; }
 
   watchlist.products.push({ name, url, store, enabled: true, variants: [] });
-  saveToLocal();
+  saveWatchlist();
   render();
   document.getElementById('addName').value = '';
   document.getElementById('addUrl').value = '';
@@ -273,7 +323,7 @@ function addProduct() {
 
 function toggleProduct(idx) {
   watchlist.products[idx].enabled = !watchlist.products[idx].enabled;
-  saveToLocal();
+  saveWatchlist();
   render();
 }
 
@@ -282,7 +332,7 @@ function editProductName(idx) {
   const newName = prompt('Product name:', current);
   if (newName && newName.trim()) {
     watchlist.products[idx].name = newName.trim();
-    saveToLocal();
+    saveWatchlist();
     render();
   }
 }
@@ -290,7 +340,7 @@ function editProductName(idx) {
 function removeProduct(idx) {
   if (confirm(`Remove "${watchlist.products[idx].name}"?`)) {
     watchlist.products.splice(idx, 1);
-    saveToLocal();
+    saveWatchlist();
     render();
   }
 }
@@ -315,7 +365,7 @@ function addVariant(productIdx) {
     delete product.target_price;
   }
 
-  saveToLocal();
+  saveWatchlist();
   render();
 }
 
@@ -326,7 +376,7 @@ function editVariant(productIdx, variantIdx) {
     const val = parseFloat(newTarget);
     if (val > 0) {
       watchlist.products[productIdx].variants[variantIdx].target_price = val;
-      saveToLocal();
+      saveWatchlist();
       render();
     } else {
       alert('Must be a positive number');
@@ -338,7 +388,7 @@ function removeVariant(productIdx, variantIdx) {
   const variant = watchlist.products[productIdx].variants[variantIdx];
   if (confirm(`Remove variant "${variant.name}"?`)) {
     watchlist.products[productIdx].variants.splice(variantIdx, 1);
-    saveToLocal();
+    saveWatchlist();
     render();
   }
 }
@@ -350,7 +400,7 @@ function editLegacyTarget(productIdx) {
     const val = parseFloat(newTarget);
     if (val > 0) {
       watchlist.products[productIdx].target_price = val;
-      saveToLocal();
+      saveWatchlist();
       render();
     } else {
       alert('Must be a positive number');
