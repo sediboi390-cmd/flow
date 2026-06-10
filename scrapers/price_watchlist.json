@@ -1,0 +1,15 @@
+{
+  "products": [
+    {
+      "name": "DJI Mini 4 Pro",
+      "url": "https://shopee.ph/product/258376387/49059376697",
+      "store": "shopee",
+      "enabled": true,
+      "variants": [
+        { "name": "FMC (DJI RC-N3)", "target_price": 35000 },
+        { "name": "FMC Plus (DJI RC 2)", "target_price": 45000 },
+        { "name": "Fly More Combo", "target_price": 55000 }
+      ]
+    }
+  ]
+}
