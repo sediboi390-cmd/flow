@@ -13,7 +13,7 @@ from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 
 try:
-    from scrapling.fetchers import Fetcher, DynamicFetcher
+    from scrapling.fetchers import Fetcher, StealthyFetcher
 except ImportError:
     print("ERROR: Scrapling not installed. Run: pip install 'scrapling[all]'")
     sys.exit(1)
@@ -100,74 +100,89 @@ def save_history(history):
 
 
 def fetch_shopee(url):
-    """Fetch Shopee product page with Scrapling, extract prices and variants."""
+    """Fetch Shopee product using Scrapling CLI with stealthy-fetch and --ai-targeted."""
     try:
-        if USE_BROWSER:
-            page = DynamicFetcher.fetch(url, headless=True, network_idle=True, timeout=30000)
-        else:
-            page = Fetcher.get(url)
+        import subprocess, tempfile, json as json_mod
+
+        # Extract shop_id and item_id from URL
+        match = re.search(r'/product/(\d+)/(\d+)', url)
+        if not match:
+            match = re.search(r'i\.(\d+)\.(\d+)', url)
+        if not match:
+            return {'name': None, 'price': None, 'discount': 0, 'variants': {}, 'status': 'error: cannot parse shop/item ID from URL'}
+
+        shop_id = match.group(1)
+        item_id = match.group(2)
+
+        # Use scrapling CLI stealthy-fetch to bypass anti-bot
+        scrapling_bin = r'C:\Users\Supremo\AppData\Local\Programs\Python\Python312\Scripts\scrapling.exe'
+        tmp_file = os.path.join(tempfile.gettempdir(), f'shopee_{item_id}.html')
+
+        result = subprocess.run(
+            [scrapling_bin, 'extract', 'stealthy-fetch', url, tmp_file,
+             '--ai-targeted', '--network-idle', '--timeout', '45000'],
+            capture_output=True, text=True, timeout=90
+        )
+
+        if result.returncode != 0:
+            # Fallback: try regular fetch
+            result = subprocess.run(
+                [scrapling_bin, 'extract', 'fetch', url, tmp_file,
+                 '--ai-targeted', '--network-idle', '--timeout', '45000'],
+                capture_output=True, text=True, timeout=90
+            )
+
+        if not os.path.exists(tmp_file):
+            return {'name': None, 'price': None, 'discount': 0, 'variants': {}, 'status': f'error: no output file. stderr: {result.stderr[:200]}'}
+
+        body = open(tmp_file, 'r', encoding='utf-8', errors='ignore').read()
+        os.remove(tmp_file)
+
+        if len(body) < 100:
+            return {'name': None, 'price': None, 'discount': 0, 'variants': {}, 'status': 'error: page too short, likely blocked'}
 
         # Product name
-        name = page.css('meta[property="og:title"]::attr(content)').get()
-        if not name:
-            name = page.css('title::text').get()
-        if name:
-            name = name.strip().split(' | ')[0]
+        name = None
+        name_match = re.search(r'"name"\s*:\s*"([^"]{3,120})"', body)
+        if name_match:
+            name = name_match.group(1)
 
-        # Overall price
-        price = None
-        price_el = page.css('.pqTWkA::text').get()  # Shopee price class
-        if not price_el:
-            price_el = page.css('[class*="price"]::text').get()
-        if price_el:
-            price_clean = re.sub(r'[^\d.]', '', price_el.replace(',', ''))
-            if price_clean:
-                price = float(price_clean)
+        # Prices (Shopee stores in centavos x100000)
+        all_prices_raw = re.findall(r'"price"\s*:\s*(\d{8,})', body)
+        all_prices_php = [int(p) / 100000 for p in all_prices_raw if 100 <= int(p) / 100000 <= 500000]
+        price = min(all_prices_php) if all_prices_php else None
 
-        # Fallback: extract from page source
+        # Also try price_min
         if price is None:
-            body = page.body.decode('utf-8', errors='ignore') if isinstance(page.body, bytes) else str(page.body)
-            m = re.search(r'"price_min"\s*:\s*(\d{6,})', body)
-            if m:
-                price = int(m.group(1)) / 100000
+            pm = re.search(r'"price_min"\s*:\s*(\d{6,})', body)
+            if pm:
+                price = int(pm.group(1)) / 100000
 
         # Discount
         discount = 0
-        disc_el = page.css('[class*="discount"]::text').get()
-        if disc_el:
-            disc_m = re.search(r'(\d+)%', disc_el)
-            if disc_m:
-                discount = int(disc_m.group(1))
+        disc_m = re.search(r'"raw_discount"\s*:\s*(\d+)', body)
+        if disc_m:
+            discount = int(disc_m.group(1))
 
-        # Variant prices
+        # Variants from models
         variants = {}
-        # Try extracting from variant buttons/options
-        variant_els = page.css('[class*="variant"], [class*="model"], .product-variation')
-        for el in variant_els:
-            vname = el.css('::text').get()
-            if vname:
-                vname = vname.strip()
-                if vname and len(vname) > 1:
-                    variants[vname] = None  # Name found but price needs matching
+        models_section = re.search(r'"models"\s*:\s*\[(.*?)\]', body, re.DOTALL)
+        if models_section:
+            models_str = models_section.group(1)
+            all_names = re.findall(r'"name"\s*:\s*"([^"]+)"', models_str)
+            all_vprices = re.findall(r'"price"\s*:\s*(\d{6,})', models_str)
 
-        # Try extracting variant prices from JSON in page source
-        body = page.body.decode('utf-8', errors='ignore') if isinstance(page.body, bytes) else str(page.body)
-        models_match = re.search(r'"models"\s*:\s*\[([^\]]+)\]', body)
-        if models_match:
-            models_str = models_match.group(1)
-            entries = re.findall(r'"name"\s*:\s*"([^"]+)"[^}]*?"price"\s*:\s*(\d{6,})', models_str)
-            for vn, vp in entries:
-                variants[vn] = int(vp) / 100000
-            if not entries:
-                entries2 = re.findall(r'"price"\s*:\s*(\d{6,})[^}]*?"name"\s*:\s*"([^"]+)"', models_str)
-                for vp, vn in entries2:
-                    variants[vn] = int(vp) / 100000
-
-        # Remove variants with no price
-        variants = {k: v for k, v in variants.items() if v is not None}
+            if all_names and all_vprices:
+                for i, vn in enumerate(all_names):
+                    if i < len(all_vprices):
+                        vp_php = int(all_vprices[i]) / 100000
+                        if 100 <= vp_php <= 500000:
+                            variants[vn] = vp_php
 
         return {'name': name, 'price': price, 'discount': discount, 'variants': variants, 'status': 'ok'}
 
+    except subprocess.TimeoutExpired:
+        return {'name': None, 'price': None, 'discount': 0, 'variants': {}, 'status': 'error: timeout (90s)'}
     except Exception as e:
         return {'name': None, 'price': None, 'discount': 0, 'variants': {}, 'status': f'error: {e}'}
 
@@ -176,7 +191,7 @@ def fetch_lazada(url):
     """Fetch Lazada product page with Scrapling, extract prices and variants."""
     try:
         if USE_BROWSER:
-            page = DynamicFetcher.fetch(url, headless=True, network_idle=True, timeout=30000)
+            page = StealthyFetcher.fetch(url, headless=True, network_idle=True, timeout=45000, block_webrtc=True, real_chrome=True)
         else:
             page = Fetcher.get(url)
 
