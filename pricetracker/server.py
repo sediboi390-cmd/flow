@@ -56,6 +56,31 @@ def get_history():
         return jsonify(json.load(f))
 
 
+@app.route('/api/check-now', methods=['POST'])
+def check_now():
+    """Run the price tracker immediately and return results."""
+    import subprocess
+    tracker_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'scrapers', 'price_drop_tracker_v2.py')
+    python_path = r'C:\Users\Supremo\AppData\Local\Programs\Python\Python312\python.exe'
+
+    try:
+        result = subprocess.run(
+            [python_path, tracker_path],
+            capture_output=True, text=True, timeout=120,
+            cwd=os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'scrapers')
+        )
+        return jsonify({
+            "status": "done",
+            "output": result.stdout,
+            "errors": result.stderr,
+            "exit_code": result.returncode
+        })
+    except subprocess.TimeoutExpired:
+        return jsonify({"status": "timeout", "output": "Check took too long (>2 min)"}), 408
+    except Exception as e:
+        return jsonify({"status": "error", "output": str(e)}), 500
+
+
 if __name__ == '__main__':
     print("=" * 50)
     print("  Price Tracker — Local Server")

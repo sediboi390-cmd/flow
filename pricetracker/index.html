@@ -110,9 +110,14 @@ a.back:hover { color: var(--text); }
   </div>
 
   <div class="export-section">
-    <button class="btn-export" onclick="exportJSON()">💾 Download Watchlist JSON</button>
-    <button class="btn-export" onclick="resetFromFile()" style="margin-left:0.5rem;color:var(--muted)">🔄 Reset from file</button>
+    <button class="btn-export" onclick="checkNow()" id="btnCheck" style="background:var(--green);color:#fff;border-color:var(--green)">⚡ Check Prices Now</button>
+    <button class="btn-export" onclick="exportJSON()" style="margin-left:0.5rem">💾 Download JSON</button>
+    <button class="btn-export" onclick="resetFromFile()" style="margin-left:0.5rem;color:var(--muted)">🔄 Reset</button>
   </div>
+
+  <div id="checkResult" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:1.5rem;font-size:0.75rem;white-space:pre-wrap;max-height:300px;overflow-y:auto;font-family:monospace;color:var(--muted)"></div>
+
+  <div id="autoCheckStatus" style="text-align:center;font-size:0.7rem;color:var(--muted);margin-bottom:1rem"></div>
 
   <div class="footer">Flow · Price Drop Tracker · Checks every 30 min via Task Scheduler</div>
 </div>
@@ -133,6 +138,7 @@ async function init() {
       watchlist = await ping.json();
       render();
       showServerBadge(true);
+      startAutoCheck();
       return;
     }
   } catch(e) { /* server not running, use static mode */ }
@@ -431,6 +437,71 @@ async function resetFromFile() {
   } catch(e) { watchlist = { products: [] }; }
   saveToLocal();
   render();
+}
+
+// --- Check Now & Auto-Check ---
+
+let autoCheckInterval = null;
+const AUTO_CHECK_MINUTES = 5;
+
+async function checkNow() {
+  if (!serverMode) {
+    alert('Check Now requires the local server running. Start pricetracker/start.bat');
+    return;
+  }
+
+  const btn = document.getElementById('btnCheck');
+  const resultEl = document.getElementById('checkResult');
+  btn.disabled = true;
+  btn.textContent = '⏳ Checking...';
+  resultEl.style.display = 'block';
+  resultEl.textContent = 'Running price check (this may take 15-60 seconds)...\n';
+
+  try {
+    const res = await fetch('/api/check-now', { method: 'POST' });
+    const data = await res.json();
+
+    if (data.status === 'done') {
+      resultEl.textContent = data.output || 'Check complete (no output)';
+      if (data.errors) resultEl.textContent += '\n\n--- Errors ---\n' + data.errors;
+    } else {
+      resultEl.textContent = 'Error: ' + (data.output || data.status);
+    }
+
+    // Reload watchlist and history after check
+    try {
+      const wlRes = await fetch('/api/watchlist');
+      if (wlRes.ok) watchlist = await wlRes.json();
+      render();
+    } catch(e) {}
+
+    updateAutoCheckStatus();
+  } catch(e) {
+    resultEl.textContent = 'Failed to run check: ' + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '⚡ Check Prices Now';
+  }
+}
+
+function startAutoCheck() {
+  if (!serverMode) return;
+
+  updateAutoCheckStatus();
+  autoCheckInterval = setInterval(() => {
+    checkNow();
+  }, AUTO_CHECK_MINUTES * 60 * 1000);
+}
+
+function updateAutoCheckStatus() {
+  const el = document.getElementById('autoCheckStatus');
+  if (!el) return;
+  if (serverMode) {
+    const next = new Date(Date.now() + AUTO_CHECK_MINUTES * 60 * 1000);
+    el.textContent = `Auto-check every ${AUTO_CHECK_MINUTES} min | Next: ${next.toLocaleTimeString()}`;
+  } else {
+    el.textContent = '';
+  }
 }
 
 // --- Helpers ---
